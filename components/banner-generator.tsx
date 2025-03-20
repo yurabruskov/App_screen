@@ -2186,7 +2186,7 @@ export default function BannerGenerator() {
           {/* Right panel - Settings */}
           <div>
             {/* Панель настроек, растянутая на всю высоту экрана, но ниже шапки */}
-            <div className="fixed top-0 right-0 h-screen pt-[calc(4rem+2px)] w-[320px]" style={{ paddingTop: 'calc(4rem + 1px)' }}>
+            <div className="fixed top-0 right-0 h-screen w-[320px]" style={{ paddingTop: 'calc(6rem + 1px)' }}>
               <Card className="h-full rounded-none border-l border-t-0 border-r-0 border-b-0">
                 <CardContent className="p-6 h-full overflow-y-auto">
                   {/* Context-sensitive settings panel */}
