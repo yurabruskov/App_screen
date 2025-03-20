@@ -30,6 +30,8 @@ import { LanguageSelector } from "@/components/language-selector"
 import { exportBanners } from "@/lib/export-utils"
 import { LANGUAGES, DEFAULT_SETTINGS, DEVICE_POSITIONS } from "@/lib/constants"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import JSZip from "jszip"
+import html2canvas from "html2canvas"
 
 // Класс для работы с IndexedDB
 class ImageDB {
@@ -882,22 +884,232 @@ export default function BannerGenerator() {
 
   // Handle export
   const handleExport = async () => {
-    setIsExporting(true)
+    setIsExporting(true);
+    console.log('Starting export process...');
+    
     try {
-      // Обновляем функцию экспорта для работы с новой структурой данных
-      const currentBanner = previewItems[previewIndex]
-      if (currentBanner && canvasRef.current) {
-        await exportBanners(canvasRef.current, localizedContent, [currentBanner.screenshot], {
-          ...bannerSettings,
-          backgroundColor: currentBanner.backgroundColor,
-        })
+      // Создаем временный канвас для экспорта, чтобы не полагаться на скрытый элемент
+      const tempCanvas = document.createElement('div');
+      tempCanvas.style.width = '320px';
+      tempCanvas.style.height = '690px';
+      tempCanvas.style.position = 'absolute';
+      tempCanvas.style.left = '-9999px';
+      tempCanvas.style.top = '-9999px';
+      document.body.appendChild(tempCanvas);
+      
+      // Создаем один общий ZIP-архив для всех баннеров
+      const zip = new JSZip();
+      console.log('Preparing to export', previewItems.length, 'banners to a single ZIP archive');
+      
+      for (const banner of previewItems) {
+        console.log('Exporting banner', banner.id, 'with name', banner.name);
+        
+        // Готовим индивидуальный контент для каждого баннера
+        const bannerContent: Record<string, { title: string; description: string }> = {};
+        
+        // Собираем контент для всех доступных языков
+        Object.keys(localizedContent).forEach(langCode => {
+          bannerContent[langCode] = {
+            title: getPreviewContent(langCode, banner.id, "title") || "",
+            description: getPreviewContent(langCode, banner.id, "description") || ""
+          };
+        });
+        
+        console.log('Content prepared for languages:', Object.keys(bannerContent));
+        
+        // Настраиваем временный канвас для текущего баннера
+        tempCanvas.innerHTML = '';
+        tempCanvas.style.backgroundColor = banner.backgroundColor;
+        
+        // Создаем структуру канваса соответствующую структуре оригинального баннера
+        const { titlePosition, descriptionPosition, separateElements } = getContentPositions(banner.devicePosition);
+        const currentOffset = banner.verticalOffset || { combined: 0, title: 0, description: 0, device: 0 };
+        
+        // Добавляем текстовые элементы
+        if (separateElements) {
+          // Титул
+          const titleDiv = document.createElement('div');
+          titleDiv.style.position = 'absolute';
+          Object.assign(titleDiv.style, titlePosition);
+          titleDiv.style.transform = `${titlePosition.transform || ""} translateY(${currentOffset.title}px)`;
+          
+          const titleH2 = document.createElement('h2');
+          titleH2.textContent = getPreviewContent(activeLanguage, banner.id, "title") || "Title";
+          titleH2.className = "text-2xl font-bold text-center";
+          Object.assign(titleH2.style, getTextStyle("title"));
+          
+          titleDiv.appendChild(titleH2);
+          tempCanvas.appendChild(titleDiv);
+          
+          // Описание
+          const descDiv = document.createElement('div');
+          descDiv.style.position = 'absolute';
+          Object.assign(descDiv.style, descriptionPosition);
+          descDiv.style.transform = `${descriptionPosition.transform || ""} translateY(${currentOffset.description}px)`;
+          
+          const descP = document.createElement('p');
+          descP.textContent = getPreviewContent(activeLanguage, banner.id, "description") || "Description";
+          descP.className = "text-base text-center";
+          Object.assign(descP.style, getTextStyle("description"));
+          
+          descDiv.appendChild(descP);
+          tempCanvas.appendChild(descDiv);
+        } else {
+          // Комбинированный блок
+          const textDiv = document.createElement('div');
+          textDiv.style.position = 'absolute';
+          Object.assign(textDiv.style, titlePosition);
+          textDiv.style.transform = `${titlePosition.transform || ""} translateY(${currentOffset.combined}px)`;
+          
+          const titleH2 = document.createElement('h2');
+          titleH2.textContent = getPreviewContent(activeLanguage, banner.id, "title") || "Title";
+          titleH2.className = "text-2xl font-bold mb-2 text-center";
+          Object.assign(titleH2.style, getTextStyle("title"));
+          
+          const descP = document.createElement('p');
+          descP.textContent = getPreviewContent(activeLanguage, banner.id, "description") || "Description";
+          descP.className = "text-base text-center";
+          Object.assign(descP.style, getTextStyle("description"));
+          
+          textDiv.appendChild(titleH2);
+          textDiv.appendChild(descP);
+          tempCanvas.appendChild(textDiv);
+        }
+        
+        // Добавляем устройство/скриншот
+        const deviceDiv = document.createElement('div');
+        deviceDiv.style.position = 'absolute';
+        Object.assign(deviceDiv.style, getDevicePositionStyles(banner));
+        
+        if (banner.screenshot?.file) {
+          const deviceContainer = document.createElement('div');
+          deviceContainer.style.borderWidth = `${banner.screenshot.borderWidth}px`;
+          deviceContainer.style.borderStyle = 'solid';
+          deviceContainer.style.borderColor = banner.screenshot.borderColor;
+          deviceContainer.style.borderRadius = `${banner.screenshot.borderRadius}px`;
+          deviceContainer.style.overflow = 'hidden';
+          
+          const img = document.createElement('img');
+          img.src = URL.createObjectURL(banner.screenshot.file);
+          img.style.width = '100%';
+          img.style.display = 'block';
+          
+          deviceContainer.appendChild(img);
+          deviceDiv.appendChild(deviceContainer);
+        } else {
+          deviceDiv.innerHTML = `
+            <div class="flex flex-col items-center justify-center p-4" style="
+              width: 100%;
+              height: 400px;
+              border-width: ${banner.screenshot?.borderWidth || 8}px;
+              border-style: solid;
+              border-color: ${banner.screenshot?.borderColor || "#000000"};
+              border-radius: ${banner.screenshot?.borderRadius || 30}px;
+              background-color: #f9f9f9;
+            ">
+              <div style="width: 48px; height: 48px; color: #ccc; text-align: center;">📷</div>
+              <span style="margin-top: 8px; font-size: 14px; color: #888;">No screenshot</span>
+            </div>
+          `;
+        }
+        
+        tempCanvas.appendChild(deviceDiv);
+        
+        console.log('Canvas prepared for banner', banner.id);
+        
+        // Для каждого языка создаем изображение и добавляем в ZIP
+        const languages = Object.keys(bannerContent);
+        for (const lang of languages) {
+          console.log(`Processing language: ${lang} for banner ${banner.id}`);
+          
+          // Обновляем текст в соответствии с языком
+          const titleElement = tempCanvas.querySelector("h2");
+          const descriptionElement = tempCanvas.querySelector("p");
+          
+          if (titleElement && bannerContent[lang]?.title) {
+            titleElement.textContent = bannerContent[lang].title;
+          }
+          
+          if (descriptionElement && bannerContent[lang]?.description) {
+            descriptionElement.textContent = bannerContent[lang].description;
+          }
+          
+          try {
+            // Создаем изображение из канваса
+            const canvas = await html2canvas(tempCanvas, {
+              scale: 2, // Higher scale for better quality
+              useCORS: true,
+              allowTaint: true,
+              backgroundColor: banner.backgroundColor,
+            });
+            
+            // Конвертируем в blob
+            const blob = await new Promise<Blob>((resolve, reject) => {
+              canvas.toBlob((blob) => {
+                if (blob) {
+                  resolve(blob);
+                } else {
+                  reject(new Error('Failed to create blob from canvas'));
+                }
+              }, "image/png", 1.0);
+            });
+            
+            // Добавляем в общий ZIP-архив
+            const bannerName = banner.name || `Banner ${banner.id}`;
+            const filename = `${bannerName}_${lang}.png`;
+            console.log(`Adding ${filename} to the common ZIP`);
+            zip.file(filename, blob);
+          } catch (error) {
+            console.error(`Error processing banner ${banner.id} for language ${lang}:`, error);
+          }
+        }
+        
+        console.log('Banner', banner.id, 'exported successfully');
+        
+        // Очищаем URL объекты
+        if (banner.screenshot?.file) {
+          URL.revokeObjectURL(URL.createObjectURL(banner.screenshot.file));
+        }
       }
+      
+      // Генерируем и скачиваем общий ZIP-архив
+      try {
+        console.log('Generating final ZIP file with all banners');
+        const content = await zip.generateAsync({ 
+          type: "blob",
+          compression: "DEFLATE",
+          compressionOptions: {
+            level: 6
+          } 
+        });
+        console.log(`ZIP file created with size: ${content.size} bytes, downloading...`);
+        
+        // Функция для скачивания
+        const saveBlob = (blob: Blob, fileName: string) => {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = fileName;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        };
+        
+        saveBlob(content, "app_store_banners.zip");
+      } catch (error) {
+        console.error("Error generating final ZIP file:", error);
+      }
+      
+      // Удаляем временный канвас
+      document.body.removeChild(tempCanvas);
+      console.log('Export process completed successfully');
     } catch (error) {
-      console.error("Export failed:", error)
+      console.error("Export failed:", error);
     } finally {
-      setIsExporting(false)
+      setIsExporting(false);
     }
-  }
+  };
 
   // Get preview-specific content
   const getPreviewContent = (langCode, previewId, field) => {
@@ -970,6 +1182,87 @@ export default function BannerGenerator() {
                         setPreviewItems(updatedItems)
                       }
                     }}
+                  />
+                </div>
+              </div>
+
+              <Separator className="my-4" />
+
+              <div className="space-y-4">
+                <h4 className="text-sm font-medium text-gray-500">Localized App Information</h4>
+                
+                <div>
+                  <Label className="text-sm">Promotional Text</Label>
+                  <Textarea
+                    value={getPreviewContent(activeLanguage, "global", "promotionalText") || ""}
+                    onChange={(e) => {
+                      setLocalizedContent({
+                        ...localizedContent,
+                        [activeLanguage]: {
+                          ...localizedContent[activeLanguage],
+                          promotionalText: e.target.value,
+                        },
+                      })
+                    }}
+                    className="mt-1"
+                    rows={4}
+                    placeholder={`Promotional text in ${activeLanguage}`}
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm">Description</Label>
+                  <Textarea
+                    value={getPreviewContent(activeLanguage, "global", "description") || ""}
+                    onChange={(e) => {
+                      setLocalizedContent({
+                        ...localizedContent,
+                        [activeLanguage]: {
+                          ...localizedContent[activeLanguage],
+                          description: e.target.value,
+                        },
+                      })
+                    }}
+                    className="mt-1"
+                    rows={4}
+                    placeholder={`Description in ${activeLanguage}`}
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm">What's New in This Version</Label>
+                  <Textarea
+                    value={getPreviewContent(activeLanguage, "global", "whatsNew") || ""}
+                    onChange={(e) => {
+                      setLocalizedContent({
+                        ...localizedContent,
+                        [activeLanguage]: {
+                          ...localizedContent[activeLanguage],
+                          whatsNew: e.target.value,
+                        },
+                      })
+                    }}
+                    className="mt-1"
+                    rows={4}
+                    placeholder={`What's new in ${activeLanguage}`}
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm">Keywords</Label>
+                  <Input
+                    value={getPreviewContent(activeLanguage, "global", "keywords") || ""}
+                    onChange={(e) => {
+                      setLocalizedContent({
+                        ...localizedContent,
+                        [activeLanguage]: {
+                          ...localizedContent[activeLanguage],
+                          keywords: e.target.value,
+                        },
+                      })
+                    }}
+                    className="mt-1"
+                    placeholder={`Keywords in ${activeLanguage}`}
                   />
                 </div>
               </div>
@@ -1614,10 +1907,11 @@ export default function BannerGenerator() {
   }
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="flex flex-col space-y-4">
-        <header className="flex justify-between items-center">
+    <div className="container px-4 py-4 mx-auto">
+      <header className="mb-6">
+        <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">App Store Banner Generator</h1>
+          
           <div className="flex items-center gap-4">
             <Dialog>
               <DialogTrigger asChild>
@@ -1645,23 +1939,6 @@ export default function BannerGenerator() {
   "fr": { "title": "French Title", "description": "French Description" }
 }`}
                     </pre>
-                    <p className="mt-2">Or for multiple previews:</p>
-                    <pre className="mt-1 bg-gray-100 p-2 rounded overflow-auto">
-                      {`[
-  {
-    "languages": {
-      "en": { "title": "Preview 1 English", "description": "Description" },
-      "fr": { "title": "Preview 1 French", "description": "Description" }
-    }
-  },
-  {
-    "languages": {
-      "en": { "title": "Preview 2 English", "description": "Description" },
-      "fr": { "title": "Preview 2 French", "description": "Description" }
-    }
-  }
-]`}
-                    </pre>
                   </div>
                   <Button onClick={handleJsonImport} className="w-full">
                     Import
@@ -1671,10 +1948,12 @@ export default function BannerGenerator() {
             </Dialog>
 
             <LanguageSelector languages={LANGUAGES} activeLanguage={activeLanguage} onChange={handleLanguageChange} />
-            <Button onClick={handleExport} disabled={isExporting}>
+            
+            <Button onClick={handleExport} disabled={isExporting} title="Экспортирует все баннеры для всех языков в ZIP-архив">
               <Download className="mr-2 h-4 w-4" />
-              {isExporting ? "Exporting..." : "Export All"}
+              {isExporting ? "Экспорт..." : "Экспорт всех баннеров"}
             </Button>
+            
             <Button 
               variant="outline" 
               onClick={() => {
@@ -1703,200 +1982,210 @@ export default function BannerGenerator() {
               Сбросить
             </Button>
           </div>
-        </header>
+        </div>
+        
+        <p className="text-sm text-muted-foreground mt-2">
+          Create beautiful banners for your App Store listings
+        </p>
+      </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left panel - Banners */}
-          <div className="lg:col-span-2">
-            <Card className="overflow-hidden">
-              <CardContent className="p-0">
-                <div className="bg-gray-100 p-6 flex flex-col min-h-[800px]">
-                  {/* Horizontal scrollable banners */}
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-sm text-gray-500">
-                      {previewIndex > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-gray-500"
-                          onClick={() => setPreviewIndex(Math.max(0, previewIndex - 1))}
-                        >
-                          <ChevronLeft className="h-4 w-4 mr-1" /> Previous
-                        </Button>
-                      )}
-                    </div>
-                    <div className="text-sm text-gray-500">Double-click on elements to edit them</div>
-                    <div className="text-sm text-gray-500">
-                      {previewIndex < previewItems.length - 1 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-gray-500"
-                          onClick={() => setPreviewIndex(Math.min(previewItems.length - 1, previewIndex + 1))}
-                        >
-                          Next <ChevronRight className="h-4 w-4 ml-1" />
-                        </Button>
-                      )}
-                    </div>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+        {/* Left panel - Banners */}
+        <div>
+          <Card className="overflow-hidden">
+            <CardContent className="p-0">
+              <div className="bg-gray-100 p-6 flex flex-col min-h-[800px]"
+                   onClick={(e) => {
+                     // Проверяем, что клик был именно по фоновой области
+                     if (e.target === e.currentTarget) {
+                       setActiveElement("banner");
+                     }
+                   }}>
+                {/* Horizontal scrollable banners */}
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm text-gray-500">
+                    {previewIndex > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-gray-500"
+                        onClick={() => setPreviewIndex(Math.max(0, previewIndex - 1))}
+                      >
+                        <ChevronLeft className="h-4 w-4 mr-1" /> Previous
+                      </Button>
+                    )}
                   </div>
+                  <div className="text-sm text-gray-500">Double-click on elements to edit them</div>
+                  <div className="text-sm text-gray-500">
+                    {previewIndex < previewItems.length - 1 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-gray-500"
+                        onClick={() => setPreviewIndex(Math.min(previewItems.length - 1, previewIndex + 1))}
+                      >
+                        Next <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                <div
+                  ref={scrollContainerRef}
+                  className="flex overflow-x-auto pb-4 pt-2 px-2 -mx-2 mb-4 snap-x"
+                  style={{ scrollbarWidth: "thin" }}
+                >
+                  {previewItems.map((item, index) => renderBanner(item, index))}
+
                   <div
-                    ref={scrollContainerRef}
-                    className="flex overflow-x-auto pb-4 pt-2 px-2 -mx-2 mb-4 snap-x"
-                    style={{ scrollbarWidth: "thin" }}
+                    className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-primary hover:bg-gray-50"
+                    style={{
+                      width: "320px",
+                      height: "690px",
+                      flexShrink: 0,
+                      margin: "0 8px",
+                    }}
+                    onClick={addPreview}
                   >
-                    {previewItems.map((item, index) => renderBanner(item, index))}
-
-                    <div
-                      className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-primary hover:bg-gray-50"
-                      style={{
-                        width: "320px",
-                        height: "690px",
-                        flexShrink: 0,
-                        margin: "0 8px",
-                      }}
-                      onClick={addPreview}
-                    >
-                      <Plus className="h-12 w-12 text-gray-400" />
-                    </div>
+                    <Plus className="h-12 w-12 text-gray-400" />
                   </div>
+                </div>
 
-                  {/* Active banner reference */}
-                  <div className="hidden">
-                    <div
-                      className="relative"
-                      ref={canvasRef}
-                      style={{
-                        width: "320px",
-                        height: "690px",
-                        backgroundColor: previewItems[previewIndex]?.backgroundColor || "#007AFF",
-                        overflow: "hidden",
-                      }}
-                    >
-                      <div className="absolute inset-0">
-                        {/* Title and description - position changes based on device position */}
-                        {(() => {
-                          const currentBanner = previewItems[previewIndex] || {};
-                          const { titlePosition, descriptionPosition, separateElements } = getContentPositions(currentBanner.devicePosition || "center");
-                          
-                          // Render title and description
-                          const renderContent = () => {
-                            if (separateElements) {
-                              return (
-                                <>
-                                  {/* Title at the top */}
-                                  <div
-                                    className="absolute"
-                                    style={{
-                                      ...titlePosition,
-                                      transform: `${titlePosition.transform || ""} translateY(${previewItems[previewIndex]?.verticalOffset?.title || 0}px)`,
-                                    }}
-                                  >
-                                    <h2 className="text-2xl font-bold text-center" style={getTextStyle("title")}>
-                                      {getPreviewContent(activeLanguage, previewItems[previewIndex]?.id || 1, "title") || "Title"}
-                                    </h2>
-                                  </div>
-
-                                  {/* Description at the bottom */}
-                                  <div
-                                    className="absolute"
-                                    style={{
-                                      ...descriptionPosition,
-                                      transform: `${descriptionPosition.transform || ""} translateY(${previewItems[previewIndex]?.verticalOffset?.description || 0}px)`,
-                                    }}
-                                  >
-                                    <p className="text-base text-center" style={getTextStyle("description")}>
-                                      {getPreviewContent(activeLanguage, previewItems[previewIndex]?.id || 1, "description") || "Description"}
-                                    </p>
-                                  </div>
-                                </>
-                              );
-                            } else {
-                              return (
+                {/* Active banner reference */}
+                <div className="hidden">
+                  <div
+                    className="relative"
+                    ref={canvasRef}
+                    style={{
+                      width: "320px",
+                      height: "690px",
+                      backgroundColor: previewItems[previewIndex]?.backgroundColor || "#007AFF",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div className="absolute inset-0">
+                      {/* Title and description - position changes based on device position */}
+                      {(() => {
+                        const currentBanner = previewItems[previewIndex] || {};
+                        const { titlePosition, descriptionPosition, separateElements } = getContentPositions(currentBanner.devicePosition || "center");
+                        
+                        // Render title and description
+                        const renderContent = () => {
+                          if (separateElements) {
+                            return (
+                              <>
+                                {/* Title at the top */}
                                 <div
                                   className="absolute"
                                   style={{
                                     ...titlePosition,
-                                    transform: `${titlePosition.transform || ""} translateY(${previewItems[previewIndex]?.verticalOffset?.combined || 0}px)`,
+                                    transform: `${titlePosition.transform || ""} translateY(${previewItems[previewIndex]?.verticalOffset?.title || 0}px)`,
                                   }}
                                 >
-                                  <h2 className="text-2xl font-bold mb-2 text-center" style={getTextStyle("title")}>
+                                  <h2 className="text-2xl font-bold text-center" style={getTextStyle("title")}>
                                     {getPreviewContent(activeLanguage, previewItems[previewIndex]?.id || 1, "title") || "Title"}
                                   </h2>
+                                </div>
+
+                                {/* Description at the bottom */}
+                                <div
+                                  className="absolute"
+                                  style={{
+                                    ...descriptionPosition,
+                                    transform: `${descriptionPosition.transform || ""} translateY(${previewItems[previewIndex]?.verticalOffset?.description || 0}px)`,
+                                  }}
+                                >
                                   <p className="text-base text-center" style={getTextStyle("description")}>
                                     {getPreviewContent(activeLanguage, previewItems[previewIndex]?.id || 1, "description") || "Description"}
                                   </p>
                                 </div>
-                              );
-                            }
-                          };
-
-                          // Render device/screenshot
-                          const renderDevice = () => {
+                              </>
+                            );
+                          } else {
                             return (
-                              <div className="absolute" style={getDevicePositionStyles(previewItems[previewIndex] || {})}>
-                                {previewItems[previewIndex]?.screenshot?.file ? (
-                                  <div
-                                    style={{
-                                      borderWidth: `${previewItems[previewIndex].screenshot.borderWidth}px`,
-                                      borderStyle: "solid",
-                                      borderColor: previewItems[previewIndex].screenshot.borderColor,
-                                      borderRadius: `${previewItems[previewIndex].screenshot.borderRadius}px`,
-                                      overflow: "hidden",
-                                    }}
-                                  >
-                                    <img
-                                      src={URL.createObjectURL(previewItems[previewIndex].screenshot.file) || "/placeholder.svg"}
-                                      alt={`Screenshot ${previewItems[previewIndex].id}`}
-                                      style={{
-                                        width: "100%",
-                                        display: "block",
-                                      }}
-                                    />
-                                  </div>
-                                ) : (
-                                  <div
-                                    className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50"
-                                    style={{
-                                      width: "100%",
-                                      height: "400px",
-                                      borderWidth: `${previewItems[previewIndex]?.screenshot?.borderWidth || 8}px`,
-                                      borderStyle: "solid",
-                                      borderColor: `${previewItems[previewIndex]?.screenshot?.borderColor || "#000000"}`,
-                                      borderRadius: `${previewItems[previewIndex]?.screenshot?.borderRadius || 30}px`,
-                                    }}
-                                  >
-                                    <ImageIcon className="h-12 w-12 text-gray-400" />
-                                    <span className="mt-2 text-sm text-gray-500">No screenshot</span>
-                                  </div>
-                                )}
+                              <div
+                                className="absolute"
+                                style={{
+                                  ...titlePosition,
+                                  transform: `${titlePosition.transform || ""} translateY(${previewItems[previewIndex]?.verticalOffset?.combined || 0}px)`,
+                                }}
+                              >
+                                <h2 className="text-2xl font-bold mb-2 text-center" style={getTextStyle("title")}>
+                                  {getPreviewContent(activeLanguage, previewItems[previewIndex]?.id || 1, "title") || "Title"}
+                                </h2>
+                                <p className="text-base text-center" style={getTextStyle("description")}>
+                                  {getPreviewContent(activeLanguage, previewItems[previewIndex]?.id || 1, "description") || "Description"}
+                                </p>
                               </div>
                             );
-                          };
+                          }
+                        };
 
+                        // Render device/screenshot
+                        const renderDevice = () => {
                           return (
-                            <>
-                              {renderContent()}
-                              {renderDevice()}
-                            </>
+                            <div className="absolute" style={getDevicePositionStyles(previewItems[previewIndex] || {})}>
+                              {previewItems[previewIndex]?.screenshot?.file ? (
+                                <div
+                                  style={{
+                                    borderWidth: `${previewItems[previewIndex].screenshot.borderWidth}px`,
+                                    borderStyle: "solid",
+                                    borderColor: previewItems[previewIndex].screenshot.borderColor,
+                                    borderRadius: `${previewItems[previewIndex].screenshot.borderRadius}px`,
+                                    overflow: "hidden",
+                                  }}
+                                >
+                                  <img
+                                    src={URL.createObjectURL(previewItems[previewIndex].screenshot.file) || "/placeholder.svg"}
+                                    alt={`Screenshot ${previewItems[previewIndex].id}`}
+                                    style={{
+                                      width: "100%",
+                                      display: "block",
+                                    }}
+                                  />
+                                </div>
+                              ) : (
+                                <div
+                                  className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50"
+                                  style={{
+                                    width: "100%",
+                                    height: "400px",
+                                    borderWidth: `${previewItems[previewIndex]?.screenshot?.borderWidth || 8}px`,
+                                    borderStyle: "solid",
+                                    borderColor: `${previewItems[previewIndex]?.screenshot?.borderColor || "#000000"}`,
+                                    borderRadius: `${previewItems[previewIndex]?.screenshot?.borderRadius || 30}px`,
+                                  }}
+                                >
+                                  <ImageIcon className="h-12 w-12 text-gray-400" />
+                                  <span className="mt-2 text-sm text-gray-500">No screenshot</span>
+                                </div>
+                              )}
+                            </div>
                           );
-                        })()}
-                      </div>
+                        };
+
+                        return (
+                          <>
+                            {renderContent()}
+                            {renderDevice()}
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-          {/* Right panel - Settings */}
-          <div className="lg:col-span-1">
-            <Card>
-              <CardContent className="p-6 space-y-6 max-h-[800px] overflow-y-auto">
-                {/* Context-sensitive settings panel */}
-                {renderSettingsPanel()}
-              </CardContent>
-            </Card>
-          </div>
+        {/* Right panel - Settings */}
+        <div>
+          <Card className="fixed top-4 right-4" style={{ width: '320px' }}>
+            <CardContent className="p-6 overflow-y-auto">
+              {/* Context-sensitive settings panel */}
+              {renderSettingsPanel()}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

@@ -636,6 +636,9 @@ video {
 .relative {
   position: relative;
 }
+.sticky {
+  position: sticky;
+}
 .inset-0 {
   inset: 0px;
 }
@@ -771,6 +774,10 @@ video {
   margin-top: 0.25rem;
   margin-bottom: 0.25rem;
 }
+.my-4 {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
 .-ml-4 {
   margin-left: -1rem;
 }
@@ -785,6 +792,9 @@ video {
 }
 .mb-4 {
   margin-bottom: 1rem;
+}
+.mb-6 {
+  margin-bottom: 1.5rem;
 }
 .ml-1 {
   margin-left: 0.25rem;
@@ -916,8 +926,8 @@ video {
 .max-h-\[300px\] {
   max-height: 300px;
 }
-.max-h-\[800px\] {
-  max-height: 800px;
+.max-h-\[90vh\] {
+  max-height: 90vh;
 }
 .max-h-screen {
   max-height: 100vh;
@@ -3021,16 +3031,8 @@ body {
 
 @media (min-width: 1024px) {
 
-  .lg\:col-span-1 {
-    grid-column: span 1 / span 1;
-  }
-
-  .lg\:col-span-2 {
-    grid-column: span 2 / span 2;
-  }
-
-  .lg\:grid-cols-3 {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .lg\:grid-cols-\[1fr_320px\] {
+    grid-template-columns: 1fr 320px;
   }
 }
 
