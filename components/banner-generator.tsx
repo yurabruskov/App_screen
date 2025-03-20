@@ -1907,285 +1907,294 @@ export default function BannerGenerator() {
   }
 
   return (
-    <div className="container px-4 py-4 mx-auto">
-      <header className="mb-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">App Store Banner Generator</h1>
-          
-          <div className="flex items-center gap-4">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline">
-                  <Upload className="mr-2 h-4 w-4" />
-                  Import JSON
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Import Localized Content</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <Textarea
-                    placeholder="Paste your JSON here..."
-                    value={jsonImportText}
-                    onChange={(e) => setJsonImportText(e.target.value)}
-                    rows={10}
-                  />
-                  <div className="text-xs text-gray-500">
-                    <p>Expected format:</p>
-                    <pre className="mt-1 bg-gray-100 p-2 rounded overflow-auto">
-                      {`{
+    <div className="min-h-screen flex flex-col">
+      {/* Шапка на всю ширину */}
+      <header className="w-full bg-white border-b py-4 px-6 z-10">
+        <div className="container mx-auto">
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold">App Store Banner Generator</h1>
+            
+            <div className="flex items-center gap-4">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline">
+                    <Upload className="mr-2 h-4 w-4" />
+                    Import JSON
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Import Localized Content</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <Textarea
+                      placeholder="Paste your JSON here..."
+                      value={jsonImportText}
+                      onChange={(e) => setJsonImportText(e.target.value)}
+                      rows={10}
+                    />
+                    <div className="text-xs text-gray-500">
+                      <p>Expected format:</p>
+                      <pre className="mt-1 bg-gray-100 p-2 rounded overflow-auto">
+                        {`{
   "en": { "title": "English Title", "description": "English Description" },
   "fr": { "title": "French Title", "description": "French Description" }
 }`}
-                    </pre>
+                      </pre>
+                    </div>
+                    <Button onClick={handleJsonImport} className="w-full">
+                      Import
+                    </Button>
                   </div>
-                  <Button onClick={handleJsonImport} className="w-full">
-                    Import
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
 
-            <LanguageSelector languages={LANGUAGES} activeLanguage={activeLanguage} onChange={handleLanguageChange} />
-            
-            <Button onClick={handleExport} disabled={isExporting} title="Экспортирует все баннеры для всех языков в ZIP-архив">
-              <Download className="mr-2 h-4 w-4" />
-              {isExporting ? "Экспорт..." : "Экспорт всех баннеров"}
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                if (confirm("Это действие сбросит все настройки. Продолжить?")) {
-                  // Очищаем localStorage
-                  localStorage.clear();
-                  
-                  // Очищаем IndexedDB
-                  if (imageDBRef.current) {
-                    imageDBRef.current.clearAll()
-                      .then(() => {
-                        console.log('IndexedDB успешно очищен');
-                        window.location.reload();
-                      })
-                      .catch(error => {
-                        console.error('Ошибка при очистке IndexedDB:', error);
-                        window.location.reload();
-                      });
-                  } else {
-                    window.location.reload();
+              <LanguageSelector languages={LANGUAGES} activeLanguage={activeLanguage} onChange={handleLanguageChange} />
+              
+              <Button onClick={handleExport} disabled={isExporting} title="Экспортирует все баннеры для всех языков в ZIP-архив">
+                <Download className="mr-2 h-4 w-4" />
+                {isExporting ? "Экспорт..." : "Экспорт всех баннеров"}
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  if (confirm("Это действие сбросит все настройки. Продолжить?")) {
+                    // Очищаем localStorage
+                    localStorage.clear();
+                    
+                    // Очищаем IndexedDB
+                    if (imageDBRef.current) {
+                      imageDBRef.current.clearAll()
+                        .then(() => {
+                          console.log('IndexedDB успешно очищен');
+                          window.location.reload();
+                        })
+                        .catch(error => {
+                          console.error('Ошибка при очистке IndexedDB:', error);
+                          window.location.reload();
+                        });
+                    } else {
+                      window.location.reload();
+                    }
                   }
-                }
-              }}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Сбросить
-            </Button>
+                }}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Сбросить
+              </Button>
+            </div>
           </div>
+          
+          <p className="text-sm text-muted-foreground mt-2">
+            Create beautiful banners for your App Store listings
+          </p>
         </div>
-        
-        <p className="text-sm text-muted-foreground mt-2">
-          Create beautiful banners for your App Store listings
-        </p>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
-        {/* Left panel - Banners */}
-        <div>
-          <Card className="overflow-hidden">
-            <CardContent className="p-0">
-              <div className="bg-gray-100 p-6 flex flex-col min-h-[800px]"
-                   onClick={(e) => {
-                     // Проверяем, что клик был именно по фоновой области
-                     if (e.target === e.currentTarget) {
-                       setActiveElement("banner");
-                     }
-                   }}>
-                {/* Horizontal scrollable banners */}
-                <div className="flex items-center justify-between mb-2">
-                  <div className="text-sm text-gray-500">
-                    {previewIndex > 0 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-gray-500"
-                        onClick={() => setPreviewIndex(Math.max(0, previewIndex - 1))}
-                      >
-                        <ChevronLeft className="h-4 w-4 mr-1" /> Previous
-                      </Button>
-                    )}
+      {/* Основное содержимое с отступом от шапки */}
+      <div className="flex-grow container mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+          {/* Left panel - Banners */}
+          <div>
+            <Card className="overflow-hidden">
+              <CardContent className="p-0">
+                <div className="bg-gray-100 p-6 flex flex-col min-h-[800px]"
+                     onClick={(e) => {
+                       // Проверяем, что клик был именно по фоновой области
+                       if (e.target === e.currentTarget) {
+                         setActiveElement("banner");
+                       }
+                     }}>
+                  {/* Horizontal scrollable banners */}
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm text-gray-500">
+                      {previewIndex > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-gray-500"
+                          onClick={() => setPreviewIndex(Math.max(0, previewIndex - 1))}
+                        >
+                          <ChevronLeft className="h-4 w-4 mr-1" /> Previous
+                        </Button>
+                      )}
+                    </div>
+                    <div className="text-sm text-gray-500">Double-click on elements to edit them</div>
+                    <div className="text-sm text-gray-500">
+                      {previewIndex < previewItems.length - 1 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-gray-500"
+                          onClick={() => setPreviewIndex(Math.min(previewItems.length - 1, previewIndex + 1))}
+                        >
+                          Next <ChevronRight className="h-4 w-4 ml-1" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-500">Double-click on elements to edit them</div>
-                  <div className="text-sm text-gray-500">
-                    {previewIndex < previewItems.length - 1 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-gray-500"
-                        onClick={() => setPreviewIndex(Math.min(previewItems.length - 1, previewIndex + 1))}
-                      >
-                        Next <ChevronRight className="h-4 w-4 ml-1" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-                <div
-                  ref={scrollContainerRef}
-                  className="flex overflow-x-auto pb-4 pt-2 px-2 -mx-2 mb-4 snap-x"
-                  style={{ scrollbarWidth: "thin" }}
-                >
-                  {previewItems.map((item, index) => renderBanner(item, index))}
-
                   <div
-                    className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-primary hover:bg-gray-50"
-                    style={{
-                      width: "320px",
-                      height: "690px",
-                      flexShrink: 0,
-                      margin: "0 8px",
-                    }}
-                    onClick={addPreview}
+                    ref={scrollContainerRef}
+                    className="flex overflow-x-auto pb-4 pt-2 px-2 -mx-2 mb-4 snap-x"
+                    style={{ scrollbarWidth: "thin" }}
                   >
-                    <Plus className="h-12 w-12 text-gray-400" />
-                  </div>
-                </div>
+                    {previewItems.map((item, index) => renderBanner(item, index))}
 
-                {/* Active banner reference */}
-                <div className="hidden">
-                  <div
-                    className="relative"
-                    ref={canvasRef}
-                    style={{
-                      width: "320px",
-                      height: "690px",
-                      backgroundColor: previewItems[previewIndex]?.backgroundColor || "#007AFF",
-                      overflow: "hidden",
-                    }}
-                  >
-                    <div className="absolute inset-0">
-                      {/* Title and description - position changes based on device position */}
-                      {(() => {
-                        const currentBanner = previewItems[previewIndex] || {};
-                        const { titlePosition, descriptionPosition, separateElements } = getContentPositions(currentBanner.devicePosition || "center");
-                        
-                        // Render title and description
-                        const renderContent = () => {
-                          if (separateElements) {
-                            return (
-                              <>
-                                {/* Title at the top */}
+                    <div
+                      className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-primary hover:bg-gray-50"
+                      style={{
+                        width: "320px",
+                        height: "690px",
+                        flexShrink: 0,
+                        margin: "0 8px",
+                      }}
+                      onClick={addPreview}
+                    >
+                      <Plus className="h-12 w-12 text-gray-400" />
+                    </div>
+                  </div>
+
+                  {/* Active banner reference */}
+                  <div className="hidden">
+                    <div
+                      className="relative"
+                      ref={canvasRef}
+                      style={{
+                        width: "320px",
+                        height: "690px",
+                        backgroundColor: previewItems[previewIndex]?.backgroundColor || "#007AFF",
+                        overflow: "hidden",
+                      }}
+                    >
+                      <div className="absolute inset-0">
+                        {/* Title and description - position changes based on device position */}
+                        {(() => {
+                          const currentBanner = previewItems[previewIndex] || {};
+                          const { titlePosition, descriptionPosition, separateElements } = getContentPositions(currentBanner.devicePosition || "center");
+                          
+                          // Render title and description
+                          const renderContent = () => {
+                            if (separateElements) {
+                              return (
+                                <>
+                                  {/* Title at the top */}
+                                  <div
+                                    className="absolute"
+                                    style={{
+                                      ...titlePosition,
+                                      transform: `${titlePosition.transform || ""} translateY(${previewItems[previewIndex]?.verticalOffset?.title || 0}px)`,
+                                    }}
+                                  >
+                                    <h2 className="text-2xl font-bold text-center" style={getTextStyle("title")}>
+                                      {getPreviewContent(activeLanguage, previewItems[previewIndex]?.id || 1, "title") || "Title"}
+                                    </h2>
+                                  </div>
+
+                                  {/* Description at the bottom */}
+                                  <div
+                                    className="absolute"
+                                    style={{
+                                      ...descriptionPosition,
+                                      transform: `${descriptionPosition.transform || ""} translateY(${previewItems[previewIndex]?.verticalOffset?.description || 0}px)`,
+                                    }}
+                                  >
+                                    <p className="text-base text-center" style={getTextStyle("description")}>
+                                      {getPreviewContent(activeLanguage, previewItems[previewIndex]?.id || 1, "description") || "Description"}
+                                    </p>
+                                  </div>
+                                </>
+                              );
+                            } else {
+                              return (
                                 <div
                                   className="absolute"
                                   style={{
                                     ...titlePosition,
-                                    transform: `${titlePosition.transform || ""} translateY(${previewItems[previewIndex]?.verticalOffset?.title || 0}px)`,
+                                    transform: `${titlePosition.transform || ""} translateY(${previewItems[previewIndex]?.verticalOffset?.combined || 0}px)`,
                                   }}
                                 >
-                                  <h2 className="text-2xl font-bold text-center" style={getTextStyle("title")}>
+                                  <h2 className="text-2xl font-bold mb-2 text-center" style={getTextStyle("title")}>
                                     {getPreviewContent(activeLanguage, previewItems[previewIndex]?.id || 1, "title") || "Title"}
                                   </h2>
-                                </div>
-
-                                {/* Description at the bottom */}
-                                <div
-                                  className="absolute"
-                                  style={{
-                                    ...descriptionPosition,
-                                    transform: `${descriptionPosition.transform || ""} translateY(${previewItems[previewIndex]?.verticalOffset?.description || 0}px)`,
-                                  }}
-                                >
                                   <p className="text-base text-center" style={getTextStyle("description")}>
                                     {getPreviewContent(activeLanguage, previewItems[previewIndex]?.id || 1, "description") || "Description"}
                                   </p>
                                 </div>
-                              </>
-                            );
-                          } else {
-                            return (
-                              <div
-                                className="absolute"
-                                style={{
-                                  ...titlePosition,
-                                  transform: `${titlePosition.transform || ""} translateY(${previewItems[previewIndex]?.verticalOffset?.combined || 0}px)`,
-                                }}
-                              >
-                                <h2 className="text-2xl font-bold mb-2 text-center" style={getTextStyle("title")}>
-                                  {getPreviewContent(activeLanguage, previewItems[previewIndex]?.id || 1, "title") || "Title"}
-                                </h2>
-                                <p className="text-base text-center" style={getTextStyle("description")}>
-                                  {getPreviewContent(activeLanguage, previewItems[previewIndex]?.id || 1, "description") || "Description"}
-                                </p>
-                              </div>
-                            );
-                          }
-                        };
+                              );
+                            }
+                          };
 
-                        // Render device/screenshot
-                        const renderDevice = () => {
-                          return (
-                            <div className="absolute" style={getDevicePositionStyles(previewItems[previewIndex] || {})}>
-                              {previewItems[previewIndex]?.screenshot?.file ? (
-                                <div
-                                  style={{
-                                    borderWidth: `${previewItems[previewIndex].screenshot.borderWidth}px`,
-                                    borderStyle: "solid",
-                                    borderColor: previewItems[previewIndex].screenshot.borderColor,
-                                    borderRadius: `${previewItems[previewIndex].screenshot.borderRadius}px`,
-                                    overflow: "hidden",
-                                  }}
-                                >
-                                  <img
-                                    src={URL.createObjectURL(previewItems[previewIndex].screenshot.file) || "/placeholder.svg"}
-                                    alt={`Screenshot ${previewItems[previewIndex].id}`}
+                          // Render device/screenshot
+                          const renderDevice = () => {
+                            return (
+                              <div className="absolute" style={getDevicePositionStyles(previewItems[previewIndex] || {})}>
+                                {previewItems[previewIndex]?.screenshot?.file ? (
+                                  <div
+                                    style={{
+                                      borderWidth: `${previewItems[previewIndex].screenshot.borderWidth}px`,
+                                      borderStyle: "solid",
+                                      borderColor: previewItems[previewIndex].screenshot.borderColor,
+                                      borderRadius: `${previewItems[previewIndex].screenshot.borderRadius}px`,
+                                      overflow: "hidden",
+                                    }}
+                                  >
+                                    <img
+                                      src={URL.createObjectURL(previewItems[previewIndex].screenshot.file) || "/placeholder.svg"}
+                                      alt={`Screenshot ${previewItems[previewIndex].id}`}
+                                      style={{
+                                        width: "100%",
+                                        display: "block",
+                                      }}
+                                    />
+                                  </div>
+                                ) : (
+                                  <div
+                                    className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50"
                                     style={{
                                       width: "100%",
-                                      display: "block",
+                                      height: "400px",
+                                      borderWidth: `${previewItems[previewIndex]?.screenshot?.borderWidth || 8}px`,
+                                      borderStyle: "solid",
+                                      borderColor: `${previewItems[previewIndex]?.screenshot?.borderColor || "#000000"}`,
+                                      borderRadius: `${previewItems[previewIndex]?.screenshot?.borderRadius || 30}px`,
                                     }}
-                                  />
-                                </div>
-                              ) : (
-                                <div
-                                  className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50"
-                                  style={{
-                                    width: "100%",
-                                    height: "400px",
-                                    borderWidth: `${previewItems[previewIndex]?.screenshot?.borderWidth || 8}px`,
-                                    borderStyle: "solid",
-                                    borderColor: `${previewItems[previewIndex]?.screenshot?.borderColor || "#000000"}`,
-                                    borderRadius: `${previewItems[previewIndex]?.screenshot?.borderRadius || 30}px`,
-                                  }}
-                                >
-                                  <ImageIcon className="h-12 w-12 text-gray-400" />
-                                  <span className="mt-2 text-sm text-gray-500">No screenshot</span>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        };
+                                  >
+                                    <ImageIcon className="h-12 w-12 text-gray-400" />
+                                    <span className="mt-2 text-sm text-gray-500">No screenshot</span>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          };
 
-                        return (
-                          <>
-                            {renderContent()}
-                            {renderDevice()}
-                          </>
-                        );
-                      })()}
+                          return (
+                            <>
+                              {renderContent()}
+                              {renderDevice()}
+                            </>
+                          );
+                        })()}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </div>
 
-        {/* Right panel - Settings */}
-        <div>
-          <Card className="fixed top-4 right-4" style={{ width: '320px' }}>
-            <CardContent className="p-6 overflow-y-auto">
-              {/* Context-sensitive settings panel */}
-              {renderSettingsPanel()}
-            </CardContent>
-          </Card>
+          {/* Right panel - Settings */}
+          <div>
+            {/* Панель настроек, растянутая на всю высоту экрана, но ниже шапки */}
+            <div className="fixed top-0 right-0 h-screen pt-[calc(4rem+2px)] w-[320px]" style={{ paddingTop: 'calc(4rem + 1px)' }}>
+              <Card className="h-full rounded-none border-l border-t-0 border-r-0 border-b-0">
+                <CardContent className="p-6 h-full overflow-y-auto">
+                  {/* Context-sensitive settings panel */}
+                  {renderSettingsPanel()}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
       </div>
     </div>
