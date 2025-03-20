@@ -8,6 +8,7 @@ export const LANGUAGES = [
   { code: "ja", name: "Japanese" },
   { code: "ko", name: "Korean" },
   { code: "zh", name: "Chinese" },
+  { code: "cs", name: "Czech" },
 ]
 
 export const DEFAULT_SETTINGS = {

@@ -33,6 +33,52 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import JSZip from "jszip"
 import html2canvas from "html2canvas"
 
+interface PreviewContent {
+  title: string;
+  description: string;
+}
+
+interface LocalizedPreview {
+  [key: string]: PreviewContent;
+}
+
+interface LocalizedContent {
+  [key: string]: {
+    title: string;
+    description: string;
+    promotionalText: string;
+    whatsNew: string;
+    keywords: string;
+    [key: string]: string;
+  };
+}
+
+interface PreviewItem {
+  id: number;
+  name: string;
+  backgroundColor: string;
+  devicePosition: string;
+  deviceScale: number;
+  rotation?: {
+    device: number;
+    title: number;
+    description: number;
+    textBlock: number;
+  };
+  verticalOffset?: {
+    combined: number;
+    title: number;
+    description: number;
+    device: number;
+  };
+  screenshot: {
+    file: File | null;
+    borderColor: string;
+    borderWidth: number;
+    borderRadius: number;
+  };
+}
+
 // Класс для работы с IndexedDB
 class ImageDB {
   private db: IDBDatabase | null = null;
@@ -194,11 +240,78 @@ class ImageDB {
   }
 }
 
+// В начале файла, после импортов добавим массив шрифтов
+const FONTS = [
+  { value: "SF Pro", label: "SF Pro" },
+  { value: "SF Pro Display", label: "SF Pro Display" },
+  { value: "SF Pro Text", label: "SF Pro Text" },
+  { value: "Arial", label: "Arial" },
+  { value: "Helvetica", label: "Helvetica" },
+  { value: "Helvetica Neue", label: "Helvetica Neue" },
+  { value: "Roboto", label: "Roboto" },
+  { value: "Inter", label: "Inter" },
+  { value: "Montserrat", label: "Montserrat" },
+  { value: "Open Sans", label: "Open Sans" },
+  { value: "Poppins", label: "Poppins" },
+  { value: "Lato", label: "Lato" }
+];
+
+// После импортов добавляем новый компонент
+interface NumberInputWithSliderProps {
+  value: number;
+  onChange: (value: number) => void;
+  min: number;
+  max: number;
+  step?: number;
+  unit?: string;
+  className?: string;
+}
+
+const NumberInputWithSlider = ({ value, onChange, min, max, step = 1, unit, className = "" }: NumberInputWithSliderProps) => {
+  return (
+    <div className={`flex items-center gap-2 ${className}`}>
+      <div className="flex-1">
+        <Slider
+          value={[value]}
+          min={min}
+          max={max}
+          step={step}
+          onValueChange={([newValue]) => onChange(newValue)}
+          className="w-full"
+        />
+      </div>
+      <div className="flex items-center gap-2 min-w-[100px]">
+        <Input
+          type="number"
+          value={value}
+          onChange={(e) => {
+            const newValue = Number(e.target.value);
+            if (!isNaN(newValue)) {
+              onChange(Math.min(Math.max(newValue, min), max));
+            }
+          }}
+          className="w-[80px]"
+          min={min}
+          max={max}
+          step={step}
+        />
+        {unit && <span className="text-sm text-gray-500">{unit}</span>}
+      </div>
+    </div>
+  );
+};
+
 export default function BannerGenerator() {
   const [activeLanguage, setActiveLanguage] = useState("en")
   const [bannerSettings, setBannerSettings] = useState(DEFAULT_SETTINGS)
-  const [localizedContent, setLocalizedContent] = useState({
-    en: { title: "TEST TITLE", description: "TEST description" },
+  const [localizedContent, setLocalizedContent] = useState<LocalizedContent>({
+    en: { 
+      title: "TEST TITLE", 
+      description: "TEST description",
+      promotionalText: "",
+      whatsNew: "",
+      keywords: ""
+    }
   })
   const [isExporting, setIsExporting] = useState(false)
   const [previewIndex, setPreviewIndex] = useState(0)
@@ -222,83 +335,32 @@ export default function BannerGenerator() {
   }, []);
 
   // Новая структура данных для баннеров с уникальными настройками
-  const [previewItems, setPreviewItems] = useState([
+  const [previewItems, setPreviewItems] = useState<PreviewItem[]>([
     {
       id: 1,
       name: "Preview 1",
       backgroundColor: "#FFD700",
       devicePosition: "center",
       deviceScale: 100,
+      rotation: {
+        device: 0,
+        title: 0,
+        description: 0,
+        textBlock: 0
+      },
       verticalOffset: {
         combined: 0,
         title: 0,
         description: 0,
-        device: 0,
+        device: 0
       },
       screenshot: {
         file: null,
         borderColor: "#000000",
         borderWidth: 8,
-        borderRadius: 30,
-      },
-    },
-    {
-      id: 2,
-      name: "Preview 2",
-      backgroundColor: "#F5F5DC",
-      devicePosition: "center",
-      deviceScale: 100,
-      verticalOffset: {
-        combined: 0,
-        title: 0,
-        description: 0,
-        device: 0,
-      },
-      screenshot: {
-        file: null,
-        borderColor: "#000000",
-        borderWidth: 8,
-        borderRadius: 30,
-      },
-    },
-    {
-      id: 3,
-      name: "Preview 3",
-      backgroundColor: "#FF6347",
-      devicePosition: "center",
-      deviceScale: 100,
-      verticalOffset: {
-        combined: 0,
-        title: 0,
-        description: 0,
-        device: 0,
-      },
-      screenshot: {
-        file: null,
-        borderColor: "#000000",
-        borderWidth: 8,
-        borderRadius: 30,
-      },
-    },
-    {
-      id: 4,
-      name: "Preview 4",
-      backgroundColor: "#FFDAB9",
-      devicePosition: "center",
-      deviceScale: 100,
-      verticalOffset: {
-        combined: 0,
-        title: 0,
-        description: 0,
-        device: 0,
-      },
-      screenshot: {
-        file: null,
-        borderColor: "#000000",
-        borderWidth: 8,
-        borderRadius: 30,
-      },
-    },
+        borderRadius: 30
+      }
+    }
   ])
 
   // Загрузка данных из localStorage при инициализации
@@ -433,30 +495,47 @@ export default function BannerGenerator() {
   }, [fontSize]);
 
   // Handle language change
-  const handleLanguageChange = (language) => {
+  const handleLanguageChange = (language: string) => {
     setActiveLanguage(language)
-
-    // Create content for new language if it doesn't exist
+    
+    // Create language content if it doesn't exist
     if (!localizedContent[language]) {
-      setLocalizedContent({
-        ...localizedContent,
-        [language]: {
-          title: localizedContent.en.title,
-          description: localizedContent.en.description,
-        },
-      })
+      const newLocalizedContent = { ...localizedContent }
+      newLocalizedContent[language] = {
+        title: "",
+        description: "",
+        promotionalText: "",
+        whatsNew: "",
+        keywords: ""
+      }
+      setLocalizedContent(newLocalizedContent)
     }
   }
 
-  // Update content for current language
-  const updateLocalizedContent = (field, value) => {
-    setLocalizedContent({
-      ...localizedContent,
-      [activeLanguage]: {
-        ...localizedContent[activeLanguage],
-        [field]: value,
-      },
-    })
+  const updateLocalizedContent = (language: string, field: keyof LocalizedContent, value: string) => {
+    const newLocalizedContent = { ...localizedContent }
+    if (!newLocalizedContent[language]) {
+      newLocalizedContent[language] = {
+        title: "",
+        description: "",
+        promotionalText: "",
+        whatsNew: "",
+        keywords: ""
+      }
+    }
+    newLocalizedContent[language][field] = value
+    setLocalizedContent(newLocalizedContent)
+  }
+
+  const getPreviewContent = (langCode: string, previewId: number, field: keyof LocalizedContent): string => {
+    // Try to get preview-specific content first
+    const specificKey = `preview_${previewId}_${field}`
+    if (localizedContent[langCode] && localizedContent[langCode][specificKey] !== undefined) {
+      return localizedContent[langCode][specificKey]
+    }
+
+    // Fall back to general content
+    return localizedContent[langCode]?.[field] || ""
   }
 
   // Перехватываем изменение screenshot.file для сохранения в IndexedDB
@@ -712,6 +791,9 @@ export default function BannerGenerator() {
       transform += `translateY(${deviceOffset}px)`
     }
 
+    // Добавляем поворот к трансформации
+    transform += `rotate(${banner.rotation?.device || 0}deg) `
+
     return {
       ...baseStyles,
       transform,
@@ -812,45 +894,30 @@ export default function BannerGenerator() {
       const importedData = JSON.parse(jsonImportText)
 
       // Check if the imported data has the expected structure
-      if (typeof importedData === "object") {
-        // If it's a language-based structure
-        if (Object.keys(importedData).some((key) => LANGUAGES.some((lang) => lang.code === key))) {
-          setLocalizedContent(importedData)
-        }
-        // If it's a preview-based structure with languages
-        else if (Array.isArray(importedData) && importedData.length > 0 && importedData[0].languages) {
-          // Create a new localized content object
-          const newLocalizedContent = { ...localizedContent }
+      if (typeof importedData === "object" && importedData !== null) {
+        // Validate the structure
+        const isValidStructure = Object.entries(importedData).every(([langCode, content]) => {
+          const isValidLanguage = LANGUAGES.some(lang => lang.code === langCode)
+          const hasRequiredFields = content && typeof content === "object" &&
+            "title" in content && typeof content.title === "string" &&
+            "description" in content && typeof content.description === "string" &&
+            "promotionalText" in content && typeof content.promotionalText === "string" &&
+            "whatsNew" in content && typeof content.whatsNew === "string" &&
+            "keywords" in content && typeof content.keywords === "string"
+          
+          return isValidLanguage && hasRequiredFields
+        })
 
-          // Process each preview item
-          importedData.forEach((item, index) => {
-            const previewId = index + 1
-
-            // Process each language for this preview
-            if (item.languages && typeof item.languages === "object") {
-              Object.keys(item.languages).forEach((langCode) => {
-                // Create language if it doesn't exist
-                if (!newLocalizedContent[langCode]) {
-                  newLocalizedContent[langCode] = {}
-                }
-
-                // Add content for this preview
-                newLocalizedContent[langCode][`preview_${previewId}_title`] = item.languages[langCode].title || ""
-                newLocalizedContent[langCode][`preview_${previewId}_description`] =
-                  item.languages[langCode].description || ""
-              })
-            }
-          })
-
-          setLocalizedContent(newLocalizedContent)
+        if (isValidStructure) {
+          setLocalizedContent(importedData as Record<string, LocalizedContent>)
         } else {
-          alert("Invalid JSON format. Please check the structure.")
+          alert("Invalid JSON structure. Please ensure all languages have the required fields: title, description, promotionalText, whatsNew, and keywords.")
         }
       } else {
         alert("Invalid JSON format. Please provide a valid object.")
       }
     } catch (error) {
-      alert(`Error parsing JSON: ${error.message}`)
+      alert(`Error parsing JSON: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
@@ -1103,20 +1170,8 @@ export default function BannerGenerator() {
     }
   };
 
-  // Get preview-specific content
-  const getPreviewContent = (langCode, previewId, field) => {
-    // Try to get preview-specific content first
-    const specificKey = `preview_${previewId}_${field}`
-    if (localizedContent[langCode] && localizedContent[langCode][specificKey] !== undefined) {
-      return localizedContent[langCode][specificKey]
-    }
-
-    // Fall back to general content
-    return localizedContent[langCode]?.[field] || ""
-  }
-
   // Обновим функцию getTextStyle, чтобы учитывать вертикальное смещение
-  const getTextStyle = (elementType) => {
+  const getTextStyle = (elementType, rotation = 0) => {
     const baseStyle = {
       color: elementType === "title" ? bannerSettings.titleColor : bannerSettings.descriptionColor,
       fontFamily: bannerSettings.fontFamily,
@@ -1124,6 +1179,10 @@ export default function BannerGenerator() {
       fontSize: `${elementType === "title" ? fontSize.title : fontSize.description}px`,
       lineHeight: elementType === "title" ? lineHeight.title : lineHeight.description,
       letterSpacing: `${elementType === "title" ? letterSpacing.title : letterSpacing.description}%`,
+      transform: rotation ? `rotate(${rotation}deg)` : undefined,
+      transformOrigin: "center",
+      display: "inline-block",
+      width: "100%"
     }
 
     return baseStyle
@@ -1188,13 +1247,7 @@ export default function BannerGenerator() {
                   <Textarea
                     value={getPreviewContent(activeLanguage, "global", "promotionalText") || ""}
                     onChange={(e) => {
-                      setLocalizedContent({
-                        ...localizedContent,
-                        [activeLanguage]: {
-                          ...localizedContent[activeLanguage],
-                          promotionalText: e.target.value,
-                        },
-                      })
+                      updateLocalizedContent(activeLanguage, "promotionalText", e.target.value)
                     }}
                     className="mt-1"
                     rows={4}
@@ -1207,13 +1260,7 @@ export default function BannerGenerator() {
                   <Textarea
                     value={getPreviewContent(activeLanguage, "global", "description") || ""}
                     onChange={(e) => {
-                      setLocalizedContent({
-                        ...localizedContent,
-                        [activeLanguage]: {
-                          ...localizedContent[activeLanguage],
-                          description: e.target.value,
-                        },
-                      })
+                      updateLocalizedContent(activeLanguage, "description", e.target.value)
                     }}
                     className="mt-1"
                     rows={4}
@@ -1226,13 +1273,7 @@ export default function BannerGenerator() {
                   <Textarea
                     value={getPreviewContent(activeLanguage, "global", "whatsNew") || ""}
                     onChange={(e) => {
-                      setLocalizedContent({
-                        ...localizedContent,
-                        [activeLanguage]: {
-                          ...localizedContent[activeLanguage],
-                          whatsNew: e.target.value,
-                        },
-                      })
+                      updateLocalizedContent(activeLanguage, "whatsNew", e.target.value)
                     }}
                     className="mt-1"
                     rows={4}
@@ -1245,13 +1286,7 @@ export default function BannerGenerator() {
                   <Input
                     value={getPreviewContent(activeLanguage, "global", "keywords") || ""}
                     onChange={(e) => {
-                      setLocalizedContent({
-                        ...localizedContent,
-                        [activeLanguage]: {
-                          ...localizedContent[activeLanguage],
-                          keywords: e.target.value,
-                        },
-                      })
+                      updateLocalizedContent(activeLanguage, "keywords", e.target.value)
                     }}
                     className="mt-1"
                     placeholder={`Keywords in ${activeLanguage}`}
@@ -1273,16 +1308,7 @@ export default function BannerGenerator() {
                 <Input
                   value={getPreviewContent(activeLanguage, currentBanner.id || 1, "title") || ""}
                   onChange={(e) => {
-                    const previewId = currentBanner.id || 1
-                    const specificKey = `preview_${previewId}_title`
-
-                    setLocalizedContent({
-                      ...localizedContent,
-                      [activeLanguage]: {
-                        ...localizedContent[activeLanguage],
-                        [specificKey]: e.target.value,
-                      },
-                    })
+                    updateLocalizedContent(activeLanguage, "title", e.target.value)
                   }}
                   className="mt-1"
                 />
@@ -1290,16 +1316,7 @@ export default function BannerGenerator() {
                 <Textarea
                   value={getPreviewContent(activeLanguage, currentBanner.id || 1, "description") || ""}
                   onChange={(e) => {
-                    const previewId = currentBanner.id || 1
-                    const specificKey = `preview_${previewId}_description`
-
-                    setLocalizedContent({
-                      ...localizedContent,
-                      [activeLanguage]: {
-                        ...localizedContent[activeLanguage],
-                        [specificKey]: e.target.value,
-                      },
-                    })
+                    updateLocalizedContent(activeLanguage, "description", e.target.value)
                   }}
                   className="mt-1"
                   rows={3}
@@ -1419,35 +1436,65 @@ export default function BannerGenerator() {
             </div>
 
             <div>
-              <div className="flex justify-between">
-                <div className="text-xs text-gray-500">Vertical Position</div>
-                <span className="text-xs text-gray-500">
-                  {isTitle ? currentBanner.verticalOffset?.title || 0 : currentBanner.verticalOffset?.description || 0}
-                  px
-                </span>
+              <div className="flex justify-between items-center">
+                <Label>Vertical Position</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    value={isTitle ? currentBanner.verticalOffset?.title || 0 : currentBanner.verticalOffset?.description || 0}
+                    className="w-[80px]"
+                    min={-100}
+                    max={100}
+                    step={1}
+                    onChange={(e) => {
+                      const value = Number(e.target.value);
+                      const updatedItems = [...previewItems];
+                      if (updatedItems[previewIndex]) {
+                        updatedItems[previewIndex] = {
+                          ...updatedItems[previewIndex],
+                          verticalOffset: {
+                            ...updatedItems[previewIndex].verticalOffset,
+                            [isTitle ? "title" : "description"]: value,
+                          },
+                        };
+                        setPreviewItems(updatedItems);
+                      }
+                    }}
+                  />
+                  <span className="text-sm text-gray-500">px</span>
+                </div>
               </div>
-              <Slider
-                value={[
-                  isTitle ? currentBanner.verticalOffset?.title || 0 : currentBanner.verticalOffset?.description || 0,
-                ]}
-                min={-100}
-                max={100}
-                step={1}
-                className="mt-2"
-                onValueChange={(value) => {
-                  const updatedItems = [...previewItems]
-                  if (updatedItems[previewIndex]) {
-                    updatedItems[previewIndex] = {
-                      ...updatedItems[previewIndex],
-                      verticalOffset: {
-                        ...updatedItems[previewIndex].verticalOffset,
-                        [isTitle ? "title" : "description"]: value[0],
-                      },
-                    }
-                    setPreviewItems(updatedItems)
-                  }
-                }}
-              />
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center">
+                <Label>Rotation</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    value={currentBanner.rotation?.[isTitle ? 'title' : 'description'] || 0}
+                    className="w-[80px]"
+                    min={-360}
+                    max={360}
+                    step={1}
+                    onChange={(e) => {
+                      const value = Number(e.target.value);
+                      const updatedItems = [...previewItems];
+                      if (updatedItems[previewIndex]) {
+                        updatedItems[previewIndex] = {
+                          ...updatedItems[previewIndex],
+                          rotation: {
+                            ...updatedItems[previewIndex].rotation,
+                            [isTitle ? 'title' : 'description']: value
+                          }
+                        };
+                        setPreviewItems(updatedItems);
+                      }
+                    }}
+                  />
+                  <span className="text-sm text-gray-500">°</span>
+                </div>
+              </div>
             </div>
           </div>
         )
@@ -1460,16 +1507,13 @@ export default function BannerGenerator() {
               <Input
                 value={getPreviewContent(activeLanguage, currentBanner.id || 1, "title") || ""}
                 onChange={(e) => {
-                  const previewId = currentBanner.id || 1
-                  const specificKey = `preview_${previewId}_title`
-
-                  setLocalizedContent({
-                    ...localizedContent,
-                    [activeLanguage]: {
-                      ...localizedContent[activeLanguage],
-                      [specificKey]: e.target.value,
-                    },
-                  })
+                  const previewKey = `preview_${currentBanner.id}_title`;
+                  const newLocalizedContent = { ...localizedContent };
+                  if (!newLocalizedContent[activeLanguage]) {
+                    newLocalizedContent[activeLanguage] = {};
+                  }
+                  newLocalizedContent[activeLanguage][previewKey] = e.target.value;
+                  setLocalizedContent(newLocalizedContent);
                 }}
                 className="mt-1"
               />
@@ -1480,46 +1524,134 @@ export default function BannerGenerator() {
               <Textarea
                 value={getPreviewContent(activeLanguage, currentBanner.id || 1, "description") || ""}
                 onChange={(e) => {
-                  const previewId = currentBanner.id || 1
-                  const specificKey = `preview_${previewId}_description`
-
-                  setLocalizedContent({
-                    ...localizedContent,
-                    [activeLanguage]: {
-                      ...localizedContent[activeLanguage],
-                      [specificKey]: e.target.value,
-                    },
-                  })
+                  const previewKey = `preview_${currentBanner.id}_description`;
+                  const newLocalizedContent = { ...localizedContent };
+                  if (!newLocalizedContent[activeLanguage]) {
+                    newLocalizedContent[activeLanguage] = {};
+                  }
+                  newLocalizedContent[activeLanguage][previewKey] = e.target.value;
+                  setLocalizedContent(newLocalizedContent);
                 }}
                 className="mt-1"
                 rows={3}
               />
             </div>
 
-            <div>
-              <div className="flex justify-between">
-                <div className="text-xs text-gray-500">Vertical Position</div>
-                <span className="text-xs text-gray-500">{currentBanner.verticalOffset?.combined || 0}px</span>
+            <div className="space-y-4">
+              <div>
+                <Label className="text-sm text-gray-500">Font</Label>
+                <Select
+                  value={bannerSettings.fontFamily}
+                  onValueChange={(value) => setBannerSettings({ ...bannerSettings, fontFamily: value })}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select font" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {FONTS.map((font) => (
+                      <SelectItem key={font.value} value={font.value}>
+                        <span style={{ fontFamily: font.value }}>{font.label}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <Slider
-                value={[currentBanner.verticalOffset?.combined || 0]}
-                min={-100}
-                max={100}
-                step={1}
-                className="mt-2"
-                onValueChange={(value) => {
-                  const updatedItems = [...previewItems]
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm text-gray-500">Title Color</Label>
+                  <ColorPicker
+                    color={bannerSettings.titleColor}
+                    onChange={(color) => setBannerSettings({ ...bannerSettings, titleColor: color })}
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm text-gray-500">Description Color</Label>
+                  <ColorPicker
+                    color={bannerSettings.descriptionColor}
+                    onChange={(color) => setBannerSettings({ ...bannerSettings, descriptionColor: color })}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-sm text-gray-500">Text Alignment</Label>
+                <div className="flex gap-1 mt-1">
+                  <Button
+                    variant={textAlignment === "left" ? "default" : "outline"}
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => setTextAlignment("left")}
+                  >
+                    <AlignLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={textAlignment === "center" ? "default" : "outline"}
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => setTextAlignment("center")}
+                  >
+                    <AlignCenter className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={textAlignment === "right" ? "default" : "outline"}
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => setTextAlignment("right")}
+                  >
+                    <AlignRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <Label>Vertical Position</Label>
+              </div>
+              <NumberInputWithSlider
+                value={currentBanner.verticalOffset?.combined || 0}
+                onChange={(value) => {
+                  const updatedItems = [...previewItems];
                   if (updatedItems[previewIndex]) {
                     updatedItems[previewIndex] = {
                       ...updatedItems[previewIndex],
                       verticalOffset: {
                         ...updatedItems[previewIndex].verticalOffset,
-                        combined: value[0],
+                        combined: value,
                       },
-                    }
-                    setPreviewItems(updatedItems)
+                    };
+                    setPreviewItems(updatedItems);
                   }
                 }}
+                min={-100}
+                max={100}
+                unit="px"
+              />
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <Label>Rotation</Label>
+              </div>
+              <NumberInputWithSlider
+                value={currentBanner.rotation?.textBlock || 0}
+                onChange={(value) => {
+                  const updatedItems = [...previewItems];
+                  if (updatedItems[previewIndex]) {
+                    updatedItems[previewIndex] = {
+                      ...updatedItems[previewIndex],
+                      rotation: {
+                        ...updatedItems[previewIndex].rotation,
+                        textBlock: value
+                      }
+                    };
+                    setPreviewItems(updatedItems);
+                  }
+                }}
+                min={-360}
+                max={360}
+                unit="°"
               />
             </div>
           </div>
@@ -1562,53 +1694,49 @@ export default function BannerGenerator() {
               </div>
 
               <div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center mb-2">
                   <Label>Device Scale</Label>
-                  <span className="text-sm text-gray-500">{currentBanner.deviceScale || 100}%</span>
                 </div>
-                <Slider
-                  value={[currentBanner.deviceScale || 100]}
-                  min={50}
-                  max={150}
-                  step={5}
-                  className="mt-2"
-                  onValueChange={(value) => {
-                    const updatedItems = [...previewItems]
+                <NumberInputWithSlider
+                  value={currentBanner.deviceScale || 100}
+                  onChange={(value) => {
+                    const updatedItems = [...previewItems];
                     if (updatedItems[previewIndex]) {
                       updatedItems[previewIndex] = {
                         ...updatedItems[previewIndex],
-                        deviceScale: value[0],
-                      }
-                      setPreviewItems(updatedItems)
+                        deviceScale: value,
+                      };
+                      setPreviewItems(updatedItems);
                     }
                   }}
+                  min={50}
+                  max={150}
+                  unit="%"
                 />
               </div>
 
               <div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center mb-2">
                   <Label>Vertical Position</Label>
-                  <span className="text-sm text-gray-500">{currentBanner.verticalOffset?.device || 0}px</span>
                 </div>
-                <Slider
-                  value={[currentBanner.verticalOffset?.device || 0]}
-                  min={-100}
-                  max={100}
-                  step={1}
-                  className="mt-2"
-                  onValueChange={(value) => {
-                    const updatedItems = [...previewItems]
+                <NumberInputWithSlider
+                  value={currentBanner.verticalOffset?.device || 0}
+                  onChange={(value) => {
+                    const updatedItems = [...previewItems];
                     if (updatedItems[previewIndex]) {
                       updatedItems[previewIndex] = {
                         ...updatedItems[previewIndex],
                         verticalOffset: {
                           ...updatedItems[previewIndex].verticalOffset,
-                          device: value[0],
+                          device: value,
                         },
-                      }
-                      setPreviewItems(updatedItems)
+                      };
+                      setPreviewItems(updatedItems);
                     }
                   }}
+                  min={-100}
+                  max={100}
+                  unit="px"
                 />
               </div>
 
@@ -1629,35 +1757,56 @@ export default function BannerGenerator() {
                   </div>
 
                   <div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center mb-2">
                       <Label>Border Width</Label>
-                      <span className="text-sm text-gray-500">{currentBanner.screenshot?.borderWidth || 8}px</span>
                     </div>
-                    <Slider
-                      value={[currentBanner.screenshot?.borderWidth || 8]}
+                    <NumberInputWithSlider
+                      value={currentBanner.screenshot?.borderWidth || 8}
+                      onChange={(value) => updateScreenshotSetting("borderWidth", value)}
                       min={0}
                       max={20}
-                      step={1}
-                      className="mt-2"
-                      onValueChange={(value) => updateScreenshotSetting("borderWidth", value[0])}
+                      unit="px"
                     />
                   </div>
 
                   <div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center mb-2">
                       <Label>Border Radius</Label>
-                      <span className="text-sm text-gray-500">{currentBanner.screenshot?.borderRadius || 30}px</span>
                     </div>
-                    <Slider
-                      value={[currentBanner.screenshot?.borderRadius || 30]}
+                    <NumberInputWithSlider
+                      value={currentBanner.screenshot?.borderRadius || 30}
+                      onChange={(value) => updateScreenshotSetting("borderRadius", value)}
                       min={0}
                       max={60}
-                      step={1}
-                      className="mt-2"
-                      onValueChange={(value) => updateScreenshotSetting("borderRadius", value[0])}
+                      unit="px"
                     />
                   </div>
                 </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <Label>Rotation</Label>
+                </div>
+                <NumberInputWithSlider
+                  value={currentBanner.rotation?.device || 0}
+                  onChange={(value) => {
+                    const updatedItems = [...previewItems];
+                    if (updatedItems[previewIndex]) {
+                      updatedItems[previewIndex] = {
+                        ...updatedItems[previewIndex],
+                        rotation: {
+                          ...updatedItems[previewIndex].rotation,
+                          device: value
+                        }
+                      };
+                      setPreviewItems(updatedItems);
+                    }
+                  }}
+                  min={-360}
+                  max={360}
+                  unit="°"
+                />
               </div>
             </div>
           </div>
@@ -1715,7 +1864,7 @@ export default function BannerGenerator() {
                   }
                 }}
               >
-                <h2 className="text-2xl font-bold text-center" style={getTextStyle("title")}>
+                <h2 className="text-2xl font-bold text-center" style={getTextStyle("title", item.rotation?.title || 0)}>
                   {getPreviewContent(activeLanguage, item.id, "title") || "Title"}
                 </h2>
               </div>
@@ -1734,7 +1883,7 @@ export default function BannerGenerator() {
                   }
                 }}
               >
-                <p className="text-base text-center" style={getTextStyle("description")}>
+                <p className="text-base text-center" style={getTextStyle("description", item.rotation?.description || 0)}>
                   {getPreviewContent(activeLanguage, item.id, "description") || "Description"}
                 </p>
               </div>
@@ -1744,7 +1893,7 @@ export default function BannerGenerator() {
               className={`absolute ${isActive ? "cursor-pointer hover:ring-2 hover:ring-blue-300 hover:ring-opacity-50 rounded-md p-1" : ""}`}
               style={{
                 ...titlePosition,
-                transform: `${titlePosition.transform || ""} translateY(${currentOffset.combined}px)`,
+                transform: `${titlePosition.transform || ""} translateY(${currentOffset.combined}px) rotate(${item.rotation?.textBlock || 0}deg)`,
               }}
               onDoubleClick={(e) => {
                 if (isActive) {
@@ -1898,6 +2047,43 @@ export default function BannerGenerator() {
     )
   }
 
+  // Добавляем функцию для экспорта JSON с текущим контентом
+  const handleJsonExport = () => {
+    const exportData = {};
+    
+    // Собираем все языки
+    Object.keys(localizedContent).forEach(langCode => {
+      exportData[langCode] = {
+        title: localizedContent[langCode].title || "",
+        description: localizedContent[langCode].description || "",
+        promotionalText: localizedContent[langCode].promotionalText || "",
+        whatsNew: localizedContent[langCode].whatsNew || "",
+        keywords: localizedContent[langCode].keywords || "",
+        previews: {}
+      };
+      
+      // Добавляем контент для каждого превью
+      previewItems.forEach(preview => {
+        const previewKey = `preview_${preview.id}`;
+        exportData[langCode].previews[previewKey] = {
+          title: getPreviewContent(langCode, preview.id, "title") || "",
+          description: getPreviewContent(langCode, preview.id, "description") || ""
+        };
+      });
+    });
+    
+    // Создаем и скачиваем файл
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'localized_content.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Шапка на всю ширину */}
@@ -1914,32 +2100,67 @@ export default function BannerGenerator() {
                     Import JSON
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Import Localized Content</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
-                    <Textarea
-                      placeholder="Paste your JSON here..."
-                      value={jsonImportText}
-                      onChange={(e) => setJsonImportText(e.target.value)}
-                      rows={10}
-                    />
-                    <div className="text-xs text-gray-500">
-                      <p>Expected format:</p>
-                      <pre className="mt-1 bg-gray-100 p-2 rounded overflow-auto">
-                        {`{
-  "en": { "title": "English Title", "description": "English Description" },
-  "fr": { "title": "French Title", "description": "French Description" }
+                    <div className="grid gap-4">
+                      <div>
+                        <Label>JSON Content</Label>
+                        <Textarea
+                          placeholder="Paste your JSON here..."
+                          value={jsonImportText}
+                          onChange={(e) => setJsonImportText(e.target.value)}
+                          className="font-mono min-h-[300px] bg-slate-50"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Expected Format</Label>
+                        <div className="text-sm text-muted-foreground space-y-2">
+                          <p>Your JSON should include translations for all supported languages with the following structure:</p>
+                          <pre className="bg-slate-100 p-4 rounded-md overflow-auto text-xs">
+{`{
+  "ru": {
+    "title": "Заголовок на русском",
+    "description": "Описание на русском",
+    "promotionalText": "Промо-текст на русском",
+    "whatsNew": "Что нового в этой версии",
+    "keywords": "ключевое слово1, ключевое слово2"
+  },
+  "en": {
+    "title": "English Title",
+    "description": "English Description",
+    "promotionalText": "Promotional Text in English",
+    "whatsNew": "What's New in This Version",
+    "keywords": "keyword1, keyword2"
+  }
 }`}
-                      </pre>
+                          </pre>
+                          <div className="mt-4 space-y-2">
+                            <p className="font-semibold">Required fields for each language:</p>
+                            <ul className="list-disc list-inside space-y-1 ml-2">
+                              <li><code>title</code>: Main title for the banner</li>
+                              <li><code>description</code>: Detailed description</li>
+                              <li><code>promotionalText</code>: App Store promotional text</li>
+                              <li><code>whatsNew</code>: Update information</li>
+                              <li><code>keywords</code>: Comma-separated keywords</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     <Button onClick={handleJsonImport} className="w-full">
-                      Import
+                      Import Content
                     </Button>
                   </div>
                 </DialogContent>
               </Dialog>
+
+              <Button variant="outline" onClick={handleJsonExport}>
+                <Download className="mr-2 h-4 w-4" />
+                Export JSON
+              </Button>
 
               <LanguageSelector languages={LANGUAGES} activeLanguage={activeLanguage} onChange={handleLanguageChange} />
               
