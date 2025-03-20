@@ -888,7 +888,7 @@ export default function BannerGenerator() {
     console.log('Starting export process...');
     
     try {
-      // Создаем временный канвас для экспорта, чтобы не полагаться на скрытый элемент
+      // Создаем временный канвас для экспорта
       const tempCanvas = document.createElement('div');
       tempCanvas.style.width = '320px';
       tempCanvas.style.height = '690px';
@@ -897,9 +897,15 @@ export default function BannerGenerator() {
       tempCanvas.style.top = '-9999px';
       document.body.appendChild(tempCanvas);
       
-      // Создаем один общий ZIP-архив для всех баннеров
+      // Создаем ZIP-архив
       const zip = new JSZip();
-      console.log('Preparing to export', previewItems.length, 'banners to a single ZIP archive');
+      console.log('Preparing to export banners to language-specific folders');
+      
+      // Создаем папки для каждого языка
+      const languages = Object.keys(localizedContent);
+      languages.forEach(lang => {
+        zip.folder(lang);
+      });
       
       for (const banner of previewItems) {
         console.log('Exporting banner', banner.id, 'with name', banner.name);
@@ -925,119 +931,104 @@ export default function BannerGenerator() {
         const { titlePosition, descriptionPosition, separateElements } = getContentPositions(banner.devicePosition);
         const currentOffset = banner.verticalOffset || { combined: 0, title: 0, description: 0, device: 0 };
         
-        // Добавляем текстовые элементы
-        if (separateElements) {
-          // Титул
-          const titleDiv = document.createElement('div');
-          titleDiv.style.position = 'absolute';
-          Object.assign(titleDiv.style, titlePosition);
-          titleDiv.style.transform = `${titlePosition.transform || ""} translateY(${currentOffset.title}px)`;
-          
-          const titleH2 = document.createElement('h2');
-          titleH2.textContent = getPreviewContent(activeLanguage, banner.id, "title") || "Title";
-          titleH2.className = "text-2xl font-bold text-center";
-          Object.assign(titleH2.style, getTextStyle("title"));
-          
-          titleDiv.appendChild(titleH2);
-          tempCanvas.appendChild(titleDiv);
-          
-          // Описание
-          const descDiv = document.createElement('div');
-          descDiv.style.position = 'absolute';
-          Object.assign(descDiv.style, descriptionPosition);
-          descDiv.style.transform = `${descriptionPosition.transform || ""} translateY(${currentOffset.description}px)`;
-          
-          const descP = document.createElement('p');
-          descP.textContent = getPreviewContent(activeLanguage, banner.id, "description") || "Description";
-          descP.className = "text-base text-center";
-          Object.assign(descP.style, getTextStyle("description"));
-          
-          descDiv.appendChild(descP);
-          tempCanvas.appendChild(descDiv);
-        } else {
-          // Комбинированный блок
-          const textDiv = document.createElement('div');
-          textDiv.style.position = 'absolute';
-          Object.assign(textDiv.style, titlePosition);
-          textDiv.style.transform = `${titlePosition.transform || ""} translateY(${currentOffset.combined}px)`;
-          
-          const titleH2 = document.createElement('h2');
-          titleH2.textContent = getPreviewContent(activeLanguage, banner.id, "title") || "Title";
-          titleH2.className = "text-2xl font-bold mb-2 text-center";
-          Object.assign(titleH2.style, getTextStyle("title"));
-          
-          const descP = document.createElement('p');
-          descP.textContent = getPreviewContent(activeLanguage, banner.id, "description") || "Description";
-          descP.className = "text-base text-center";
-          Object.assign(descP.style, getTextStyle("description"));
-          
-          textDiv.appendChild(titleH2);
-          textDiv.appendChild(descP);
-          tempCanvas.appendChild(textDiv);
-        }
-        
-        // Добавляем устройство/скриншот
-        const deviceDiv = document.createElement('div');
-        deviceDiv.style.position = 'absolute';
-        Object.assign(deviceDiv.style, getDevicePositionStyles(banner));
-        
-        if (banner.screenshot?.file) {
-          const deviceContainer = document.createElement('div');
-          deviceContainer.style.borderWidth = `${banner.screenshot.borderWidth}px`;
-          deviceContainer.style.borderStyle = 'solid';
-          deviceContainer.style.borderColor = banner.screenshot.borderColor;
-          deviceContainer.style.borderRadius = `${banner.screenshot.borderRadius}px`;
-          deviceContainer.style.overflow = 'hidden';
-          
-          const img = document.createElement('img');
-          img.src = URL.createObjectURL(banner.screenshot.file);
-          img.style.width = '100%';
-          img.style.display = 'block';
-          
-          deviceContainer.appendChild(img);
-          deviceDiv.appendChild(deviceContainer);
-        } else {
-          deviceDiv.innerHTML = `
-            <div class="flex flex-col items-center justify-center p-4" style="
-              width: 100%;
-              height: 400px;
-              border-width: ${banner.screenshot?.borderWidth || 8}px;
-              border-style: solid;
-              border-color: ${banner.screenshot?.borderColor || "#000000"};
-              border-radius: ${banner.screenshot?.borderRadius || 30}px;
-              background-color: #f9f9f9;
-            ">
-              <div style="width: 48px; height: 48px; color: #ccc; text-align: center;">📷</div>
-              <span style="margin-top: 8px; font-size: 14px; color: #888;">No screenshot</span>
-            </div>
-          `;
-        }
-        
-        tempCanvas.appendChild(deviceDiv);
-        
-        console.log('Canvas prepared for banner', banner.id);
-        
-        // Для каждого языка создаем изображение и добавляем в ZIP
-        const languages = Object.keys(bannerContent);
+        // Для каждого языка создаем изображение и добавляем в соответствующую папку в ZIP
         for (const lang of languages) {
           console.log(`Processing language: ${lang} for banner ${banner.id}`);
           
-          // Обновляем текст в соответствии с языком
-          const titleElement = tempCanvas.querySelector("h2");
-          const descriptionElement = tempCanvas.querySelector("p");
-          
-          if (titleElement && bannerContent[lang]?.title) {
-            titleElement.textContent = bannerContent[lang].title;
+          // Обновляем текстовые элементы в соответствии с языком
+          if (separateElements) {
+            // Титул
+            const titleDiv = document.createElement('div');
+            titleDiv.style.position = 'absolute';
+            Object.assign(titleDiv.style, titlePosition);
+            titleDiv.style.transform = `${titlePosition.transform || ""} translateY(${currentOffset.title}px)`;
+            
+            const titleH2 = document.createElement('h2');
+            titleH2.textContent = bannerContent[lang].title;
+            titleH2.className = "text-2xl font-bold text-center";
+            Object.assign(titleH2.style, getTextStyle("title"));
+            
+            titleDiv.appendChild(titleH2);
+            tempCanvas.appendChild(titleDiv);
+            
+            // Описание
+            const descDiv = document.createElement('div');
+            descDiv.style.position = 'absolute';
+            Object.assign(descDiv.style, descriptionPosition);
+            descDiv.style.transform = `${descriptionPosition.transform || ""} translateY(${currentOffset.description}px)`;
+            
+            const descP = document.createElement('p');
+            descP.textContent = bannerContent[lang].description;
+            descP.className = "text-base text-center";
+            Object.assign(descP.style, getTextStyle("description"));
+            
+            descDiv.appendChild(descP);
+            tempCanvas.appendChild(descDiv);
+          } else {
+            // Комбинированный блок
+            const textDiv = document.createElement('div');
+            textDiv.style.position = 'absolute';
+            Object.assign(textDiv.style, titlePosition);
+            textDiv.style.transform = `${titlePosition.transform || ""} translateY(${currentOffset.combined}px)`;
+            
+            const titleH2 = document.createElement('h2');
+            titleH2.textContent = bannerContent[lang].title;
+            titleH2.className = "text-2xl font-bold mb-2 text-center";
+            Object.assign(titleH2.style, getTextStyle("title"));
+            
+            const descP = document.createElement('p');
+            descP.textContent = bannerContent[lang].description;
+            descP.className = "text-base text-center";
+            Object.assign(descP.style, getTextStyle("description"));
+            
+            textDiv.appendChild(titleH2);
+            textDiv.appendChild(descP);
+            tempCanvas.appendChild(textDiv);
           }
           
-          if (descriptionElement && bannerContent[lang]?.description) {
-            descriptionElement.textContent = bannerContent[lang].description;
+          // Добавляем устройство/скриншот
+          const deviceDiv = document.createElement('div');
+          deviceDiv.style.position = 'absolute';
+          Object.assign(deviceDiv.style, getDevicePositionStyles(banner));
+          
+          if (banner.screenshot?.file) {
+            const deviceContainer = document.createElement('div');
+            deviceContainer.style.borderWidth = `${banner.screenshot.borderWidth}px`;
+            deviceContainer.style.borderStyle = 'solid';
+            deviceContainer.style.borderColor = banner.screenshot.borderColor;
+            deviceContainer.style.borderRadius = `${banner.screenshot.borderRadius}px`;
+            deviceContainer.style.overflow = 'hidden';
+            
+            const img = document.createElement('img');
+            img.src = URL.createObjectURL(banner.screenshot.file);
+            img.style.width = '100%';
+            img.style.display = 'block';
+            
+            deviceContainer.appendChild(img);
+            deviceDiv.appendChild(deviceContainer);
+          } else {
+            deviceDiv.innerHTML = `
+              <div class="flex flex-col items-center justify-center p-4" style="
+                width: 100%;
+                height: 400px;
+                border-width: ${banner.screenshot?.borderWidth || 8}px;
+                border-style: solid;
+                border-color: ${banner.screenshot?.borderColor || "#000000"};
+                border-radius: ${banner.screenshot?.borderRadius || 30}px;
+                background-color: #f9f9f9;
+              ">
+                <div style="width: 48px; height: 48px; color: #ccc; text-align: center;">📷</div>
+                <span style="margin-top: 8px; font-size: 14px; color: #888;">No screenshot</span>
+              </div>
+            `;
           }
+          
+          tempCanvas.appendChild(deviceDiv);
           
           try {
             // Создаем изображение из канваса
             const canvas = await html2canvas(tempCanvas, {
-              scale: 2, // Higher scale for better quality
+              scale: 2,
               useCORS: true,
               allowTaint: true,
               backgroundColor: banner.backgroundColor,
@@ -1054,17 +1045,18 @@ export default function BannerGenerator() {
               }, "image/png", 1.0);
             });
             
-            // Добавляем в общий ZIP-архив
+            // Добавляем в ZIP в соответствующую языковую папку
             const bannerName = banner.name || `Banner ${banner.id}`;
-            const filename = `${bannerName}_${lang}.png`;
-            console.log(`Adding ${filename} to the common ZIP`);
-            zip.file(filename, blob);
+            const filename = `${bannerName}.png`;
+            console.log(`Adding ${filename} to ${lang} folder`);
+            zip.folder(lang)?.file(filename, blob);
           } catch (error) {
             console.error(`Error processing banner ${banner.id} for language ${lang}:`, error);
           }
+          
+          // Очищаем канвас для следующего баннера
+          tempCanvas.innerHTML = '';
         }
-        
-        console.log('Banner', banner.id, 'exported successfully');
         
         // Очищаем URL объекты
         if (banner.screenshot?.file) {
@@ -1072,9 +1064,9 @@ export default function BannerGenerator() {
         }
       }
       
-      // Генерируем и скачиваем общий ZIP-архив
+      // Генерируем и скачиваем ZIP-архив
       try {
-        console.log('Generating final ZIP file with all banners');
+        console.log('Generating final ZIP file with language folders');
         const content = await zip.generateAsync({ 
           type: "blob",
           compression: "DEFLATE",
