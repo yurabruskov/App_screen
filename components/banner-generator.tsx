@@ -1471,16 +1471,27 @@ export default function BannerGenerator() {
                 useCORS: true,
                 allowTaint: true,
                 backgroundColor: banner.backgroundColor || '#ffffff',
-                width: 320, // Базовая ширина (будет умножена на scale)
-                height: 690, // Базовая высота (будет умножена на scale)
+                width: 323, // 323 * 4 = 1292 (близко к 1290)
+                height: 699, // 699 * 4 = 2796
                 logging: false,
                 removeContainer: false
               });
               
-              // Получаем данные из canvas
-              const blob = await new Promise<Blob>(resolve => {
-                canvas.toBlob(blob => {
-                  resolve(blob);
+              // Масштабируем и обрезаем до точных размеров
+              const finalCanvas = document.createElement('canvas');
+              finalCanvas.width = 1290;
+              finalCanvas.height = 2796;
+              const finalCtx = finalCanvas.getContext('2d');
+              if (finalCtx) {
+                // Рисуем исходный canvas на финальный с точными размерами
+                finalCtx.drawImage(canvas, 0, 0, 1290, 2796);
+              }
+              
+              // Получаем данные из финального canvas
+              const blob = await new Promise<Blob>((resolve, reject) => {
+                finalCanvas.toBlob((b) => {
+                  if (b) resolve(b);
+                  else reject(new Error('Failed to create blob'));
                 }, 'image/png', 1.0);
               });
               
