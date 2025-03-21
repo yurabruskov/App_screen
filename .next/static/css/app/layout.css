@@ -1225,9 +1225,6 @@ video {
 .justify-between {
   justify-content: space-between;
 }
-.gap-0 {
-  gap: 0px;
-}
 .gap-1 {
   gap: 0.25rem;
 }
@@ -1335,14 +1332,6 @@ video {
 }
 .rounded-xl {
   border-radius: 0.75rem;
-}
-.rounded-l-none {
-  border-top-left-radius: 0px;
-  border-bottom-left-radius: 0px;
-}
-.rounded-r-none {
-  border-top-right-radius: 0px;
-  border-bottom-right-radius: 0px;
 }
 .rounded-t-\[10px\] {
   border-top-left-radius: 10px;
@@ -1711,10 +1700,6 @@ video {
 .text-gray-500 {
   --tw-text-opacity: 1;
   color: rgb(107 114 128 / var(--tw-text-opacity, 1));
-}
-.text-gray-700 {
-  --tw-text-opacity: 1;
-  color: rgb(55 65 81 / var(--tw-text-opacity, 1));
 }
 .text-muted-foreground {
   color: hsl(var(--muted-foreground));
