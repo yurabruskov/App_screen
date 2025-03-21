@@ -950,37 +950,124 @@ export default function BannerGenerator() {
     }
   }
 
-  // Также обновим обработчик drag & drop для всего приложения
+  // Update the useEffect that handles drag and drop
   useEffect(() => {
+    const highlightDropTargets = (show) => {
+      const bannerDevices = document.querySelectorAll('.banner-device-target');
+      bannerDevices.forEach((element) => {
+        if (show) {
+          element.classList.add('drag-highlight');
+        } else {
+          element.classList.remove('drag-highlight');
+        }
+      });
+    };
+
     const handleDragOver = (e: DragEvent) => {
       e.preventDefault();
       e.stopPropagation();
+      
+      // Highlight all potential drop targets when dragging over the window
+      highlightDropTargets(true);
+    };
+
+    const handleDragLeave = (e: DragEvent) => {
+      // Only remove highlights if we're leaving the window
+      if (!e.relatedTarget) {
+        highlightDropTargets(false);
+      }
     };
 
     const handleDrop = (e: DragEvent) => {
       e.preventDefault();
       e.stopPropagation();
       
-      console.log("Drop event received");
+      // Remove highlights
+      highlightDropTargets(false);
       
-      // Предотвращаем всплытие события, чтобы избежать двойной обработки
-      if (e.dataTransfer?.files && e.dataTransfer.files[0]) {
-        console.log("File dropped, current position:", previewItems[previewIndex]?.devicePosition);
-        handleScreenshotUpload(e.dataTransfer.files[0]);
-        return false;
+      // Check if we have files
+      if (!e.dataTransfer?.files || !e.dataTransfer.files[0]) {
+        return;
+      }
+      
+      const file = e.dataTransfer.files[0];
+      
+      // Find which banner device element was dropped on
+      const targetElement = findDropTarget(e);
+      if (targetElement) {
+        const bannerId = parseInt(targetElement.dataset.bannerId || "-1");
+        if (bannerId >= 0) {
+          // Set the active preview to the target banner
+          setPreviewIndex(bannerId);
+          
+          // Upload the screenshot to the target banner
+          uploadScreenshotToBanner(file, bannerId);
+          return;
+        }
+      }
+      
+      // Default to current active banner if no specific target found
+      handleScreenshotUpload(file);
+    };
+    
+    // Helper function to find which banner device the drop occurred on
+    const findDropTarget = (e: DragEvent) => {
+      // Get all potential drop targets
+      const dropTargets = document.querySelectorAll('.banner-device-target');
+      
+      // Check each drop target to see if the drop point is within its bounds
+      for (const target of dropTargets) {
+        const rect = target.getBoundingClientRect();
+        // Check if drop coordinates are within this element's bounds
+        if (
+          e.clientX >= rect.left &&
+          e.clientX <= rect.right &&
+          e.clientY >= rect.top &&
+          e.clientY <= rect.bottom
+        ) {
+          return target;
+        }
+      }
+      return null;
+    };
+    
+    // Helper function to upload a screenshot to a specific banner
+    const uploadScreenshotToBanner = (file: File, bannerIndex: number) => {
+      console.log(`Uploading screenshot to banner ${bannerIndex}`);
+      
+      const newItems = [...previewItems];
+      
+      if (newItems[bannerIndex]) {
+        const item = newItems[bannerIndex];
+        
+        item.screenshot = {
+          ...item.screenshot,
+          file
+        };
+        
+        setPreviewItems(newItems);
+        
+        // Save to IndexedDB
+        if (imageDBRef.current) {
+          const imageId = `preview_${item.id}`;
+          imageDBRef.current.saveImage(imageId, file)
+            .catch(error => console.error('Error saving image to IndexedDB:', error));
+        }
       }
     };
 
     // Add event listeners to the window
     window.addEventListener("dragover", handleDragOver);
+    window.addEventListener("dragleave", handleDragLeave);
     window.addEventListener("drop", handleDrop);
 
     // Clean up
     return () => {
       window.removeEventListener("dragover", handleDragOver);
+      window.removeEventListener("dragleave", handleDragLeave);
       window.removeEventListener("drop", handleDrop);
     };
-  }, [previewIndex, previewItems]); // Важно: добавляем previewItems в зависимости
+  }, [previewIndex, previewItems]); // Keep dependencies as before
 
   // Handle export
   const handleExport = async () => {
@@ -1953,7 +2040,8 @@ export default function BannerGenerator() {
 
           {/* Device/Screenshot */}
           <div
-            className={`absolute ${isActive ? "cursor-pointer hover:ring-2 hover:ring-blue-300 hover:ring-opacity-50" : ""}`}
+            className={`absolute banner-device-target ${isActive ? "cursor-pointer hover:ring-2 hover:ring-blue-300 hover:ring-opacity-50" : ""}`}
+            data-banner-id={index}
             style={getDevicePositionStyles(item)}
             onDoubleClick={(e) => {
               if (isActive) {
@@ -1983,7 +2071,7 @@ export default function BannerGenerator() {
               </div>
             ) : (
               <div
-                className={`flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 ${isActive ? "cursor-pointer" : ""}`}
+                className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50"
                 style={{
                   width: "100%",
                   height: "400px",
@@ -1992,48 +2080,6 @@ export default function BannerGenerator() {
                   borderColor: item.screenshot?.borderColor || "#000000",
                   borderRadius: `${item.screenshot?.borderRadius || 30}px`,
                 }}
-                onDragOver={
-                  isActive
-                    ? (e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        e.currentTarget.classList.add("border-primary")
-                      }
-                    : undefined
-                }
-                onDragLeave={
-                  isActive
-                    ? (e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        e.currentTarget.classList.remove("border-primary")
-                      }
-                    : undefined
-                }
-                onDrop={
-                  isActive
-                    ? (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.currentTarget.classList.remove("border-primary");
-
-                        // Сохраняем текущую позицию для логирования
-                        const currentPosition = item.devicePosition;
-                        console.log("Before drop in banner - device position:", currentPosition);
-
-                        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                          // Вызываем handleScreenshotUpload с сохранением позиции
-                          handleScreenshotUpload(e.dataTransfer.files[0]);
-                          
-                          // Дополнительная проверка позиции через 100мс
-                          setTimeout(() => {
-                            console.log("100ms after drop - device position:", previewItems[previewIndex]?.devicePosition);
-                            console.log("Should match original position:", currentPosition);
-                          }, 100);
-                        }
-                      }
-                    : undefined
-                }
               >
                 {isActive && (
                   <input
@@ -2134,6 +2180,32 @@ export default function BannerGenerator() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
+
+  // Add CSS rules in a useEffect to the document head
+  useEffect(() => {
+    // Create a style element
+    const styleElement = document.createElement('style');
+    
+    // Add the CSS for drag-and-drop highlighting
+    styleElement.textContent = `
+      .drag-highlight {
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5), 0 0 0 6px rgba(59, 130, 246, 0.3);
+        transition: box-shadow 0.2s ease-in-out;
+      }
+      
+      .banner-device-target {
+        transition: all 0.2s ease-in-out;
+      }
+    `;
+    
+    // Append the style element to the head
+    document.head.appendChild(styleElement);
+    
+    // Clean up
+    return () => {
+      document.head.removeChild(styleElement);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col">
