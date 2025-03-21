@@ -1067,12 +1067,19 @@ export default function BannerGenerator() {
       }
       
       // Создаем новый объект для локализованного контента
-      const newLocalizedContent = { ...localizedContent };
+      const newLocalizedContent: LocalizedContent = {};
       
       // Обрабатываем глобальные данные
       Object.entries(data.global).forEach(([langCode, content]: [string, any]) => {
         if (!newLocalizedContent[langCode]) {
-          newLocalizedContent[langCode] = {};
+          // Создаем структуру для нового языка
+          newLocalizedContent[langCode] = {
+            title: "",
+            description: "",
+            promotionalText: "",
+            whatsNew: "",
+            keywords: ""
+          };
         }
         
         // Копируем глобальные поля
@@ -1089,15 +1096,21 @@ export default function BannerGenerator() {
       // Обрабатываем данные баннеров
       Object.entries(data.banners).forEach(([langCode, banners]: [string, any]) => {
         if (!newLocalizedContent[langCode]) {
-          newLocalizedContent[langCode] = {};
+          // Создаем структуру для нового языка
+          newLocalizedContent[langCode] = {
+            title: "",
+            description: "",
+            promotionalText: "",
+            whatsNew: "",
+            keywords: ""
+          };
         }
         
         // Копируем данные каждого баннера
         Object.entries(banners).forEach(([previewKey, content]: [string, any]) => {
-          newLocalizedContent[langCode][previewKey] = {
-            title: content.title || "",
-            description: content.description || ""
-          };
+          // Добавляем данные баннера как дополнительные поля
+          newLocalizedContent[langCode][`${previewKey}_title`] = content.title || "";
+          newLocalizedContent[langCode][`${previewKey}_description`] = content.description || "";
         });
       });
       
@@ -1124,12 +1137,19 @@ export default function BannerGenerator() {
       }
       
       // Создаем новый объект для локализованного контента
-      const newLocalizedContent = { ...localizedContent };
+      const newLocalizedContent: LocalizedContent = {};
       
       // Обрабатываем глобальные данные
       Object.entries(data.global).forEach(([langCode, content]: [string, any]) => {
         if (!newLocalizedContent[langCode]) {
-          newLocalizedContent[langCode] = {};
+          // Создаем структуру для нового языка
+          newLocalizedContent[langCode] = {
+            title: "",
+            description: "",
+            promotionalText: "",
+            whatsNew: "",
+            keywords: ""
+          };
         }
         
         // Копируем глобальные поля
@@ -1146,15 +1166,21 @@ export default function BannerGenerator() {
       // Обрабатываем данные баннеров
       Object.entries(data.banners).forEach(([langCode, banners]: [string, any]) => {
         if (!newLocalizedContent[langCode]) {
-          newLocalizedContent[langCode] = {};
+          // Создаем структуру для нового языка
+          newLocalizedContent[langCode] = {
+            title: "",
+            description: "",
+            promotionalText: "",
+            whatsNew: "",
+            keywords: ""
+          };
         }
         
         // Копируем данные каждого баннера
         Object.entries(banners).forEach(([previewKey, content]: [string, any]) => {
-          newLocalizedContent[langCode][previewKey] = {
-            title: content.title || "",
-            description: content.description || ""
-          };
+          // Добавляем данные баннера как дополнительные поля
+          newLocalizedContent[langCode][`${previewKey}_title`] = content.title || "";
+          newLocalizedContent[langCode][`${previewKey}_description`] = content.description || "";
         });
       });
       
@@ -2697,6 +2723,36 @@ export default function BannerGenerator() {
                       </DialogHeader>
                       <div className="space-y-4 py-4">
                         {/* Диалог импорта JSON */}
+                        <div className="space-y-4 py-4">
+                          <div className="flex flex-col gap-4">
+                            <div>
+                              <Label>Импорт из файла</Label>
+                              <Input 
+                                type="file" 
+                                accept=".json"
+                                onChange={handleImportFile}
+                                className="mt-2"
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label>Или вставьте JSON текст</Label>
+                              <Textarea
+                                value={jsonImportText}
+                                onChange={(e) => setJsonImportText(e.target.value)}
+                                placeholder="Вставьте JSON здесь..."
+                                className="mt-2 min-h-[200px]"
+                              />
+                              <Button 
+                                onClick={handleImportFromText}
+                                className="mt-2"
+                                disabled={!jsonImportText}
+                              >
+                                Импортировать из текста
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </DialogContent>
                   </Dialog>
