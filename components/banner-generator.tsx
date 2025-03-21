@@ -1452,8 +1452,13 @@ export default function BannerGenerator() {
                 element.className = classes.join(' ');
               });
               
-              // Удаляем рамки и тени
-              exportElement.classList.remove('border', 'border-blue-500', 'shadow-xl');
+              // НЕ удаляем рамки и тени для девайса
+              const nonDeviceElements = exportElement.querySelectorAll('.banner-content');
+              nonDeviceElements.forEach(el => {
+                if (el instanceof HTMLElement) {
+                  el.classList.remove('border', 'border-blue-500', 'shadow-xl');
+                }
+              });
               
               // Устанавливаем стили для экспорта
               exportElement.style.position = 'absolute';
@@ -1464,20 +1469,23 @@ export default function BannerGenerator() {
               exportElement.style.margin = '0';
               exportElement.style.padding = '0';
               exportElement.style.borderRadius = '0';
-              exportElement.style.border = 'none';
               exportElement.style.width = '323px';
               exportElement.style.height = '699px';
               exportElement.style.boxSizing = 'border-box';
               
-              // Удаляем нижние отступы и прочие элементы, которые могут вызывать пространство внизу
-              const allElements = exportElement.querySelectorAll('*');
-              allElements.forEach(el => {
-                if (el instanceof HTMLElement) {
-                  el.style.marginBottom = '0';
-                  el.style.paddingBottom = '0';
-                  el.style.borderBottom = 'none';
-                }
-              });
+              // Сохраняем оригинальные вертикальные отступы
+              const deviceElement = exportElement.querySelector('.banner-device-target');
+              const textElement = exportElement.querySelector('.banner-text-container');
+              let originalDeviceTransform = '';
+              let originalTextTransform = '';
+              
+              if (deviceElement instanceof HTMLElement) {
+                originalDeviceTransform = deviceElement.style.transform;
+              }
+              
+              if (textElement instanceof HTMLElement) {
+                originalTextTransform = textElement.style.transform;
+              }
               
               // Используем html2canvas для рендеринга
               const canvas = await html2canvas(exportElement as HTMLElement, {
@@ -1488,7 +1496,22 @@ export default function BannerGenerator() {
                 width: 323,
                 height: 699,
                 logging: false,
-                removeContainer: false
+                removeContainer: false,
+                onclone: (clonedDoc, element) => {
+                  // Восстанавливаем оригинальные трансформации в клоне
+                  const clonedDevice = clonedDoc.querySelector('.banner-device-target');
+                  const clonedText = clonedDoc.querySelector('.banner-text-container');
+                  
+                  if (clonedDevice instanceof HTMLElement && originalDeviceTransform) {
+                    clonedDevice.style.transform = originalDeviceTransform;
+                  }
+                  
+                  if (clonedText instanceof HTMLElement && originalTextTransform) {
+                    clonedText.style.transform = originalTextTransform;
+                  }
+                  
+                  return element;
+                }
               });
               
               // Создаем новый canvas с точными размерами
