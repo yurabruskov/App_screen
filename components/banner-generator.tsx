@@ -302,12 +302,12 @@ const NumberInputWithSlider = ({ value, onChange, min, max, step = 1, unit, clas
 };
 
 export default function BannerGenerator() {
-  const [activeLanguage, setActiveLanguage] = useState("en")
+  const [activeLanguage, setActiveLanguage] = useState("ru")
   const [bannerSettings, setBannerSettings] = useState(DEFAULT_SETTINGS)
   const [localizedContent, setLocalizedContent] = useState<LocalizedContent>({
-    en: { 
-      title: "TEST TITLE", 
-      description: "TEST description",
+    ru: { 
+      title: "ЗАГОЛОВОК", 
+      description: "Описание",
       promotionalText: "",
       whatsNew: "",
       keywords: ""
@@ -356,6 +356,57 @@ export default function BannerGenerator() {
       }
     }
   ]);
+
+  // Add localStorage functionality to persist banner data
+
+  // Add useEffect to load data from localStorage when component mounts
+  useEffect(() => {
+    const savedContent = localStorage.getItem('bannerGeneratorContent');
+    const savedPreviewItems = localStorage.getItem('bannerGeneratorPreviewItems');
+    
+    if (savedContent) {
+      try {
+        const parsedContent = JSON.parse(savedContent);
+        setLocalizedContent(parsedContent);
+      } catch (e) {
+        console.error('Error parsing saved content:', e);
+      }
+    }
+    
+    if (savedPreviewItems) {
+      try {
+        const parsedItems = JSON.parse(savedPreviewItems);
+        // Need to recreate File objects which can't be stored in JSON
+        const itemsWithoutFiles = parsedItems.map(item => ({
+          ...item,
+          screenshot: {
+            ...item.screenshot,
+            file: null // Files need to be loaded separately from IndexedDB
+          }
+        }));
+        setPreviewItems(itemsWithoutFiles);
+      } catch (e) {
+        console.error('Error parsing saved preview items:', e);
+      }
+    }
+  }, []);
+
+  // Add useEffect to save data to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('bannerGeneratorContent', JSON.stringify(localizedContent));
+  }, [localizedContent]);
+
+  useEffect(() => {
+    const previewItemsToSave = previewItems.map(item => ({
+      ...item,
+      screenshot: {
+        ...item.screenshot,
+        // Don't include the file in JSON storage - that's handled by IndexedDB
+        file: item.screenshot?.file ? true : null // Just store whether it has a file or not
+      }
+    }));
+    localStorage.setItem('bannerGeneratorPreviewItems', JSON.stringify(previewItemsToSave));
+  }, [previewItems]);
 
   // Исправление порядка хуков useEffect для корректной загрузки данных
   // Перемещаем хук загрузки previewItems из localStorage перед другими хуками
@@ -541,11 +592,19 @@ export default function BannerGenerator() {
     setLocalizedContent(newLocalizedContent)
   }
 
-  const getPreviewContent = (langCode: string, previewId: number, field: keyof LocalizedContent): string => {
-    // Try to get preview-specific content first
-    const specificKey = `preview_${previewId}_${field}`
-    if (localizedContent[langCode] && localizedContent[langCode][specificKey] !== undefined) {
-      return localizedContent[langCode][specificKey]
+  // Update the getPreviewContent function to properly retrieve banner content
+  const getPreviewContent = (langCode: string, previewId: number, field: string): string => {
+    // Skip if there's no language data
+    if (!localizedContent[langCode]) {
+      return ""
+    }
+
+    // Banner-specific content is stored with key format "preview_<id>_<field>"
+    const previewKey = `preview_${previewId}_${field}`
+    
+    // Check if there's custom content for this preview
+    if (localizedContent[langCode][previewKey]) {
+      return localizedContent[langCode][previewKey]
     }
 
     // Fall back to general content
@@ -1945,11 +2004,12 @@ export default function BannerGenerator() {
     setEditingText({ type, bannerId, value });
   };
 
+  // Update the saveInlineTextEdit function to use the correct key format
   const saveInlineTextEdit = () => {
     if (!editingText) return;
     
     const { type, bannerId, value } = editingText;
-    const previewKey = `preview_${bannerId}`;
+    const previewKey = `preview_${bannerId}_${type}`;
     
     // Update the localized content
     const newLocalizedContent = { ...localizedContent };
@@ -1963,12 +2023,34 @@ export default function BannerGenerator() {
       };
     }
     
-    newLocalizedContent[activeLanguage][previewKey + "_" + type] = value;
+    // Store content using the proper key format that matches getPreviewContent
+    newLocalizedContent[activeLanguage][previewKey] = value;
     setLocalizedContent(newLocalizedContent);
     
     // Clear editing state
     setEditingText(null);
   };
+
+  // Add a ref for the textarea element
+  const textareaRef = useRef(null);
+
+  // Add a function to automatically adjust the textarea height
+  const adjustTextareaHeight = (textarea) => {
+    if (!textarea) return;
+    
+    // Reset height to auto to get the correct scrollHeight
+    textarea.style.height = 'auto';
+    
+    // Set the height to match the content
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  };
+
+  // Move the useEffect for textarea adjustment outside nested functions
+  useEffect(() => {
+    if (editingText && textareaRef.current) {
+      adjustTextareaHeight(textareaRef.current);
+    }
+  }, [editingText]);
 
   // Функция для рендеринга баннера
   const renderBanner = (item, index) => {
@@ -1987,15 +2069,36 @@ export default function BannerGenerator() {
     const renderEditableText = (type, content, elementStyle, additionalStyle = {}) => {
       const isEditing = editingText && editingText.type === type && editingText.bannerId === item.id;
       
+      // Calculate consistent dimensions for both view and edit modes
+      const containerStyle = {
+        ...additionalStyle,
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+      };
+      
+      const textStyle = {
+        ...elementStyle,
+        textAlign: 'center',
+        fontSize: type === 'title' ? '1.5rem' : '1rem',
+        fontWeight: type === 'title' ? 'bold' : 'normal',
+        lineHeight: type === 'title' ? '1.2' : '1.5',
+        width: '100%',
+        margin: '0 auto',
+      };
+      
       return isEditing ? (
-        <div 
-          className="relative"
-          style={additionalStyle}
-        >
+        <div style={containerStyle}>
           <textarea
-            className="w-full bg-transparent text-center outline-none resize-none border border-blue-500 rounded p-1"
+            ref={textareaRef}
+            className="w-full bg-transparent outline-none resize-none p-1"
             value={editingText.value}
-            onChange={(e) => setEditingText({ ...editingText, value: e.target.value })}
+            onChange={(e) => {
+              setEditingText({ ...editingText, value: e.target.value });
+              adjustTextareaHeight(e.target);
+            }}
             onBlur={saveInlineTextEdit}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
@@ -2005,8 +2108,14 @@ export default function BannerGenerator() {
             }}
             autoFocus
             style={{
-              ...elementStyle,
-              height: type === 'title' ? '2.5rem' : '3.5rem',
+              ...textStyle,
+              height: 'auto',
+              minHeight: type === 'title' ? '2.5rem' : '3.5rem',
+              display: 'block',
+              overflow: 'hidden',
+              border: 'none',
+              background: 'rgba(59, 130, 246, 0.05)',
+              verticalAlign: 'top',
             }}
           />
         </div>
@@ -2018,14 +2127,14 @@ export default function BannerGenerator() {
               handleInlineTextEdit(type, item.id, content);
             }
           }}
-          style={additionalStyle}
+          style={containerStyle}
         >
           {type === 'title' ? (
-            <h2 className="text-2xl font-bold text-center" style={elementStyle}>
+            <h2 style={textStyle} className="text-2xl font-bold">
               {content || "Title"}
             </h2>
           ) : (
-            <p className="text-base text-center" style={elementStyle}>
+            <p style={textStyle} className="text-base">
               {content || "Description"}
             </p>
           )}
@@ -2240,18 +2349,50 @@ export default function BannerGenerator() {
   const handleJsonExport = () => {
     const exportData = {};
     
-    // Собираем все языки
-    Object.keys(localizedContent).forEach(langCode => {
+    // Get Russian content as the reference language
+    const ruContent = localizedContent["ru"] || {
+      title: "",
+      description: "",
+      promotionalText: "",
+      whatsNew: "",
+      keywords: "",
+    };
+    
+    // Add Russian content to export data
+    exportData["ru"] = {
+      title: ruContent.title || "",
+      description: ruContent.description || "",
+      promotionalText: ruContent.promotionalText || "",
+      whatsNew: ruContent.whatsNew || "",
+      keywords: ruContent.keywords || "",
+      previews: {}
+    };
+    
+    // Add preview-specific content for Russian
+    previewItems.forEach(preview => {
+      const previewKey = `preview_${preview.id}`;
+      exportData["ru"].previews[previewKey] = {
+        title: getPreviewContent("ru", preview.id, "title") || "",
+        description: getPreviewContent("ru", preview.id, "description") || ""
+      };
+    });
+    
+    // Create empty placeholders for other languages
+    const otherLanguages = LANGUAGES.filter(lang => lang.code !== "ru").map(lang => lang.code);
+    
+    otherLanguages.forEach(langCode => {
+      const langContent = localizedContent[langCode] || {};
+      
       exportData[langCode] = {
-        title: localizedContent[langCode].title || "",
-        description: localizedContent[langCode].description || "",
-        promotionalText: localizedContent[langCode].promotionalText || "",
-        whatsNew: localizedContent[langCode].whatsNew || "",
-        keywords: localizedContent[langCode].keywords || "",
+        title: langContent.title || "",
+        description: langContent.description || "",
+        promotionalText: langContent.promotionalText || "",
+        whatsNew: langContent.whatsNew || "",
+        keywords: langContent.keywords || "",
         previews: {}
       };
       
-      // Добавляем контент для каждого превью
+      // Add empty or existing preview-specific content for other languages
       previewItems.forEach(preview => {
         const previewKey = `preview_${preview.id}`;
         exportData[langCode].previews[previewKey] = {
@@ -2261,7 +2402,7 @@ export default function BannerGenerator() {
       });
     });
     
-    // Создаем и скачиваем файл
+    // Create and download file
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

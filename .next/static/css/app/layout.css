@@ -1306,9 +1306,6 @@ video {
 .break-words {
   overflow-wrap: break-word;
 }
-.rounded {
-  border-radius: 0.25rem;
-}
 .rounded-\[2px\] {
   border-radius: 2px;
 }
@@ -1387,10 +1384,6 @@ video {
 }
 .border-\[--color-border\] {
   border-color: var(--color-border);
-}
-.border-blue-500 {
-  --tw-border-opacity: 1;
-  border-color: rgb(59 130 246 / var(--tw-border-opacity, 1));
 }
 .border-border\/50 {
   border-color: hsl(var(--border) / 0.5);
