@@ -662,24 +662,30 @@ export default function BannerGenerator() {
     setLocalizedContent(newLocalizedContent)
   }
 
-  // Update the getPreviewContent function to properly retrieve banner content
-  const getPreviewContent = (langCode: string, previewId: number, field: string): string => {
-    // Skip if there's no language data
+  // Функция для получения глобального контента
+  const getGlobalContent = (langCode: string, field: string): string => {
+    // Проверяем наличие языковых данных
     if (!localizedContent[langCode]) {
-      return ""
+      return "";
     }
 
-    // Banner-specific content is stored with key format "preview_<id>_<field>"
-    const previewKey = `preview_${previewId}_${field}`
+    // Возвращаем глобальный контент
+    return localizedContent[langCode]?.[field] || "";
+  };
+
+  // Обновляем функцию getPreviewContent для работы только с контентом баннеров
+  const getPreviewContent = (langCode: string, previewId: number, field: string): string => {
+    // Проверяем наличие языковых данных
+    if (!localizedContent[langCode]) {
+      return "";
+    }
+
+    // Формируем ключ для контента баннера
+    const previewKey = `preview_${previewId}_${field}`;
     
-    // Check if there's custom content for this preview
-    if (localizedContent[langCode][previewKey]) {
-      return localizedContent[langCode][previewKey]
-    }
-
-    // Fall back to general content
-    return localizedContent[langCode]?.[field] || ""
-  }
+    // Возвращаем контент баннера или пустую строку
+    return localizedContent[langCode]?.[previewKey] || "";
+  };
 
   // Полностью заменяем эту функцию
   const handleScreenshotUpload = (file: File) => {
@@ -1045,6 +1051,125 @@ export default function BannerGenerator() {
       separateElements,
     }
   }
+
+  // Обновляем функции для импорта JSON
+  const handleImportFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files || !event.target.files[0]) return;
+    
+    try {
+      const file = event.target.files[0];
+      const text = await file.text();
+      const data = JSON.parse(text);
+      
+      // Проверяем структуру данных
+      if (!data.global || !data.banners) {
+        throw new Error('Неверный формат JSON: отсутствуют разделы global или banners');
+      }
+      
+      // Создаем новый объект для локализованного контента
+      const newLocalizedContent = { ...localizedContent };
+      
+      // Обрабатываем глобальные данные
+      Object.entries(data.global).forEach(([langCode, content]: [string, any]) => {
+        if (!newLocalizedContent[langCode]) {
+          newLocalizedContent[langCode] = {};
+        }
+        
+        // Копируем глобальные поля
+        newLocalizedContent[langCode] = {
+          ...newLocalizedContent[langCode],
+          title: content.title || "",
+          description: content.description || "",
+          promotionalText: content.promotionalText || "",
+          whatsNew: content.whatsNew || "",
+          keywords: content.keywords || ""
+        };
+      });
+      
+      // Обрабатываем данные баннеров
+      Object.entries(data.banners).forEach(([langCode, banners]: [string, any]) => {
+        if (!newLocalizedContent[langCode]) {
+          newLocalizedContent[langCode] = {};
+        }
+        
+        // Копируем данные каждого баннера
+        Object.entries(banners).forEach(([previewKey, content]: [string, any]) => {
+          newLocalizedContent[langCode][previewKey] = {
+            title: content.title || "",
+            description: content.description || ""
+          };
+        });
+      });
+      
+      // Обновляем состояние
+      setLocalizedContent(newLocalizedContent);
+      
+      // Очищаем поле файла
+      event.target.value = '';
+      
+      alert('JSON успешно импортирован!');
+    } catch (error) {
+      console.error('Ошибка при импорте JSON:', error);
+      alert('Ошибка при импорте JSON. Проверьте формат файла.');
+    }
+  };
+
+  const handleImportFromText = () => {
+    try {
+      const data = JSON.parse(jsonImportText);
+      
+      // Проверяем структуру данных
+      if (!data.global || !data.banners) {
+        throw new Error('Неверный формат JSON: отсутствуют разделы global или banners');
+      }
+      
+      // Создаем новый объект для локализованного контента
+      const newLocalizedContent = { ...localizedContent };
+      
+      // Обрабатываем глобальные данные
+      Object.entries(data.global).forEach(([langCode, content]: [string, any]) => {
+        if (!newLocalizedContent[langCode]) {
+          newLocalizedContent[langCode] = {};
+        }
+        
+        // Копируем глобальные поля
+        newLocalizedContent[langCode] = {
+          ...newLocalizedContent[langCode],
+          title: content.title || "",
+          description: content.description || "",
+          promotionalText: content.promotionalText || "",
+          whatsNew: content.whatsNew || "",
+          keywords: content.keywords || ""
+        };
+      });
+      
+      // Обрабатываем данные баннеров
+      Object.entries(data.banners).forEach(([langCode, banners]: [string, any]) => {
+        if (!newLocalizedContent[langCode]) {
+          newLocalizedContent[langCode] = {};
+        }
+        
+        // Копируем данные каждого баннера
+        Object.entries(banners).forEach(([previewKey, content]: [string, any]) => {
+          newLocalizedContent[langCode][previewKey] = {
+            title: content.title || "",
+            description: content.description || ""
+          };
+        });
+      });
+      
+      // Обновляем состояние
+      setLocalizedContent(newLocalizedContent);
+      
+      // Очищаем поле ввода
+      setJsonImportText('');
+      
+      alert('JSON успешно импортирован!');
+    } catch (error) {
+      console.error('Ошибка при импорте JSON:', error);
+      alert('Ошибка при импорте JSON. Проверьте формат текста.');
+    }
+  };
 
   // Handle JSON import
   const handleJsonImport = () => {
@@ -1450,7 +1575,7 @@ export default function BannerGenerator() {
                 <div>
                   <Label className="text-sm">Promotional Text</Label>
                   <Textarea
-                    value={getPreviewContent(activeLanguage, "global", "promotionalText") || ""}
+                    value={getGlobalContent(activeLanguage, "promotionalText") || ""}
                     onChange={(e) => {
                       updateLocalizedContent(activeLanguage, "promotionalText", e.target.value)
                     }}
@@ -1463,7 +1588,7 @@ export default function BannerGenerator() {
                 <div>
                   <Label className="text-sm">Description</Label>
                   <Textarea
-                    value={getPreviewContent(activeLanguage, "global", "description") || ""}
+                    value={getGlobalContent(activeLanguage, "description") || ""}
                     onChange={(e) => {
                       updateLocalizedContent(activeLanguage, "description", e.target.value)
                     }}
@@ -1476,7 +1601,7 @@ export default function BannerGenerator() {
                 <div>
                   <Label className="text-sm">What's New in This Version</Label>
                   <Textarea
-                    value={getPreviewContent(activeLanguage, "global", "whatsNew") || ""}
+                    value={getGlobalContent(activeLanguage, "whatsNew") || ""}
                     onChange={(e) => {
                       updateLocalizedContent(activeLanguage, "whatsNew", e.target.value)
                     }}
@@ -1489,7 +1614,7 @@ export default function BannerGenerator() {
                 <div>
                   <Label className="text-sm">Keywords</Label>
                   <Input
-                    value={getPreviewContent(activeLanguage, "global", "keywords") || ""}
+                    value={getGlobalContent(activeLanguage, "keywords") || ""}
                     onChange={(e) => {
                       updateLocalizedContent(activeLanguage, "keywords", e.target.value)
                     }}
@@ -2356,62 +2481,40 @@ export default function BannerGenerator() {
 
   // Добавляем функцию для экспорта JSON с текущим контентом
   const handleJsonExport = () => {
-    const exportData = {};
-    
-    // Get Russian content as the reference language
-    const ruContent = localizedContent["ru"] || {
-      title: "",
-      description: "",
-      promotionalText: "",
-      whatsNew: "",
-      keywords: "",
+    const exportData = {
+      global: {},
+      banners: {}
     };
     
-    // Add Russian content to export data
-    exportData["ru"] = {
-      title: ruContent.title || "",
-      description: ruContent.description || "",
-      promotionalText: ruContent.promotionalText || "",
-      whatsNew: ruContent.whatsNew || "",
-      keywords: ruContent.keywords || "",
-      previews: {}
-    };
-    
-    // Add preview-specific content for Russian
-    previewItems.forEach(preview => {
-      const previewKey = `preview_${preview.id}`;
-      exportData["ru"].previews[previewKey] = {
-        title: getPreviewContent("ru", preview.id, "title") || "",
-        description: getPreviewContent("ru", preview.id, "description") || ""
-      };
-    });
-    
-    // Create empty placeholders for other languages
-    const otherLanguages = LANGUAGES.filter(lang => lang.code !== "ru").map(lang => lang.code);
-    
-    otherLanguages.forEach(langCode => {
-      const langContent = localizedContent[langCode] || {};
+    // Обрабатываем все языки
+    LANGUAGES.forEach(({ code: langCode }) => {
+      // Добавляем глобальный контент
+      if (!exportData.global[langCode]) {
+        exportData.global[langCode] = {
+          title: getGlobalContent(langCode, "title") || "",
+          description: getGlobalContent(langCode, "description") || "",
+          promotionalText: getGlobalContent(langCode, "promotionalText") || "",
+          whatsNew: getGlobalContent(langCode, "whatsNew") || "",
+          keywords: getGlobalContent(langCode, "keywords") || ""
+        };
+      }
       
-      exportData[langCode] = {
-        title: langContent.title || "",
-        description: langContent.description || "",
-        promotionalText: langContent.promotionalText || "",
-        whatsNew: langContent.whatsNew || "",
-        keywords: langContent.keywords || "",
-        previews: {}
-      };
+      // Добавляем контент баннеров
+      if (!exportData.banners[langCode]) {
+        exportData.banners[langCode] = {};
+      }
       
-      // Add empty or existing preview-specific content for other languages
+      // Добавляем контент для каждого баннера
       previewItems.forEach(preview => {
         const previewKey = `preview_${preview.id}`;
-        exportData[langCode].previews[previewKey] = {
+        exportData.banners[langCode][previewKey] = {
           title: getPreviewContent(langCode, preview.id, "title") || "",
           description: getPreviewContent(langCode, preview.id, "description") || ""
         };
       });
     });
     
-    // Create and download file
+    // Создаем и скачиваем файл
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
