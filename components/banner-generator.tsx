@@ -1,43 +1,30 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
-import {
-  Download,
-  Plus,
-  Trash2,
-  ImageIcon,
-  Smartphone,
-  Upload,
-  Copy,
-  AlignCenter,
-  AlignLeft,
-  AlignRight,
-  AlignJustify,
-  ChevronLeft,
-  ChevronRight,
-  Loader2,
-  ArrowDownToLine,
-} from "lucide-react"
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Slider } from "@/components/ui/slider"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Loader2, ArrowDownToLine, Plus, Trash2, ImageIcon, Smartphone, Upload, Copy, AlignCenter, AlignLeft, AlignRight, AlignJustify, ChevronLeft, ChevronRight, Download } from "lucide-react"
+import * as htmlToImage from 'html-to-image'
+import { saveAs } from 'file-saver'
+import JSZip from 'jszip'
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Textarea } from "@/components/ui/textarea"
-import { ColorPicker } from "@/components/color-picker"
 import { LanguageSelector } from "@/components/language-selector"
-import { exportBanners } from "@/lib/export-utils"
 import { LANGUAGES, DEFAULT_SETTINGS, DEVICE_POSITIONS } from "@/lib/constants"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import JSZip from "jszip"
-import html2canvas from "html2canvas"
-// @ts-ignore
-import domtoimage from "dom-to-image"
-// @ts-ignore
-import { saveAs } from "file-saver"
+import { ColorPicker } from "@/components/color-picker"
 
 interface PreviewContent {
   title: string;
@@ -1217,6 +1204,16 @@ export default function BannerGenerator() {
     setExportingProgress(0);
     
     try {
+      console.log("Начинаем процесс экспорта...");
+      
+      // Проверяем, инициализирована ли IndexedDB
+      if (!imageDBRef.current) {
+        console.log("Инициализируем IndexedDB...");
+        imageDBRef.current = new ImageDB();
+        // Ждем инициализации
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
       // Create a zip file to hold all banners
       const zip = new JSZip();
       
@@ -1225,53 +1222,153 @@ export default function BannerGenerator() {
       const totalBanners = previewItems.length * languages.length;
       let processedBanners = 0;
       
-      // Create a folder for each language
+      // Сохраняем текущий язык и индекс
+      const originalLang = activeLanguage;
+      const originalIndex = previewIndex;
+      
+      // Создаем массив для хранения задач экспорта
+      const exportTasks = [];
+      
+      // Создаем папки для каждого языка
       for (const langCode of languages) {
-        // Create a folder for this language
         const langFolder = zip.folder(langCode);
         if (!langFolder) continue;
         
-        // Export all previews for this language
+        // Подготавливаем задачи экспорта для каждого баннера
         for (let i = 0; i < previewItems.length; i++) {
           const item = previewItems[i];
-          const preview = document.getElementById(`preview-${item.id}`);
-          
-          if (preview) {
-            // Active language switch temporarily to render correct language
-            const originalLang = activeLanguage;
-            setActiveLanguage(langCode);
-            
-            // Force render the banner with this language
-            console.log(`Rendering banner ${i} for language ${langCode}`);
-            
-            // Use domtoimage to capture the banner
-            await new Promise<void>(resolve => {
-              setTimeout(async () => {
-                try {
-                  const blob = await domtoimage.toBlob(preview);
-                  langFolder.file(`banner_${item.id}.png`, blob);
-                  processedBanners++;
-                  setExportingProgress((processedBanners / totalBanners) * 100);
-                  resolve();
-                } catch (error) {
-                  console.error("Error generating image:", error);
-                  resolve();
-                }
-              }, 100); // Give time for the language change to apply
-            });
-            
-            // Restore original language
-            setActiveLanguage(originalLang);
-          }
+          exportTasks.push({
+            langCode,
+            bannerIndex: i,
+            bannerId: item.id,
+            folder: langFolder
+          });
         }
       }
       
-      // Generate the zip file
+      // Функция для обработки одного баннера
+      const processBanner = async (task) => {
+        try {
+          console.log(`Экспорт баннера #${task.bannerId} для языка ${task.langCode}`);
+          
+          // Устанавливаем активный язык и индекс
+          setActiveLanguage(task.langCode);
+          setPreviewIndex(task.bannerIndex);
+          
+          // Даем интерфейсу перерисоваться с новыми настройками
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          // Получаем DOM-элемент баннера
+          const bannerElement = document.getElementById(`preview-${task.bannerId}`);
+          if (!bannerElement) {
+            console.error(`Не найден элемент с ID preview-${task.bannerId}`);
+            return;
+          }
+          
+          console.log(`Найден элемент баннера:`, bannerElement);
+          
+          // Создаем временный canvas нужного размера
+          const canvas = document.createElement('canvas');
+          canvas.width = 1290;
+          canvas.height = 2796;
+          
+          // Получаем контекст для рисования
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            console.error("Не удалось получить 2D контекст canvas");
+            return;
+          }
+          
+          // Заполняем фон
+          ctx.fillStyle = previewItems[task.bannerIndex].backgroundColor || '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          
+          // Получаем изображение баннера с помощью html-to-image
+          // Но с меньшим размером для скорости
+          const options = {
+            pixelRatio: 1,
+            backgroundColor: 'transparent', // Прозрачный фон, т.к. мы уже заполнили canvas
+            skipFonts: false,
+            fontEmbedCSS: true,
+            filter: (node) => {
+              // Исключаем контролы редактирования из экспорта
+              return !node.classList?.contains('banner-controls') && 
+                     !node.classList?.contains('banner-edit-icons') && 
+                     !node.classList?.contains('banner-options');
+            }
+          };
+          
+          // Получаем изображение DOM-элемента
+          console.log(`Генерируем изображение для баннера #${task.bannerId}`);
+          const dataUrl = await htmlToImage.toPng(bannerElement, options);
+          
+          // Загружаем полученное изображение
+          const img = new Image();
+          await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+            img.src = dataUrl;
+          });
+          
+          // Масштабируем изображение, сохраняя пропорции
+          const scale = Math.min(
+            canvas.width / img.width,
+            canvas.height / img.height
+          );
+          
+          // Вычисляем новые размеры с сохранением пропорций
+          const newWidth = img.width * scale;
+          const newHeight = img.height * scale;
+          
+          // Центрируем изображение
+          const x = (canvas.width - newWidth) / 2;
+          const y = (canvas.height - newHeight) / 2;
+          
+          // Рисуем изображение на canvas с масштабированием
+          ctx.drawImage(img, x, y, newWidth, newHeight);
+          
+          // Получаем финальное изображение нужного размера
+          const finalDataUrl = canvas.toDataURL('image/png');
+          
+          // Конвертируем data URL в Blob
+          const blob = await fetch(finalDataUrl).then(res => res.blob());
+          console.log(`Blob создан размером ${blob.size} байт`);
+          
+          // Добавляем в архив
+          task.folder.file(`banner_${task.bannerId}.png`, blob);
+          console.log(`Баннер #${task.bannerId} для языка ${task.langCode} добавлен в архив`);
+          
+          // Обновляем прогресс
+          processedBanners++;
+          setExportingProgress(Math.floor((processedBanners / totalBanners) * 100));
+          
+          return true;
+        } catch (error) {
+          console.error(`Ошибка при экспорте баннера #${task.bannerId}:`, error);
+          return false;
+        }
+      };
+      
+      // Обрабатываем баннеры последовательно
+      for (const task of exportTasks) {
+        await processBanner(task);
+      }
+      
+      // Восстанавливаем исходный язык и индекс
+      setActiveLanguage(originalLang);
+      setPreviewIndex(originalIndex);
+      
+      // Генерируем ZIP-архив
+      console.log('Генерация архива...');
       const content = await zip.generateAsync({ type: "blob" });
+      console.log(`Размер архива: ${content.size} байт`);
+      
+      // Сохраняем
       saveAs(content, "app_banners.zip");
+      console.log('Экспорт завершен успешно!');
     } catch (error) {
-      console.error("Error during export:", error);
-      alert("An error occurred during export. Please try again.");
+      console.error("Ошибка при экспорте:", error);
+      alert("Произошла ошибка при экспорте. Пожалуйста, попробуйте снова.");
     } finally {
       setIsExporting(false);
       setExportingProgress(0);
@@ -2056,16 +2153,16 @@ export default function BannerGenerator() {
 
     return (
       <div
-        key={item.id}
-        className={`relative cursor-pointer transition-all ${isActive ? "ring-2 ring-blue-500" : "opacity-90 hover:opacity-100"}`}
+        key={`banner-${item.id}`}
+        id={`preview-${item.id}`}
+        className={`relative rounded-lg pb-4 overflow-hidden banner border ${isActive ? "border-blue-500 shadow-xl" : "border-transparent"}`}
         onClick={() => setPreviewIndex(index)}
         style={{
+          backgroundColor: item.backgroundColor || "#007AFF",
           width: "320px",
           height: "690px",
-          flexShrink: 0,
-          borderRadius: "16px",
-          overflow: "hidden",
-          margin: "0 8px",
+          position: "relative",
+          margin: "0 auto",
         }}
       >
         <div
@@ -2438,315 +2535,151 @@ export default function BannerGenerator() {
     setLocalizedContent(newLocalizedContent);
   };
 
+  // Добавим useLayoutEffect, чтобы избежать проблем с гидратацией
+  const [domLoaded, setDomLoaded] = useState(false);
+
+  // Используем useEffect для установки domLoaded когда компонент монтируется на клиенте
+  useEffect(() => {
+    setDomLoaded(true);
+  }, []);
+
+  // Добавим функцию для рисования скругленного прямоугольника
+  const drawRoundedRect = (ctx, x, y, width, height, radius) => {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+    return ctx;
+  };
+
+  // Убедиться, что IndexedDB инициализируется корректно
+  useEffect(() => {
+    // Инициализируем БД для хранения изображений только на клиенте
+    if (typeof window !== 'undefined') {
+      if (!imageDBRef.current) {
+        imageDBRef.current = new ImageDB();
+        console.log('IndexedDB initialized');
+      }
+    }
+  }, []);
+
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Fixed header */}
-      <header className="fixed top-0 left-0 right-0 bg-white border-b py-4 px-6 z-50 shadow-sm">
-        <div className="container mx-auto">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold">App Store Banner Generator</h1>
-            
-            <div className="flex items-center gap-4">
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="outline">
-                    <Upload className="mr-2 h-4 w-4" />
-                    Import JSON
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Import Localized Content</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="grid gap-4">
-                      <div>
-                        <Label>JSON Content</Label>
-                        <Textarea
-                          placeholder="Paste your JSON here..."
-                          value={jsonImportText}
-                          onChange={(e) => setJsonImportText(e.target.value)}
-                          className="font-mono min-h-[300px] bg-slate-50"
-                        />
+    <>
+      {domLoaded ? (
+        <div className="min-h-screen flex flex-col">
+          {/* Fixed header */}
+          <header className="fixed top-0 left-0 right-0 bg-white border-b py-4 px-6 z-50 shadow-sm">
+            <div className="container mx-auto">
+              <div className="flex justify-between items-center">
+                <h1 className="text-2xl font-bold">App Store Banner Generator</h1>
+                
+                <div className="flex items-center gap-4">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline">
+                        <Upload className="mr-2 h-4 w-4" />
+                        Import JSON
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>Import Localized Content</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        {/* Диалог импорта JSON */}
                       </div>
-                      <div className="space-y-2">
-                        <Label>Expected Format</Label>
-                        <div className="text-sm text-muted-foreground space-y-2">
-                          <p>Your JSON should include translations for all supported languages with the following structure:</p>
-                          <pre className="bg-slate-100 p-4 rounded-md overflow-auto text-xs">
-{`{
-  "ru": {
-    "title": "Заголовок на русском",
-    "description": "Описание на русском",
-    "promotionalText": "Промо-текст на русском",
-    "whatsNew": "Что нового в этой версии",
-    "keywords": "ключевое слово1, ключевое слово2"
-  },
-  "en": {
-    "title": "English Title",
-    "description": "English Description",
-    "promotionalText": "Promotional Text in English",
-    "whatsNew": "What's New in This Version",
-    "keywords": "keyword1, keyword2"
-  }
-}`}
-                          </pre>
-                          <div className="mt-4 space-y-2">
-                            <p className="font-semibold">Required fields for each language:</p>
-                            <ul className="list-disc list-inside space-y-1 ml-2">
-                              <li><code>title</code>: Main title for the banner</li>
-                              <li><code>description</code>: Detailed description</li>
-                              <li><code>promotionalText</code>: App Store promotional text</li>
-                              <li><code>whatsNew</code>: Update information</li>
-                              <li><code>keywords</code>: Comma-separated keywords</li>
-                            </ul>
-                          </div>
+                    </DialogContent>
+                  </Dialog>
+                  
+                  <Button variant="outline" onClick={handleJsonExport}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Export JSON
+                  </Button>
+                  
+                  <LanguageSelector languages={LANGUAGES} activeLanguage={activeLanguage} onChange={handleLanguageChange} />
+                  
+                  <Button variant="default" onClick={handleExport} disabled={isExporting}>
+                    {isExporting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Exporting {Math.round(exportingProgress)}%
+                      </>
+                    ) : (
+                      <>
+                        <ArrowDownToLine className="mr-2 h-4 w-4" />
+                        Export All Images
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {/* Add padding to content area to account for fixed header */}
+          <div className="flex-grow container mx-auto px-4 py-6 mt-[116px]">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+              {/* Left panel - Banners */}
+              <div>
+                <Card className="overflow-hidden">
+                  <CardContent className="p-0">
+                    <div className="bg-gray-100 p-6 flex flex-col min-h-[800px]"
+                         onClick={(e) => {
+                           // Проверяем, что клик был именно по фоновой области
+                           if (e.target === e.currentTarget) {
+                             setActiveElement("banner");
+                           }
+                         }}>
+                      {/* Horizontal scrollable banners */}
+                      <div
+                        ref={scrollContainerRef}
+                        className="flex overflow-x-auto pb-4 pt-2 px-2 -mx-2 mb-4 snap-x"
+                        style={{ scrollbarWidth: "thin" }}
+                      >
+                        {previewItems.map((item, index) => renderBanner(item, index))}
+
+                        <div
+                          className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-primary hover:bg-gray-50"
+                          style={{
+                            width: "320px",
+                            height: "690px",
+                            flexShrink: 0,
+                            margin: "0 8px",
+                          }}
+                          onClick={addPreview}
+                        >
+                          <Plus className="h-12 w-12 text-gray-400" />
                         </div>
                       </div>
                     </div>
-                    <Button onClick={handleJsonImport} className="w-full">
-                      Import Content
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-              
-              <Button variant="outline" onClick={handleJsonExport}>
-                <Download className="mr-2 h-4 w-4" />
-                Export JSON
-              </Button>
-              
-              <LanguageSelector languages={LANGUAGES} activeLanguage={activeLanguage} onChange={handleLanguageChange} />
-              
-              <Button variant="primary" onClick={handleExport} disabled={isExporting}>
-                {isExporting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Exporting {exportingProgress}%
-                  </>
-                ) : (
-                  <>
-                    <ArrowDownToLine className="mr-2 h-4 w-4" />
-                    Export All Images
-                  </>
-                )}
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  if (confirm("Это действие сбросит все настройки. Продолжить?")) {
-                    // Очищаем localStorage
-                    localStorage.clear();
-                    
-                    // Очищаем IndexedDB
-                    if (imageDBRef.current) {
-                      imageDBRef.current.clearAll()
-                        .then(() => {
-                          console.log('IndexedDB успешно очищен');
-                          window.location.reload();
-                        })
-                        .catch(error => {
-                          console.error('Ошибка при очистке IndexedDB:', error);
-                          window.location.reload();
-                        });
-                    } else {
-                      window.location.reload();
-                    }
-                  }
-                }}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Сбросить
-              </Button>
-            </div>
-          </div>
-          
-          <p className="text-sm text-muted-foreground mt-2">
-            Create beautiful banners for your App Store listings
-          </p>
-        </div>
-      </header>
+                  </CardContent>
+                </Card>
+              </div>
 
-      {/* Add padding to content area to account for fixed header */}
-      <div className="flex-grow container mx-auto px-4 py-6 mt-[116px]">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
-          {/* Left panel - Banners */}
-          <div>
-            <Card className="overflow-hidden">
-              <CardContent className="p-0">
-                <div className="bg-gray-100 p-6 flex flex-col min-h-[800px]"
-                     onClick={(e) => {
-                       // Проверяем, что клик был именно по фоновой области
-                       if (e.target === e.currentTarget) {
-                         setActiveElement("banner");
-                       }
-                     }}>
-                  {/* Horizontal scrollable banners */}
-                  <div
-                    ref={scrollContainerRef}
-                    className="flex overflow-x-auto pb-4 pt-2 px-2 -mx-2 mb-4 snap-x"
-                    style={{ scrollbarWidth: "thin" }}
-                  >
-                    {previewItems.map((item, index) => renderBanner(item, index))}
-
-                    <div
-                      className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-primary hover:bg-gray-50"
-                      style={{
-                        width: "320px",
-                        height: "690px",
-                        flexShrink: 0,
-                        margin: "0 8px",
-                      }}
-                      onClick={addPreview}
-                    >
-                      <Plus className="h-12 w-12 text-gray-400" />
-                    </div>
-                  </div>
-
-                  {/* Active banner reference */}
-                  <div className="hidden">
-                    <div
-                      className="relative"
-                      ref={canvasRef}
-                      style={{
-                        width: "320px",
-                        height: "690px",
-                        backgroundColor: previewItems[previewIndex]?.backgroundColor || "#007AFF",
-                        overflow: "hidden",
-                      }}
-                    >
-                      <div className="absolute inset-0">
-                        {/* Title and description - position changes based on device position */}
-                        {(() => {
-                          const currentBanner = previewItems[previewIndex] || {};
-                          const { titlePosition, descriptionPosition, separateElements } = getContentPositions(currentBanner.devicePosition || "center");
-                          
-                          // Render title and description
-                          const renderContent = () => {
-                            if (separateElements) {
-                              return (
-                                <>
-                                  {/* Title at the top */}
-                                  <div
-                                    className="absolute"
-                                    style={{
-                                      ...titlePosition,
-                                      transform: `${titlePosition.transform || ""} translateY(${previewItems[previewIndex]?.verticalOffset?.title || 0}px)`,
-                                    }}
-                                  >
-                                    <h2 className="text-2xl font-bold text-center" style={getTextStyle("title")}>
-                                      {getPreviewContent(activeLanguage, previewItems[previewIndex]?.id || 1, "title") || "Title"}
-                                    </h2>
-                                  </div>
-
-                                  {/* Description at the bottom */}
-                                  <div
-                                    className="absolute"
-                                    style={{
-                                      ...descriptionPosition,
-                                      transform: `${descriptionPosition.transform || ""} translateY(${previewItems[previewIndex]?.verticalOffset?.description || 0}px)`,
-                                    }}
-                                  >
-                                    <p className="text-base text-center" style={getTextStyle("description")}>
-                                      {getPreviewContent(activeLanguage, previewItems[previewIndex]?.id || 1, "description") || "Description"}
-                                    </p>
-                                  </div>
-                                </>
-                              );
-                            } else {
-                              return (
-                                <div
-                                  className="absolute"
-                                  style={{
-                                    ...titlePosition,
-                                    transform: `${titlePosition.transform || ""} translateY(${previewItems[previewIndex]?.verticalOffset?.combined || 0}px)`,
-                                  }}
-                                >
-                                  <h2 className="text-2xl font-bold mb-2 text-center" style={getTextStyle("title")}>
-                                    {getPreviewContent(activeLanguage, previewItems[previewIndex]?.id || 1, "title") || "Title"}
-                                  </h2>
-                                  <p className="text-base text-center" style={getTextStyle("description")}>
-                                    {getPreviewContent(activeLanguage, previewItems[previewIndex]?.id || 1, "description") || "Description"}
-                                  </p>
-                                </div>
-                              );
-                            }
-                          };
-
-                          // Render device/screenshot
-                          const renderDevice = () => {
-                            return (
-                              <div className="absolute" style={getDevicePositionStyles(previewItems[previewIndex] || {})}>
-                                {previewItems[previewIndex]?.screenshot?.file ? (
-                                  <div
-                                    style={{
-                                      borderWidth: `${previewItems[previewIndex].screenshot.borderWidth}px`,
-                                      borderStyle: "solid",
-                                      borderColor: previewItems[previewIndex].screenshot.borderColor,
-                                      borderRadius: `${previewItems[previewIndex].screenshot.borderRadius}px`,
-                                      overflow: "hidden",
-                                    }}
-                                  >
-                                    <img
-                                      src={URL.createObjectURL(previewItems[previewIndex].screenshot.file) || "/placeholder.svg"}
-                                      alt={`Screenshot ${previewItems[previewIndex].id}`}
-                                      style={{
-                                        width: "100%",
-                                        display: "block",
-                                      }}
-                                    />
-                                  </div>
-                                ) : (
-                                  <div
-                                    className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50"
-                                    style={{
-                                      width: "100%",
-                                      height: "400px",
-                                      borderWidth: `${previewItems[previewIndex]?.screenshot?.borderWidth || 8}px`,
-                                      borderStyle: "solid",
-                                      borderColor: `${previewItems[previewIndex]?.screenshot?.borderColor || "#000000"}`,
-                                      borderRadius: `${previewItems[previewIndex]?.screenshot?.borderRadius || 30}px`,
-                                    }}
-                                  >
-                                    <ImageIcon className="h-12 w-12 text-gray-400" />
-                                    <span className="mt-2 text-sm text-gray-500">No screenshot</span>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          };
-
-                          return (
-                            <>
-                              {renderContent()}
-                              {renderDevice()}
-                            </>
-                          );
-                        })()}
-                      </div>
-                    </div>
-                  </div>
+              {/* Right panel - Settings */}
+              <div>
+                {/* Панель настроек, растянутая на всю высоту экрана, но ниже шапки */}
+                <div className="fixed top-0 right-0 h-screen w-[320px]" style={{ paddingTop: 'calc(6rem + 1px)' }}>
+                  <Card className="h-full rounded-none border-l border-t-0 border-r-0 border-b-0">
+                    <CardContent className="p-6 h-full overflow-y-auto">
+                      {/* Context-sensitive settings panel */}
+                      {renderSettingsPanel()}
+                    </CardContent>
+                  </Card>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right panel - Settings */}
-          <div>
-            {/* Панель настроек, растянутая на всю высоту экрана, но ниже шапки */}
-            <div className="fixed top-0 right-0 h-screen w-[320px]" style={{ paddingTop: 'calc(6rem + 1px)' }}>
-              <Card className="h-full rounded-none border-l border-t-0 border-r-0 border-b-0">
-                <CardContent className="p-6 h-full overflow-y-auto">
-                  {/* Context-sensitive settings panel */}
-                  {renderSettingsPanel()}
-                </CardContent>
-              </Card>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      ) : null}
+    </>
   )
 }
 
