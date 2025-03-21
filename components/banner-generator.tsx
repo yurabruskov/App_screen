@@ -2162,7 +2162,7 @@ export default function BannerGenerator() {
           width: "320px",
           height: "690px",
           position: "relative",
-          margin: "0 auto",
+          margin: "0 15px", // Добавляем отступ 15px справа и слева (итого 30px между соседними баннерами)
         }}
       >
         <div
