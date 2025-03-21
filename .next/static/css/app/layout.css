@@ -817,6 +817,9 @@ video {
 .mt-4 {
   margin-top: 1rem;
 }
+.mt-\[116px\] {
+  margin-top: 116px;
+}
 .mt-auto {
   margin-top: auto;
 }
@@ -1140,6 +1143,15 @@ video {
 }
 .animate-pulse {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes spin {
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+.animate-spin {
+  animation: spin 1s linear infinite;
 }
 .cursor-default {
   cursor: default;

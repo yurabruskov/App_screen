@@ -15,6 +15,8 @@ import {
   AlignJustify,
   ChevronLeft,
   ChevronRight,
+  Loader2,
+  ArrowDownToLine,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -32,6 +34,10 @@ import { LANGUAGES, DEFAULT_SETTINGS, DEVICE_POSITIONS } from "@/lib/constants"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import JSZip from "jszip"
 import html2canvas from "html2canvas"
+// @ts-ignore
+import domtoimage from "dom-to-image"
+// @ts-ignore
+import { saveAs } from "file-saver"
 
 interface PreviewContent {
   title: string;
@@ -303,24 +309,102 @@ const NumberInputWithSlider = ({ value, onChange, min, max, step = 1, unit, clas
 
 export default function BannerGenerator() {
   const [activeLanguage, setActiveLanguage] = useState("ru")
-  const [bannerSettings, setBannerSettings] = useState(DEFAULT_SETTINGS)
-  const [localizedContent, setLocalizedContent] = useState<LocalizedContent>({
-    ru: { 
-      title: "ЗАГОЛОВОК", 
-      description: "Описание",
-      promotionalText: "",
-      whatsNew: "",
-      keywords: ""
+  const [bannerSettings, setBannerSettings] = useState(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const savedSettings = localStorage.getItem('bannerSettings');
+        if (savedSettings) {
+          return JSON.parse(savedSettings);
+        }
+      } catch (e) {
+        console.error('Error loading initial banner settings:', e);
+      }
     }
-  })
+    return DEFAULT_SETTINGS;
+  });
+  const [localizedContent, setLocalizedContent] = useState<LocalizedContent>(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const savedContent = localStorage.getItem('localizedContent');
+        if (savedContent) {
+          return JSON.parse(savedContent);
+        }
+      } catch (e) {
+        console.error('Error loading initial localized content:', e);
+      }
+    }
+    
+    // Значение по умолчанию
+    return {
+      ru: { 
+        title: "Новое приложение",
+        description: "Описание приложения",
+        promotionalText: "Рекламный текст",
+        whatsNew: "Что нового в этой версии",
+        keywords: "приложение, ключевые, слова"
+      }
+    };
+  });
   const [isExporting, setIsExporting] = useState(false)
   const [jsonImportText, setJsonImportText] = useState("")
   const [exportingProgress, setExportingProgress] = useState(0)
   const [previewIndex, setPreviewIndex] = useState(0)
-  const [textAlignment, setTextAlignment] = useState("center")
-  const [fontSize, setFontSize] = useState({ title: 24, description: 16 })
-  const [lineHeight, setLineHeight] = useState({ title: "auto", description: "auto" })
-  const [letterSpacing, setLetterSpacing] = useState({ title: 0, description: 0 })
+  const [textAlignment, setTextAlignment] = useState<string>(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const savedAlignment = localStorage.getItem('textAlignment');
+        if (savedAlignment) {
+          console.log("Loaded initial text alignment from localStorage:", savedAlignment);
+          return savedAlignment;
+        }
+      } catch (e) {
+        console.error('Error loading initial text alignment:', e);
+      }
+    }
+    return 'center'; // значение по умолчанию
+  });
+  const [fontSize, setFontSize] = useState(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const savedFontSize = localStorage.getItem('fontSize');
+        if (savedFontSize) {
+          console.log("Loaded initial font size from localStorage");
+          return JSON.parse(savedFontSize);
+        }
+      } catch (e) {
+        console.error('Error loading initial font size:', e);
+      }
+    }
+    return { title: 24, description: 16 };
+  });
+  const [lineHeight, setLineHeight] = useState(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const savedLineHeight = localStorage.getItem('lineHeight');
+        if (savedLineHeight) {
+          console.log("Loaded initial line height from localStorage");
+          return JSON.parse(savedLineHeight);
+        }
+      } catch (e) {
+        console.error('Error loading initial line height:', e);
+      }
+    }
+    return { title: "auto", description: "auto" };
+  });
+  const [letterSpacing, setLetterSpacing] = useState(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const savedLetterSpacing = localStorage.getItem('letterSpacing');
+        if (savedLetterSpacing) {
+          console.log("Loaded initial letter spacing from localStorage");
+          return JSON.parse(savedLetterSpacing);
+        }
+      } catch (e) {
+        console.error('Error loading initial letter spacing:', e);
+      }
+    }
+    return { title: 0, description: 0 };
+  });
   const canvasRef = useRef(null)
   const scrollContainerRef = useRef(null)
   const [activeElement, setActiveElement] = useState("banner") // banner, title, description, device
@@ -328,128 +412,112 @@ export default function BannerGenerator() {
   // Создаем экземпляр ImageDB
   const imageDBRef = useRef<ImageDB | null>(null);
 
-  // Новая структура данных для баннеров с уникальными настройками
-  const [previewItems, setPreviewItems] = useState<PreviewItem[]>([
-    {
-      id: 1,
-      name: "Preview 1",
-      backgroundColor: "#FFD700",
-      devicePosition: "center",
-      deviceScale: 100,
-      rotation: {
-        device: 0,
-        title: 0,
-        description: 0,
-        textBlock: 0
-      },
-      verticalOffset: {
-        combined: 0,
-        title: 0,
-        description: 0,
-        device: 0
-      },
-      screenshot: {
-        file: null,
-        borderColor: "#000000",
-        borderWidth: 8,
-        borderRadius: 30
+  // Обновим установку начальных значений, добавим проверку localStorage перед установкой дефолтного состояния
+  const [previewItems, setPreviewItems] = useState<PreviewItem[]>(() => {
+    // Попробуем загрузить из localStorage при инициализации
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const savedItems = localStorage.getItem('previewItems');
+        if (savedItems) {
+          const parsedItems = JSON.parse(savedItems);
+          console.log("Loaded initial preview items from localStorage", parsedItems);
+          if (Array.isArray(parsedItems) && parsedItems.length > 0) {
+            return parsedItems;
+          }
+        }
+      } catch (e) {
+        console.error('Error loading initial preview items:', e);
       }
     }
-  ]);
-
-  // Add localStorage functionality to persist banner data
-
-  // Add useEffect to load data from localStorage when component mounts
-  useEffect(() => {
-    const savedContent = localStorage.getItem('bannerGeneratorContent');
-    const savedPreviewItems = localStorage.getItem('bannerGeneratorPreviewItems');
     
-    if (savedContent) {
-      try {
+    // Если не удалось загрузить, используем значение по умолчанию
+    return [
+      {
+        id: 1,
+        name: "Preview 1",
+        backgroundColor: "#FFD700",
+        devicePosition: "center",
+        deviceScale: 100,
+        rotation: {
+          device: 0,
+          title: 0,
+          description: 0,
+          textBlock: 0
+        },
+        verticalOffset: {
+          combined: 0,
+          title: 0,
+          description: 0,
+          device: 0
+        },
+        screenshot: {
+          file: null,
+          borderColor: "#000000",
+          borderWidth: 8,
+          borderRadius: 30
+        }
+      }
+    ];
+  });
+
+  // Замените старый хук загрузки данных из localStorage на этот
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    
+    console.log("Checking for additional data in localStorage");
+    
+    // Загружаем только недостающие данные, не трогая previewItems и bannerSettings,
+    // так как они уже были загружены в useState
+    try {
+      const savedContent = localStorage.getItem('localizedContent');
+      if (savedContent) {
         const parsedContent = JSON.parse(savedContent);
         setLocalizedContent(parsedContent);
-      } catch (e) {
-        console.error('Error parsing saved content:', e);
       }
+      
+      const savedAlignment = localStorage.getItem('textAlignment');
+      if (savedAlignment) {
+        setTextAlignment(savedAlignment);
+      }
+      
+      const savedFontSize = localStorage.getItem('fontSize');
+      if (savedFontSize) {
+        setFontSize(JSON.parse(savedFontSize));
+      }
+      
+      const savedLineHeight = localStorage.getItem('lineHeight');
+      if (savedLineHeight) {
+        setLineHeight(JSON.parse(savedLineHeight));
+      }
+      
+      const savedLetterSpacing = localStorage.getItem('letterSpacing');
+      if (savedLetterSpacing) {
+        setLetterSpacing(JSON.parse(savedLetterSpacing));
+      }
+    } catch (e) {
+      console.error('Error loading additional data from localStorage:', e);
     }
+  }, []);
+
+  // Обновим функцию сохранения previewItems
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    if (!previewItems) return;
     
-    if (savedPreviewItems) {
-      try {
-        const parsedItems = JSON.parse(savedPreviewItems);
-        // Need to recreate File objects which can't be stored in JSON
-        const itemsWithoutFiles = parsedItems.map(item => ({
-          ...item,
-          screenshot: {
-            ...item.screenshot,
-            file: null // Files need to be loaded separately from IndexedDB
-          }
-        }));
-        setPreviewItems(itemsWithoutFiles);
-      } catch (e) {
-        console.error('Error parsing saved preview items:', e);
-      }
-    }
-  }, []);
-
-  // Add useEffect to save data to localStorage when it changes
-  useEffect(() => {
-    localStorage.setItem('bannerGeneratorContent', JSON.stringify(localizedContent));
-  }, [localizedContent]);
-
-  useEffect(() => {
-    const previewItemsToSave = previewItems.map(item => ({
-      ...item,
-      screenshot: {
-        ...item.screenshot,
-        // Don't include the file in JSON storage - that's handled by IndexedDB
-        file: item.screenshot?.file ? true : null // Just store whether it has a file or not
-      }
-    }));
-    localStorage.setItem('bannerGeneratorPreviewItems', JSON.stringify(previewItemsToSave));
-  }, [previewItems]);
-
-  // Исправление порядка хуков useEffect для корректной загрузки данных
-  // Перемещаем хук загрузки previewItems из localStorage перед другими хуками
-  // Сначала загружаем сохраненные настройки баннеров
-  useEffect(() => {
-    console.log("Loading saved preview items from localStorage");
-    const savedItems = localStorage.getItem("previewItems");
-    if (savedItems) {
-      try {
-        const parsedItems = JSON.parse(savedItems);
-        setPreviewItems(parsedItems);
-      } catch (error) {
-        console.error("Error parsing saved preview items:", error);
-      }
-    }
-  }, []);
-
-  // Затем загружаем локализованное содержимое
-  useEffect(() => {
-    console.log("Loading localized content from localStorage");
-    const localContent = localStorage.getItem("localizedContent");
-    if (localContent) {
-      try {
-        const parsedContent = JSON.parse(localContent);
-        setLocalizedContent(parsedContent);
-      } catch (error) {
-        console.error("Error parsing localized content:", error);
-      }
-    }
-  }, []);
-
-  // Сохраняем previewItems в localStorage при их изменении
-  useEffect(() => {
-    console.log("Saving preview items to localStorage");
-    localStorage.setItem("previewItems", JSON.stringify(
-      previewItems.map(item => ({
+    try {
+      console.log("Saving previewItems to localStorage", previewItems.length);
+      // Создаем копию превью без файлов для сохранения
+      const previewsForStorage = previewItems.map(item => ({
         ...item,
         screenshot: {
           ...item.screenshot,
-          file: null // Не сохраняем файл в localStorage, он будет в IndexedDB
+          file: null // Не сохраняем файлы, так как они не могут быть сериализованы
         }
-      }))
-    ));
+      }));
+      localStorage.setItem('previewItems', JSON.stringify(previewsForStorage));
+    } catch (error) {
+      console.error('Error saving preview items:', error);
+    }
   }, [previewItems]);
 
   // После того как previewItems загружены, инициализируем базу данных и загружаем изображения
@@ -507,10 +575,21 @@ export default function BannerGenerator() {
     }
   }, [previewItems.length]); // Запускаем только при изменении количества превью
 
-  // Сохранение данных в localStorage при изменении
+  // Обновляем все хуки сохранения, чтобы они были консистентными
   useEffect(() => {
-    // Проверка доступности localStorage перед сохранением
     if (typeof window === 'undefined' || !window.localStorage) return;
+    if (!localizedContent) return;
+    
+    try {
+      localStorage.setItem('localizedContent', JSON.stringify(localizedContent));
+    } catch (error) {
+      console.error('Error saving localized content:', error);
+    }
+  }, [localizedContent]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    if (!bannerSettings) return;
     
     try {
       localStorage.setItem('bannerSettings', JSON.stringify(bannerSettings));
@@ -518,46 +597,50 @@ export default function BannerGenerator() {
       console.error('Error saving banner settings:', error);
     }
   }, [bannerSettings]);
-  
+
   useEffect(() => {
-    try {
-      localStorage.setItem('localizedContent', JSON.stringify(localizedContent));
-    } catch (error) {
-      console.error('Error saving localized content:', error);
-    }
-  }, [localizedContent]);
-  
-  useEffect(() => {
-    try {
-      // Создаем копию превью без файлов для сохранения
-      const previewsForStorage = previewItems.map(item => ({
-        ...item,
-        screenshot: {
-          ...item.screenshot,
-          file: null // Не сохраняем файлы, так как они не могут быть сериализованы
-        }
-      }));
-      localStorage.setItem('previewItems', JSON.stringify(previewsForStorage));
-    } catch (error) {
-      console.error('Error saving preview items:', error);
-    }
-  }, [previewItems]);
-  
-  useEffect(() => {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    if (!textAlignment) return;
+    
     try {
       localStorage.setItem('textAlignment', textAlignment);
     } catch (error) {
       console.error('Error saving text alignment:', error);
     }
   }, [textAlignment]);
-  
+
   useEffect(() => {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    if (!fontSize) return;
+    
     try {
       localStorage.setItem('fontSize', JSON.stringify(fontSize));
     } catch (error) {
       console.error('Error saving font size:', error);
     }
   }, [fontSize]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    if (!lineHeight) return;
+    
+    try {
+      localStorage.setItem('lineHeight', JSON.stringify(lineHeight));
+    } catch (error) {
+      console.error('Error saving line height:', error);
+    }
+  }, [lineHeight]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    if (!letterSpacing) return;
+    
+    try {
+      localStorage.setItem('letterSpacing', JSON.stringify(letterSpacing));
+    } catch (error) {
+      console.error('Error saving letter spacing:', error);
+    }
+  }, [letterSpacing]);
 
   // Handle language change
   const handleLanguageChange = (language: string) => {
@@ -1131,230 +1214,76 @@ export default function BannerGenerator() {
   // Handle export
   const handleExport = async () => {
     setIsExporting(true);
-    console.log('Starting export process...');
+    setExportingProgress(0);
     
     try {
-      // Создаем временный канвас для экспорта
-      const tempCanvas = document.createElement('div');
-      tempCanvas.style.width = '320px';
-      tempCanvas.style.height = '690px';
-      tempCanvas.style.position = 'absolute';
-      tempCanvas.style.left = '-9999px';
-      tempCanvas.style.top = '-9999px';
-      document.body.appendChild(tempCanvas);
-      
-      // Создаем ZIP-архив
+      // Create a zip file to hold all banners
       const zip = new JSZip();
-      console.log('Preparing to export banners to language-specific folders');
       
-      // Создаем папки для каждого языка
+      // Get supported languages from the content
       const languages = Object.keys(localizedContent);
-      languages.forEach(lang => {
-        zip.folder(lang);
-      });
+      const totalBanners = previewItems.length * languages.length;
+      let processedBanners = 0;
       
-      for (const banner of previewItems) {
-        console.log('Exporting banner', banner.id, 'with name', banner.name);
+      // Create a folder for each language
+      for (const langCode of languages) {
+        // Create a folder for this language
+        const langFolder = zip.folder(langCode);
+        if (!langFolder) continue;
         
-        // Готовим индивидуальный контент для каждого баннера
-        const bannerContent: Record<string, { title: string; description: string }> = {};
-        
-        // Собираем контент для всех доступных языков
-        Object.keys(localizedContent).forEach(langCode => {
-          bannerContent[langCode] = {
-            title: getPreviewContent(langCode, banner.id, "title") || "",
-            description: getPreviewContent(langCode, banner.id, "description") || ""
-          };
-        });
-        
-        console.log('Content prepared for languages:', Object.keys(bannerContent));
-        
-        // Настраиваем временный канвас для текущего баннера
-        tempCanvas.innerHTML = '';
-        tempCanvas.style.backgroundColor = banner.backgroundColor;
-        
-        // Создаем структуру канваса соответствующую структуре оригинального баннера
-        const { titlePosition, descriptionPosition, separateElements } = getContentPositions(banner.devicePosition || "center");
-        const currentOffset = banner.verticalOffset || { combined: 0, title: 0, description: 0, device: 0 };
-        
-        // Для каждого языка создаем изображение и добавляем в соответствующую папку в ZIP
-        for (const lang of languages) {
-          console.log(`Processing language: ${lang} for banner ${banner.id}`);
+        // Export all previews for this language
+        for (let i = 0; i < previewItems.length; i++) {
+          const item = previewItems[i];
+          const preview = document.getElementById(`preview-${item.id}`);
           
-          // Обновляем текстовые элементы в соответствии с языком
-          if (separateElements) {
-            // Титул
-            const titleDiv = document.createElement('div');
-            titleDiv.style.position = 'absolute';
-            Object.assign(titleDiv.style, titlePosition);
-            titleDiv.style.transform = `${titlePosition.transform || ""} translateY(${currentOffset.title}px)`;
+          if (preview) {
+            // Active language switch temporarily to render correct language
+            const originalLang = activeLanguage;
+            setActiveLanguage(langCode);
             
-            const titleH2 = document.createElement('h2');
-            titleH2.textContent = bannerContent[lang].title;
-            titleH2.className = "text-2xl font-bold text-center";
-            Object.assign(titleH2.style, getTextStyle("title"));
+            // Force render the banner with this language
+            console.log(`Rendering banner ${i} for language ${langCode}`);
             
-            titleDiv.appendChild(titleH2);
-            tempCanvas.appendChild(titleDiv);
-            
-            // Описание
-            const descDiv = document.createElement('div');
-            descDiv.style.position = 'absolute';
-            Object.assign(descDiv.style, descriptionPosition);
-            descDiv.style.transform = `${descriptionPosition.transform || ""} translateY(${currentOffset.description}px)`;
-            
-            const descP = document.createElement('p');
-            descP.textContent = bannerContent[lang].description;
-            descP.className = "text-base text-center";
-            Object.assign(descP.style, getTextStyle("description"));
-            
-            descDiv.appendChild(descP);
-            tempCanvas.appendChild(descDiv);
-          } else {
-            // Комбинированный блок
-            const textDiv = document.createElement('div');
-            textDiv.style.position = 'absolute';
-            Object.assign(textDiv.style, titlePosition);
-            textDiv.style.transform = `${titlePosition.transform || ""} translateY(${currentOffset.combined}px)`;
-            
-            const titleH2 = document.createElement('h2');
-            titleH2.textContent = bannerContent[lang].title;
-            titleH2.className = "text-2xl font-bold mb-2 text-center";
-            Object.assign(titleH2.style, getTextStyle("title"));
-            
-            const descP = document.createElement('p');
-            descP.textContent = bannerContent[lang].description;
-            descP.className = "text-base text-center";
-            Object.assign(descP.style, getTextStyle("description"));
-            
-            textDiv.appendChild(titleH2);
-            textDiv.appendChild(descP);
-            tempCanvas.appendChild(textDiv);
-          }
-          
-          // Добавляем устройство/скриншот
-          const deviceDiv = document.createElement('div');
-          deviceDiv.style.position = 'absolute';
-          Object.assign(deviceDiv.style, getDevicePositionStyles(banner));
-          
-          if (banner.screenshot?.file) {
-            const deviceContainer = document.createElement('div');
-            deviceContainer.style.borderWidth = `${banner.screenshot.borderWidth}px`;
-            deviceContainer.style.borderStyle = 'solid';
-            deviceContainer.style.borderColor = banner.screenshot.borderColor;
-            deviceContainer.style.borderRadius = `${banner.screenshot.borderRadius}px`;
-            deviceContainer.style.overflow = 'hidden';
-            
-            const img = document.createElement('img');
-            img.src = URL.createObjectURL(banner.screenshot.file);
-            img.style.width = '100%';
-            img.style.display = 'block';
-            
-            deviceContainer.appendChild(img);
-            deviceDiv.appendChild(deviceContainer);
-          } else {
-            deviceDiv.innerHTML = `
-              <div class="flex flex-col items-center justify-center p-4" style="
-                width: 100%;
-                height: 400px;
-                border-width: ${banner.screenshot?.borderWidth || 8}px;
-                border-style: solid;
-                border-color: ${banner.screenshot?.borderColor || "#000000"};
-                border-radius: ${banner.screenshot?.borderRadius || 30}px;
-                background-color: #f9f9f9;
-              ">
-                <div style="width: 48px; height: 48px; color: #ccc; text-align: center;">📷</div>
-                <span style="margin-top: 8px; font-size: 14px; color: #888;">No screenshot</span>
-              </div>
-            `;
-          }
-          
-          tempCanvas.appendChild(deviceDiv);
-          
-          try {
-            // Создаем изображение из канваса
-            const canvas = await html2canvas(tempCanvas, {
-              scale: 2,
-              useCORS: true,
-              allowTaint: true,
-              backgroundColor: banner.backgroundColor,
-            });
-            
-            // Конвертируем в blob
-            const blob = await new Promise<Blob>((resolve, reject) => {
-              canvas.toBlob((blob) => {
-                if (blob) {
-                  resolve(blob);
-                } else {
-                  reject(new Error('Failed to create blob from canvas'));
+            // Use domtoimage to capture the banner
+            await new Promise<void>(resolve => {
+              setTimeout(async () => {
+                try {
+                  const blob = await domtoimage.toBlob(preview);
+                  langFolder.file(`banner_${item.id}.png`, blob);
+                  processedBanners++;
+                  setExportingProgress((processedBanners / totalBanners) * 100);
+                  resolve();
+                } catch (error) {
+                  console.error("Error generating image:", error);
+                  resolve();
                 }
-              }, "image/png", 1.0);
+              }, 100); // Give time for the language change to apply
             });
             
-            // Добавляем в ZIP в соответствующую языковую папку
-            const bannerName = banner.name || `Banner ${banner.id}`;
-            const filename = `${bannerName}.png`;
-            console.log(`Adding ${filename} to ${lang} folder`);
-            zip.folder(lang)?.file(filename, blob);
-          } catch (error) {
-            console.error(`Error processing banner ${banner.id} for language ${lang}:`, error);
+            // Restore original language
+            setActiveLanguage(originalLang);
           }
-          
-          // Очищаем канвас для следующего баннера
-          tempCanvas.innerHTML = '';
-        }
-        
-        // Очищаем URL объекты
-        if (banner.screenshot?.file) {
-          URL.revokeObjectURL(URL.createObjectURL(banner.screenshot.file));
         }
       }
       
-      // Генерируем и скачиваем ZIP-архив
-      try {
-        console.log('Generating final ZIP file with language folders');
-        const content = await zip.generateAsync({ 
-          type: "blob",
-          compression: "DEFLATE",
-          compressionOptions: {
-            level: 6
-          } 
-        });
-        console.log(`ZIP file created with size: ${content.size} bytes, downloading...`);
-        
-        // Функция для скачивания
-        const saveBlob = (blob: Blob, fileName: string) => {
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = url;
-          link.download = fileName;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
-        };
-        
-        saveBlob(content, "app_store_banners.zip");
-      } catch (error) {
-        console.error("Error generating final ZIP file:", error);
-      }
-      
-      // Удаляем временный канвас
-      document.body.removeChild(tempCanvas);
-      console.log('Export process completed successfully');
+      // Generate the zip file
+      const content = await zip.generateAsync({ type: "blob" });
+      saveAs(content, "app_banners.zip");
     } catch (error) {
-      console.error("Export failed:", error);
+      console.error("Error during export:", error);
+      alert("An error occurred during export. Please try again.");
     } finally {
       setIsExporting(false);
+      setExportingProgress(0);
     }
   };
 
-  // Обновим функцию getTextStyle, чтобы учитывать вертикальное смещение
+  // Обновим функцию getTextStyle, чтобы обеспечить корректное применение textAlignment
   const getTextStyle = (elementType, rotation = 0) => {
     const baseStyle = {
       color: elementType === "title" ? bannerSettings.titleColor : bannerSettings.descriptionColor,
       fontFamily: bannerSettings.fontFamily,
-      textAlign: textAlignment,
+      textAlign: textAlignment as any, // используем as any для обхода проверки типов
       fontSize: `${elementType === "title" ? fontSize.title : fontSize.description}px`,
       lineHeight: elementType === "title" ? lineHeight.title : lineHeight.description,
       letterSpacing: `${elementType === "title" ? letterSpacing.title : letterSpacing.description}%`,
@@ -2001,33 +1930,19 @@ export default function BannerGenerator() {
 
   // Add function to handle inline text editing
   const handleInlineTextEdit = (type: string, bannerId: number, value: string) => {
-    setEditingText({ type, bannerId, value });
+    setEditingText({ type, value, bannerId });
+    if (textareaRef.current) {
+      adjustTextareaHeight(textareaRef.current);
+    }
   };
 
   // Update the saveInlineTextEdit function to use the correct key format
   const saveInlineTextEdit = () => {
     if (!editingText) return;
+
+    // Используем updateBannerText для сохранения текста
+    updateBannerText(activeLanguage, editingText.bannerId, editingText.type, editingText.value);
     
-    const { type, bannerId, value } = editingText;
-    const previewKey = `preview_${bannerId}_${type}`;
-    
-    // Update the localized content
-    const newLocalizedContent = { ...localizedContent };
-    if (!newLocalizedContent[activeLanguage]) {
-      newLocalizedContent[activeLanguage] = {
-        title: "",
-        description: "",
-        promotionalText: "",
-        whatsNew: "",
-        keywords: "",
-      };
-    }
-    
-    // Store content using the proper key format that matches getPreviewContent
-    newLocalizedContent[activeLanguage][previewKey] = value;
-    setLocalizedContent(newLocalizedContent);
-    
-    // Clear editing state
     setEditingText(null);
   };
 
@@ -2075,18 +1990,15 @@ export default function BannerGenerator() {
         width: '100%',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
+        alignItems: textAlignment === 'center' ? 'center' : textAlignment === 'right' ? 'flex-end' : 'flex-start',
         justifyContent: 'flex-start',
       };
       
+      // Make sure text alignment is properly applied
       const textStyle = {
         ...elementStyle,
-        textAlign: 'center',
-        fontSize: type === 'title' ? '1.5rem' : '1rem',
-        fontWeight: type === 'title' ? 'bold' : 'normal',
-        lineHeight: type === 'title' ? '1.2' : '1.5',
+        textAlign: textAlignment,
         width: '100%',
-        margin: '0 auto',
       };
       
       return isEditing ? (
@@ -2121,7 +2033,7 @@ export default function BannerGenerator() {
         </div>
       ) : (
         <div 
-          className="cursor-text"
+          className="cursor-text w-full"
           onClick={() => {
             if (isActive) {
               handleInlineTextEdit(type, item.id, content);
@@ -2130,11 +2042,11 @@ export default function BannerGenerator() {
           style={containerStyle}
         >
           {type === 'title' ? (
-            <h2 style={textStyle} className="text-2xl font-bold">
+            <h2 className={`text-2xl font-bold text-${textAlignment}`} style={textStyle}>
               {content || "Title"}
             </h2>
           ) : (
-            <p style={textStyle} className="text-base">
+            <p className={`text-base text-${textAlignment}`} style={textStyle}>
               {content || "Description"}
             </p>
           )}
@@ -2440,10 +2352,96 @@ export default function BannerGenerator() {
     };
   }, []);
 
+  // Load bannerSettings from localStorage
+  useEffect(() => {
+    console.log("Loading banner settings from localStorage");
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    
+    try {
+      const savedSettings = localStorage.getItem('bannerSettings');
+      if (savedSettings) {
+        const parsedSettings = JSON.parse(savedSettings);
+        setBannerSettings(parsedSettings);
+      }
+    } catch (error) {
+      console.error("Error parsing banner settings:", error);
+    }
+  }, []);
+
+  // Load textAlignment from localStorage
+  useEffect(() => {
+    console.log("Loading text alignment from localStorage");
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    
+    try {
+      const savedAlignment = localStorage.getItem('textAlignment');
+      if (savedAlignment) {
+        setTextAlignment(savedAlignment);
+      }
+    } catch (error) {
+      console.error("Error loading text alignment:", error);
+    }
+  }, []);
+
+  // Load fontSize from localStorage
+  useEffect(() => {
+    console.log("Loading font size from localStorage");
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    
+    try {
+      const savedFontSize = localStorage.getItem('fontSize');
+      if (savedFontSize) {
+        setFontSize(JSON.parse(savedFontSize));
+      }
+    } catch (error) {
+      console.error("Error parsing font size:", error);
+    }
+  }, []);
+
+  // Load lineHeight and letterSpacing from localStorage
+  useEffect(() => {
+    console.log("Loading line height and letter spacing from localStorage");
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    
+    try {
+      const savedLineHeight = localStorage.getItem('lineHeight');
+      if (savedLineHeight) {
+        setLineHeight(JSON.parse(savedLineHeight));
+      }
+      
+      const savedLetterSpacing = localStorage.getItem('letterSpacing');
+      if (savedLetterSpacing) {
+        setLetterSpacing(JSON.parse(savedLetterSpacing));
+      }
+    } catch (error) {
+      console.error("Error parsing line height or letter spacing:", error);
+    }
+  }, []);
+
+  // Улучшим функцию для обновления текстов в баннерах
+  const updateBannerText = (language: string, previewId: number, field: string, value: string) => {
+    console.log(`Updating banner text: ${language}, id=${previewId}, ${field}=${value}`);
+    const newLocalizedContent = { ...localizedContent };
+    if (!newLocalizedContent[language]) {
+      newLocalizedContent[language] = {
+        title: "",
+        description: "",
+        promotionalText: "",
+        whatsNew: "",
+        keywords: ""
+      };
+    }
+    
+    // Banner-specific content is stored with key format "preview_<id>_<field>"
+    const previewKey = `preview_${previewId}_${field}`;
+    newLocalizedContent[language][previewKey] = value;
+    setLocalizedContent(newLocalizedContent);
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Шапка на всю ширину */}
-      <header className="w-full bg-white border-b py-4 px-6 z-10">
+      {/* Fixed header */}
+      <header className="fixed top-0 left-0 right-0 bg-white border-b py-4 px-6 z-50 shadow-sm">
         <div className="container mx-auto">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold">App Store Banner Generator</h1>
@@ -2512,17 +2510,26 @@ export default function BannerGenerator() {
                   </div>
                 </DialogContent>
               </Dialog>
-
+              
               <Button variant="outline" onClick={handleJsonExport}>
                 <Download className="mr-2 h-4 w-4" />
                 Export JSON
               </Button>
-
+              
               <LanguageSelector languages={LANGUAGES} activeLanguage={activeLanguage} onChange={handleLanguageChange} />
               
-              <Button onClick={handleExport} disabled={isExporting} title="Экспортирует все баннеры для всех языков в ZIP-архив">
-                <Download className="mr-2 h-4 w-4" />
-                {isExporting ? "Экспорт..." : "Экспорт всех баннеров"}
+              <Button variant="primary" onClick={handleExport} disabled={isExporting}>
+                {isExporting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Exporting {exportingProgress}%
+                  </>
+                ) : (
+                  <>
+                    <ArrowDownToLine className="mr-2 h-4 w-4" />
+                    Export All Images
+                  </>
+                )}
               </Button>
               
               <Button 
@@ -2561,8 +2568,8 @@ export default function BannerGenerator() {
         </div>
       </header>
 
-      {/* Основное содержимое с отступом от шапки */}
-      <div className="flex-grow container mx-auto px-4 py-6">
+      {/* Add padding to content area to account for fixed header */}
+      <div className="flex-grow container mx-auto px-4 py-6 mt-[116px]">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
           {/* Left panel - Banners */}
           <div>
