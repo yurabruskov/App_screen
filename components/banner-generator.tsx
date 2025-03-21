@@ -25,7 +25,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { LanguageSelector } from "@/components/language-selector"
 import { LANGUAGES, DEFAULT_SETTINGS, DEVICE_POSITIONS } from "@/lib/constants"
 import { ColorPicker } from "@/components/color-picker"
-import * as html2canvas from 'html2canvas'
+import html2canvas from 'html2canvas'
 
 interface PreviewContent {
   title: string;
@@ -1466,13 +1466,13 @@ export default function BannerGenerator() {
               exportElement.style.border = 'none';
               
               // Используем html2canvas для рендеринга
-              const canvas = await html2canvas(exportElement, {
-                scale: 2, // Повышенное качество
+              const canvas = await html2canvas(exportElement as HTMLElement, {
+                scale: 4, // Увеличиваем масштаб с 2 до 4 для более высокого разрешения
                 useCORS: true,
                 allowTaint: true,
                 backgroundColor: banner.backgroundColor || '#ffffff',
-                width: 320, // Фиксированная ширина
-                height: 690, // Фиксированная высота
+                width: 320, // Базовая ширина (будет умножена на scale)
+                height: 690, // Базовая высота (будет умножена на scale)
                 logging: false,
                 removeContainer: false
               });
