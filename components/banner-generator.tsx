@@ -540,20 +540,28 @@ export default function BannerGenerator() {
 
   // Перехватываем изменение screenshot.file для сохранения в IndexedDB
   const handleScreenshotUpload = (file: File) => {
+    // Создаем копию массива, но не используем JSON для глубокого клонирования
     const updatedItems = [...previewItems];
+    
     if (updatedItems[previewIndex]) {
+      // Сохраняем файл и все текущие настройки
+      const currentItem = updatedItems[previewIndex];
+      
+      // Обновляем только те свойства, которые нужно изменить
       updatedItems[previewIndex] = {
-        ...updatedItems[previewIndex],
+        ...currentItem,
         screenshot: {
-          ...updatedItems[previewIndex].screenshot,
-          file,
-        },
+          ...currentItem.screenshot,
+          file: file // Просто заменяем файл
+        }
       };
+      
+      // Установка обновленного массива превью
       setPreviewItems(updatedItems);
       
       // Сохраняем в IndexedDB
       if (imageDBRef.current) {
-        const imageId = `preview_${updatedItems[previewIndex].id}`;
+        const imageId = `preview_${currentItem.id}`;
         imageDBRef.current.saveImage(imageId, file)
           .catch(error => console.error('Error saving image to IndexedDB:', error));
       }
@@ -923,17 +931,17 @@ export default function BannerGenerator() {
 
   // Handle drag and drop for the entire application
   useEffect(() => {
-    const handleDragOver = (e) => {
+    const handleDragOver = (e: DragEvent) => {
       e.preventDefault()
       e.stopPropagation()
     }
 
-    const handleDrop = (e) => {
+    const handleDrop = (e: DragEvent) => {
       e.preventDefault()
       e.stopPropagation()
 
       // If we have a file, add it to the current banner
-      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      if (e.dataTransfer?.files && e.dataTransfer.files[0]) {
         handleScreenshotUpload(e.dataTransfer.files[0])
       }
     }
@@ -1990,7 +1998,7 @@ export default function BannerGenerator() {
                     id={`screenshot-upload-${item.id}`}
                     className="hidden"
                     accept="image/*"
-                    onChange={(e) => {
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       if (e.target.files && e.target.files[0]) {
                         handleScreenshotUpload(e.target.files[0])
                       }
