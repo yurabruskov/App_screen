@@ -399,7 +399,7 @@ export default function BannerGenerator() {
     return { title: 0, description: 0 };
   });
   const canvasRef = useRef(null)
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const scrollContainerRef = useRef(null)
   const [activeElement, setActiveElement] = useState("banner") // banner, title, description, device
   
   // Создаем экземпляр ImageDB

@@ -21,9 +21,15 @@ const nextConfig = {
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
   },
-  // Оптимизации для App Router и корректной работы с Vercel
+  useFileSystemPublicRoutes: true,
   swcMinify: true,
   reactStrictMode: true,
+  env: {
+    APP_ENV: process.env.APP_ENV || 'production',
+  },
+  redirects: () => {
+    return []
+  },
 }
 
 mergeConfig(nextConfig, userConfig)
