@@ -1937,6 +1937,39 @@ export default function BannerGenerator() {
     }
   }
 
+  // Add new state for inline editing
+  const [editingText, setEditingText] = useState<{ type: string; bannerId: number; value: string } | null>(null);
+
+  // Add function to handle inline text editing
+  const handleInlineTextEdit = (type: string, bannerId: number, value: string) => {
+    setEditingText({ type, bannerId, value });
+  };
+
+  const saveInlineTextEdit = () => {
+    if (!editingText) return;
+    
+    const { type, bannerId, value } = editingText;
+    const previewKey = `preview_${bannerId}`;
+    
+    // Update the localized content
+    const newLocalizedContent = { ...localizedContent };
+    if (!newLocalizedContent[activeLanguage]) {
+      newLocalizedContent[activeLanguage] = {
+        title: "",
+        description: "",
+        promotionalText: "",
+        whatsNew: "",
+        keywords: "",
+      };
+    }
+    
+    newLocalizedContent[activeLanguage][previewKey + "_" + type] = value;
+    setLocalizedContent(newLocalizedContent);
+    
+    // Clear editing state
+    setEditingText(null);
+  };
+
   // Функция для рендеринга баннера
   const renderBanner = (item, index) => {
     const isActive = index === previewIndex
@@ -1949,6 +1982,56 @@ export default function BannerGenerator() {
     const { titlePosition, descriptionPosition, separateElements } = getContentPositions(devicePosition)
     const currentOffset = item.verticalOffset || { combined: 0, title: 0, description: 0, device: 0 }
     const currentRotation = item.rotation || { device: 0, title: 0, description: 0, textBlock: 0 }
+
+    // Helper function to render editable text
+    const renderEditableText = (type, content, elementStyle, additionalStyle = {}) => {
+      const isEditing = editingText && editingText.type === type && editingText.bannerId === item.id;
+      
+      return isEditing ? (
+        <div 
+          className="relative"
+          style={additionalStyle}
+        >
+          <textarea
+            className="w-full bg-transparent text-center outline-none resize-none border border-blue-500 rounded p-1"
+            value={editingText.value}
+            onChange={(e) => setEditingText({ ...editingText, value: e.target.value })}
+            onBlur={saveInlineTextEdit}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                saveInlineTextEdit();
+              }
+            }}
+            autoFocus
+            style={{
+              ...elementStyle,
+              height: type === 'title' ? '2.5rem' : '3.5rem',
+            }}
+          />
+        </div>
+      ) : (
+        <div 
+          className="cursor-text"
+          onClick={() => {
+            if (isActive) {
+              handleInlineTextEdit(type, item.id, content);
+            }
+          }}
+          style={additionalStyle}
+        >
+          {type === 'title' ? (
+            <h2 className="text-2xl font-bold text-center" style={elementStyle}>
+              {content || "Title"}
+            </h2>
+          ) : (
+            <p className="text-base text-center" style={elementStyle}>
+              {content || "Description"}
+            </p>
+          )}
+        </div>
+      );
+    };
 
     return (
       <div
@@ -1979,7 +2062,7 @@ export default function BannerGenerator() {
             <>
               {/* Title at the top */}
               <div
-                className={`absolute ${isActive ? "cursor-pointer hover:ring-2 hover:ring-blue-300 hover:ring-opacity-50 rounded-md p-1" : ""}`}
+                className={`absolute ${isActive ? "hover:ring-2 hover:ring-blue-300 hover:ring-opacity-50 rounded-md p-1" : ""}`}
                 style={{
                   ...titlePosition,
                   transform: `${titlePosition.transform || ""} translateY(${currentOffset.title}px)`,
@@ -1991,14 +2074,16 @@ export default function BannerGenerator() {
                   }
                 }}
               >
-                <h2 className="text-2xl font-bold text-center" style={getTextStyle("title", currentRotation.device)}>
-                  {getPreviewContent(activeLanguage, item.id, "title") || "Title"}
-                </h2>
+                {renderEditableText(
+                  'title', 
+                  getPreviewContent(activeLanguage, item.id, "title"),
+                  getTextStyle("title", currentRotation.title)
+                )}
               </div>
 
               {/* Description at the bottom */}
               <div
-                className={`absolute ${isActive ? "cursor-pointer hover:ring-2 hover:ring-blue-300 hover:ring-opacity-50 rounded-md p-1" : ""}`}
+                className={`absolute ${isActive ? "hover:ring-2 hover:ring-blue-300 hover:ring-opacity-50 rounded-md p-1" : ""}`}
                 style={{
                   ...descriptionPosition,
                   transform: `${descriptionPosition.transform || ""} translateY(${currentOffset.description}px)`,
@@ -2010,14 +2095,16 @@ export default function BannerGenerator() {
                   }
                 }}
               >
-                <p className="text-base text-center" style={getTextStyle("description", currentRotation.description)}>
-                  {getPreviewContent(activeLanguage, item.id, "description") || "Description"}
-                </p>
+                {renderEditableText(
+                  'description',
+                  getPreviewContent(activeLanguage, item.id, "description"),
+                  getTextStyle("description", currentRotation.description)
+                )}
               </div>
             </>
           ) : (
             <div
-              className={`absolute ${isActive ? "cursor-pointer hover:ring-2 hover:ring-blue-300 hover:ring-opacity-50 rounded-md p-1" : ""}`}
+              className={`absolute ${isActive ? "hover:ring-2 hover:ring-blue-300 hover:ring-opacity-50 rounded-md p-1" : ""}`}
               style={{
                 ...titlePosition,
                 transform: `${titlePosition.transform || ""} translateY(${currentOffset.combined}px) rotate(${currentRotation.textBlock}deg)`,
@@ -2029,12 +2116,17 @@ export default function BannerGenerator() {
                 }
               }}
             >
-              <h2 className="text-2xl font-bold mb-2 text-center" style={getTextStyle("title")}>
-                {getPreviewContent(activeLanguage, item.id, "title") || "Title"}
-              </h2>
-              <p className="text-base text-center" style={getTextStyle("description")}>
-                {getPreviewContent(activeLanguage, item.id, "description") || "Description"}
-              </p>
+              {renderEditableText(
+                'title',
+                getPreviewContent(activeLanguage, item.id, "title"),
+                getTextStyle("title"),
+                { marginBottom: '0.5rem' }
+              )}
+              {renderEditableText(
+                'description',
+                getPreviewContent(activeLanguage, item.id, "description"),
+                getTextStyle("description")
+              )}
             </div>
           )}
 
@@ -2123,7 +2215,7 @@ export default function BannerGenerator() {
               >
                 <Copy className="h-4 w-4" />
               </Button>
-
+              
               {previewItems.length > 1 && (
                 <Button
                   variant="ghost"
