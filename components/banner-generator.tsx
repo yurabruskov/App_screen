@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Loader2, ArrowDownToLine, Plus, Trash2, ImageIcon, Smartphone, Upload, Copy, AlignCenter, AlignLeft, AlignRight, AlignJustify, ChevronLeft, ChevronRight, Download } from "lucide-react"
 import * as htmlToImage from 'html-to-image'
 import { saveAs } from 'file-saver'
@@ -25,6 +25,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { LanguageSelector } from "@/components/language-selector"
 import { LANGUAGES, DEFAULT_SETTINGS, DEVICE_POSITIONS } from "@/lib/constants"
 import { ColorPicker } from "@/components/color-picker"
+import * as html2canvas from 'html2canvas'
 
 interface PreviewContent {
   title: string;
@@ -1349,7 +1350,32 @@ export default function BannerGenerator() {
     };
   }, [previewIndex, previewItems]); // Keep dependencies as before
 
-  // Handle export
+  // Добавляем состояние для выбора локалей при экспорте
+  const [selectedLocales, setSelectedLocales] = useState(() => {
+    return LANGUAGES.reduce((acc, lang) => {
+      acc[lang.code] = true; // По умолчанию выбраны все
+      return acc;
+    }, {});
+  });
+  
+  // Функция для переключения выбора локали
+  const toggleLocaleSelection = (langCode) => {
+    setSelectedLocales(prev => ({
+      ...prev,
+      [langCode]: !prev[langCode]
+    }));
+  };
+  
+  // Функция для выбора/отмены выбора всех локалей
+  const toggleAllLocales = (selectAll) => {
+    const newSelection = {};
+    LANGUAGES.forEach(lang => {
+      newSelection[lang.code] = selectAll;
+    });
+    setSelectedLocales(newSelection);
+  };
+
+  // Полностью переписываем функцию handleExport
   const handleExport = async () => {
     setIsExporting(true);
     setExportingProgress(0);
@@ -1365,144 +1391,116 @@ export default function BannerGenerator() {
         await new Promise(resolve => setTimeout(resolve, 500));
       }
       
-      // Create a zip file to hold all banners
+      // Создаем zip-архив
       const zip = new JSZip();
       
-      // Get supported languages from the content
-      const languages = Object.keys(localizedContent);
-      const totalBanners = previewItems.length * languages.length;
+      // Отбираем только выбранные языки
+      const selectedLanguages = Object.keys(selectedLocales).filter(lang => selectedLocales[lang]);
+      if (selectedLanguages.length === 0) {
+        alert("Пожалуйста, выберите хотя бы один язык для экспорта");
+        setIsExporting(false);
+        return;
+      }
+      
+      console.log("Выбранные языки для экспорта:", selectedLanguages);
+      
+      const totalBanners = previewItems.length * selectedLanguages.length;
       let processedBanners = 0;
       
       // Сохраняем текущий язык и индекс
       const originalLang = activeLanguage;
       const originalIndex = previewIndex;
       
-      // Создаем массив для хранения задач экспорта
-      const exportTasks = [];
-      
       // Создаем папки для каждого языка
-      for (const langCode of languages) {
+      for (const langCode of selectedLanguages) {
         const langFolder = zip.folder(langCode);
         if (!langFolder) continue;
         
-        // Подготавливаем задачи экспорта для каждого баннера
+        // Перебираем все баннеры
         for (let i = 0; i < previewItems.length; i++) {
-          const item = previewItems[i];
-          exportTasks.push({
-            langCode,
-            bannerIndex: i,
-            bannerId: item.id,
-            folder: langFolder
-          });
-        }
-      }
-      
-      // Функция для обработки одного баннера
-      const processBanner = async (task) => {
-        try {
-          console.log(`Экспорт баннера #${task.bannerId} для языка ${task.langCode}`);
-          
-          // Устанавливаем активный язык и индекс
-          setActiveLanguage(task.langCode);
-          setPreviewIndex(task.bannerIndex);
-          
-          // Даем интерфейсу перерисоваться с новыми настройками
-          await new Promise(resolve => setTimeout(resolve, 300));
-          
-          // Получаем DOM-элемент баннера
-          const bannerElement = document.getElementById(`preview-${task.bannerId}`);
-          if (!bannerElement) {
-            console.error(`Не найден элемент с ID preview-${task.bannerId}`);
-            return;
-          }
-          
-          console.log(`Найден элемент баннера:`, bannerElement);
-          
-          // Создаем временный canvas нужного размера
-          const canvas = document.createElement('canvas');
-          canvas.width = 1290;
-          canvas.height = 2796;
-          
-          // Получаем контекст для рисования
-          const ctx = canvas.getContext('2d');
-          if (!ctx) {
-            console.error("Не удалось получить 2D контекст canvas");
-            return;
-          }
-          
-          // Заполняем фон
-          ctx.fillStyle = previewItems[task.bannerIndex].backgroundColor || '#ffffff';
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          
-          // Получаем изображение баннера с помощью html-to-image
-          // Но с меньшим размером для скорости
-          const options = {
-            pixelRatio: 1,
-            backgroundColor: 'transparent', // Прозрачный фон, т.к. мы уже заполнили canvas
-            skipFonts: false,
-            fontEmbedCSS: true,
-            filter: (node) => {
-              // Исключаем контролы редактирования из экспорта
-              return !node.classList?.contains('banner-controls') && 
-                     !node.classList?.contains('banner-edit-icons') && 
-                     !node.classList?.contains('banner-options');
+          try {
+            // Устанавливаем текущий язык и индекс
+            setActiveLanguage(langCode);
+            setPreviewIndex(i);
+            
+            // Даем время на обновление интерфейса
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            const banner = previewItems[i];
+            console.log(`Экспорт баннера #${banner.id} для языка ${langCode}`);
+            
+            // Получаем DOM-элемент баннера
+            const previewElement = document.getElementById(`preview-${banner.id}`);
+            if (!previewElement) {
+              console.error(`Не найден элемент с ID preview-${banner.id}`);
+              continue;
             }
-          };
-          
-          // Получаем изображение DOM-элемента
-          console.log(`Генерируем изображение для баннера #${task.bannerId}`);
-          const dataUrl = await htmlToImage.toPng(bannerElement, options);
-          
-          // Загружаем полученное изображение
-          const img = new Image();
-          await new Promise((resolve, reject) => {
-            img.onload = resolve;
-            img.onerror = reject;
-            img.src = dataUrl;
-          });
-          
-          // Масштабируем изображение, сохраняя пропорции
-          const scale = Math.min(
-            canvas.width / img.width,
-            canvas.height / img.height
-          );
-          
-          // Вычисляем новые размеры с сохранением пропорций
-          const newWidth = img.width * scale;
-          const newHeight = img.height * scale;
-          
-          // Центрируем изображение
-          const x = (canvas.width - newWidth) / 2;
-          const y = (canvas.height - newHeight) / 2;
-          
-          // Рисуем изображение на canvas с масштабированием
-          ctx.drawImage(img, x, y, newWidth, newHeight);
-          
-          // Получаем финальное изображение нужного размера
-          const finalDataUrl = canvas.toDataURL('image/png');
-          
-          // Конвертируем data URL в Blob
-          const blob = await fetch(finalDataUrl).then(res => res.blob());
-          console.log(`Blob создан размером ${blob.size} байт`);
-          
-          // Добавляем в архив
-          task.folder.file(`banner_${task.bannerId}.png`, blob);
-          console.log(`Баннер #${task.bannerId} для языка ${task.langCode} добавлен в архив`);
-          
-          // Обновляем прогресс
-          processedBanners++;
-          setExportingProgress(Math.floor((processedBanners / totalBanners) * 100));
-          
-          return true;
-        } catch (error) {
-          console.error(`Ошибка при экспорте баннера #${task.bannerId}:`, error);
-          return false;
+            
+            // Создаем копию элемента для экспорта
+            const exportElement = previewElement.cloneNode(true);
+            document.body.appendChild(exportElement);
+            
+            try {
+              // Удаляем элементы управления из копии
+              const controlButtons = exportElement.querySelectorAll('.banner-controls, .banner-edit-icons, button');
+              controlButtons.forEach(el => el.parentNode?.removeChild(el));
+              
+              // Удаляем hover-эффекты
+              exportElement.querySelectorAll('[class*="hover:"]').forEach(el => {
+                const element = el;
+                const classes = element.className.split(' ').filter(cls => !cls.includes('hover:'));
+                element.className = classes.join(' ');
+              });
+              
+              // Удаляем рамки и тени
+              exportElement.classList.remove('border', 'border-blue-500', 'shadow-xl');
+              
+              // Устанавливаем стили для экспорта
+              exportElement.style.position = 'absolute';
+              exportElement.style.left = '-9999px';
+              exportElement.style.top = '0';
+              exportElement.style.zIndex = '-1';
+              exportElement.style.transform = 'none';
+              exportElement.style.margin = '0';
+              exportElement.style.borderRadius = '0';
+              exportElement.style.border = 'none';
+              
+              // Используем html2canvas для рендеринга
+              const canvas = await html2canvas(exportElement, {
+                scale: 2, // Повышенное качество
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: banner.backgroundColor || '#ffffff',
+                width: 320, // Фиксированная ширина
+                height: 690, // Фиксированная высота
+                logging: false,
+                removeContainer: false
+              });
+              
+              // Получаем данные из canvas
+              const blob = await new Promise<Blob>(resolve => {
+                canvas.toBlob(blob => {
+                  resolve(blob);
+                }, 'image/png', 1.0);
+              });
+              
+              // Добавляем в архив
+              langFolder.file(`banner_${banner.id}.png`, blob);
+              
+              // Обновляем прогресс
+              processedBanners++;
+              setExportingProgress(Math.floor((processedBanners / totalBanners) * 100));
+              
+            } finally {
+              // Удаляем временный элемент
+              if (exportElement.parentNode) {
+                document.body.removeChild(exportElement);
+              }
+            }
+          } catch (error) {
+            console.error(`Ошибка при экспорте баннера ${previewItems[i].id}:`, error);
+          }
         }
-      };
-      
-      // Обрабатываем баннеры последовательно
-      for (const task of exportTasks) {
-        await processBanner(task);
       }
       
       // Восстанавливаем исходный язык и индекс
@@ -1511,12 +1509,19 @@ export default function BannerGenerator() {
       
       // Генерируем ZIP-архив
       console.log('Генерация архива...');
-      const content = await zip.generateAsync({ type: "blob" });
+      const content = await zip.generateAsync({ 
+        type: "blob",
+        compression: "DEFLATE",
+        compressionOptions: {
+          level: 6
+        }
+      });
       console.log(`Размер архива: ${content.size} байт`);
       
       // Сохраняем
       saveAs(content, "app_banners.zip");
       console.log('Экспорт завершен успешно!');
+      
     } catch (error) {
       console.error("Ошибка при экспорте:", error);
       alert("Произошла ошибка при экспорте. Пожалуйста, попробуйте снова.");
@@ -2764,19 +2769,80 @@ export default function BannerGenerator() {
                   
                   <LanguageSelector languages={LANGUAGES} activeLanguage={activeLanguage} onChange={handleLanguageChange} />
                   
-                  <Button variant="default" onClick={handleExport} disabled={isExporting}>
-                    {isExporting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Exporting {Math.round(exportingProgress)}%
-                      </>
-                    ) : (
-                      <>
-                        <ArrowDownToLine className="mr-2 h-4 w-4" />
-                        Export All Images
-                      </>
-                    )}
-                  </Button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="default" disabled={isExporting}>
+                        {isExporting ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Exporting {Math.round(exportingProgress)}%
+                          </>
+                        ) : (
+                          <>
+                            <ArrowDownToLine className="mr-2 h-4 w-4" />
+                            Export All Images
+                          </>
+                        )}
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Экспорт изображений</DialogTitle>
+                        <DialogDescription>
+                          Выберите локали для экспорта изображений
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="py-4">
+                        <div className="flex justify-between mb-4">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => toggleAllLocales(true)}
+                          >
+                            Выбрать все
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => toggleAllLocales(false)}
+                          >
+                            Отменить все
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          {LANGUAGES.map(lang => (
+                            <div key={lang.code} className="flex items-center space-x-2">
+                              <input 
+                                type="checkbox" 
+                                id={`lang-${lang.code}`}
+                                checked={selectedLocales[lang.code]}
+                                onChange={() => toggleLocaleSelection(lang.code)}
+                                className="rounded border-gray-300"
+                              />
+                              <label htmlFor={`lang-${lang.code}`} className="text-sm font-medium">
+                                {lang.name} ({lang.code})
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button 
+                          onClick={handleExport}
+                          disabled={isExporting || Object.values(selectedLocales).every(v => !v)}
+                        >
+                          {isExporting ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Экспорт {Math.round(exportingProgress)}%
+                            </>
+                          ) : (
+                            'Экспортировать'
+                          )}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </div>
             </div>
