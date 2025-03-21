@@ -2576,33 +2576,6 @@ export default function BannerGenerator() {
                        }
                      }}>
                   {/* Horizontal scrollable banners */}
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-sm text-gray-500">
-                      {previewIndex > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-gray-500"
-                          onClick={() => setPreviewIndex(Math.max(0, previewIndex - 1))}
-                        >
-                          <ChevronLeft className="h-4 w-4 mr-1" /> Previous
-                        </Button>
-                      )}
-                    </div>
-                    <div className="text-sm text-gray-500">Double-click on elements to edit them</div>
-                    <div className="text-sm text-gray-500">
-                      {previewIndex < previewItems.length - 1 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-gray-500"
-                          onClick={() => setPreviewIndex(Math.min(previewItems.length - 1, previewIndex + 1))}
-                        >
-                          Next <ChevronRight className="h-4 w-4 ml-1" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
                   <div
                     ref={scrollContainerRef}
                     className="flex overflow-x-auto pb-4 pt-2 px-2 -mx-2 mb-4 snap-x"
