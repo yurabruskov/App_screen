@@ -21,6 +21,9 @@ const nextConfig = {
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
   },
+  // Оптимизации для App Router и корректной работы с Vercel
+  swcMinify: true,
+  reactStrictMode: true,
 }
 
 mergeConfig(nextConfig, userConfig)
