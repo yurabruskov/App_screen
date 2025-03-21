@@ -1464,6 +1464,9 @@ export default function BannerGenerator() {
               exportElement.style.margin = '0';
               exportElement.style.borderRadius = '0';
               exportElement.style.border = 'none';
+              exportElement.style.overflow = 'hidden';
+              exportElement.style.width = '320px';
+              exportElement.style.height = '690px';
               
               // Используем html2canvas для рендеринга
               const canvas = await html2canvas(exportElement as HTMLElement, {
@@ -1471,20 +1474,47 @@ export default function BannerGenerator() {
                 useCORS: true,
                 allowTaint: true,
                 backgroundColor: banner.backgroundColor || '#ffffff',
-                width: 323, // 323 * 4 = 1292 (близко к 1290)
-                height: 699, // 699 * 4 = 2796
+                width: 320, // Базовая ширина (будет умножена на scale)
+                height: 690, // Базовая высота (будет умножена на scale)
                 logging: false,
-                removeContainer: false
+                removeContainer: false,
+                imageTimeout: 0, // Убираем таймаут для загрузки изображений
+                onclone: (clonedDoc, element) => {
+                  // Дополнительная очистка в клонированном документе
+                  element.style.paddingBottom = '0';
+                  element.style.marginBottom = '0';
+                  return element;
+                }
               });
               
-              // Масштабируем и обрезаем до точных размеров
+              // Создаем новый canvas с точными размерами
               const finalCanvas = document.createElement('canvas');
               finalCanvas.width = 1290;
               finalCanvas.height = 2796;
               const finalCtx = finalCanvas.getContext('2d');
+              
               if (finalCtx) {
-                // Рисуем исходный canvas на финальный с точными размерами
-                finalCtx.drawImage(canvas, 0, 0, 1290, 2796);
+                // Заполняем фон
+                finalCtx.fillStyle = banner.backgroundColor || '#ffffff';
+                finalCtx.fillRect(0, 0, 1290, 2796);
+                
+                // Вычисляем размеры для сохранения пропорций, но с точной высотой
+                const aspectRatio = canvas.width / canvas.height;
+                let drawWidth = 1290;
+                let drawHeight = drawWidth / aspectRatio;
+                
+                // Если полученная высота больше целевой, корректируем ширину
+                if (drawHeight > 2796) {
+                  drawHeight = 2796;
+                  drawWidth = drawHeight * aspectRatio;
+                }
+                
+                // Центрируем изображение
+                const x = (1290 - drawWidth) / 2;
+                const y = 0; // Выравниваем по верхнему краю
+                
+                // Рисуем изображение на новом canvas
+                finalCtx.drawImage(canvas, x, y, drawWidth, drawHeight);
               }
               
               // Получаем данные из финального canvas
