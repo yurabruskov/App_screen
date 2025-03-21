@@ -314,25 +314,19 @@ export default function BannerGenerator() {
     }
   })
   const [isExporting, setIsExporting] = useState(false)
-  const [previewIndex, setPreviewIndex] = useState(0)
   const [jsonImportText, setJsonImportText] = useState("")
-  const [activeElement, setActiveElement] = useState("banner") // banner, title, description, device
+  const [exportingProgress, setExportingProgress] = useState(0)
+  const [previewIndex, setPreviewIndex] = useState(0)
   const [textAlignment, setTextAlignment] = useState("center")
   const [fontSize, setFontSize] = useState({ title: 24, description: 16 })
   const [lineHeight, setLineHeight] = useState({ title: "auto", description: "auto" })
   const [letterSpacing, setLetterSpacing] = useState({ title: 0, description: 0 })
   const canvasRef = useRef(null)
   const scrollContainerRef = useRef(null)
+  const [activeElement, setActiveElement] = useState("banner") // banner, title, description, device
   
   // Создаем экземпляр ImageDB
   const imageDBRef = useRef<ImageDB | null>(null);
-
-  // Инициализация imageDB
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      imageDBRef.current = new ImageDB();
-    }
-  }, []);
 
   // Новая структура данных для баннеров с уникальными настройками
   const [previewItems, setPreviewItems] = useState<PreviewItem[]>([
@@ -361,87 +355,107 @@ export default function BannerGenerator() {
         borderRadius: 30
       }
     }
-  ])
+  ]);
 
-  // Загрузка данных из localStorage при инициализации
+  // Исправление порядка хуков useEffect для корректной загрузки данных
+  // Перемещаем хук загрузки previewItems из localStorage перед другими хуками
+  // Сначала загружаем сохраненные настройки баннеров
   useEffect(() => {
-    // Проверка доступности localStorage
-    const isLocalStorageAvailable = () => {
+    console.log("Loading saved preview items from localStorage");
+    const savedItems = localStorage.getItem("previewItems");
+    if (savedItems) {
       try {
-        const testKey = '__localStorage_test__';
-        localStorage.setItem(testKey, testKey);
-        localStorage.removeItem(testKey);
-        return true;
-      } catch (e) {
-        return false;
+        const parsedItems = JSON.parse(savedItems);
+        setPreviewItems(parsedItems);
+      } catch (error) {
+        console.error("Error parsing saved preview items:", error);
       }
-    };
-
-    if (!isLocalStorageAvailable()) {
-      console.warn('localStorage is not available');
-      return;
-    }
-
-    // Загрузка настроек из localStorage
-    try {
-      const savedSettings = localStorage.getItem('bannerSettings');
-      const savedContent = localStorage.getItem('localizedContent');
-      const savedPreviews = localStorage.getItem('previewItems');
-      const savedTextAlignment = localStorage.getItem('textAlignment');
-      const savedFontSize = localStorage.getItem('fontSize');
-      
-      if (savedSettings) {
-        setBannerSettings(JSON.parse(savedSettings));
-      }
-      
-      if (savedContent) {
-        setLocalizedContent(JSON.parse(savedContent));
-      }
-      
-      if (savedPreviews) {
-        // При загрузке превью, скриншоты теряются, так как File объекты нельзя сериализовать
-        const parsedPreviews = JSON.parse(savedPreviews);
-        // Восстанавливаем превью без файлов скриншотов
-        setPreviewItems(parsedPreviews.map((item: any) => ({
-          ...item,
-          screenshot: {
-            ...item.screenshot,
-            file: null // Файлы не могут быть сохранены в localStorage
-          }
-        })));
-
-        // Загружаем изображения из IndexedDB, если он доступен
-        if (typeof window !== 'undefined' && imageDBRef.current) {
-          // Загружаем изображения для каждого превью
-          parsedPreviews.forEach(async (item: any) => {
-            try {
-              const imageId = `preview_${item.id}`;
-              const file = await imageDBRef.current?.getImage(imageId);
-              if (file) {
-                const updatedItems = [...parsedPreviews].map((p: any) => 
-                  p.id === item.id ? { ...p, screenshot: { ...p.screenshot, file } } : p
-                );
-                setPreviewItems(updatedItems);
-              }
-            } catch (error) {
-              console.error('Error loading image from IndexedDB:', error);
-            }
-          });
-        }
-      }
-      
-      if (savedTextAlignment) {
-        setTextAlignment(savedTextAlignment);
-      }
-      
-      if (savedFontSize) {
-        setFontSize(JSON.parse(savedFontSize));
-      }
-    } catch (error) {
-      console.error('Error loading data from localStorage:', error);
     }
   }, []);
-  
+
+  // Затем загружаем локализованное содержимое
+  useEffect(() => {
+    console.log("Loading localized content from localStorage");
+    const localContent = localStorage.getItem("localizedContent");
+    if (localContent) {
+      try {
+        const parsedContent = JSON.parse(localContent);
+        setLocalizedContent(parsedContent);
+      } catch (error) {
+        console.error("Error parsing localized content:", error);
+      }
+    }
+  }, []);
+
+  // Сохраняем previewItems в localStorage при их изменении
+  useEffect(() => {
+    console.log("Saving preview items to localStorage");
+    localStorage.setItem("previewItems", JSON.stringify(
+      previewItems.map(item => ({
+        ...item,
+        screenshot: {
+          ...item.screenshot,
+          file: null // Не сохраняем файл в localStorage, он будет в IndexedDB
+        }
+      }))
+    ));
+  }, [previewItems]);
+
+  // После того как previewItems загружены, инициализируем базу данных и загружаем изображения
+  useEffect(() => {
+    console.log("Initializing IndexedDB and loading images");
+    // Инициализируем базу данных
+    if (!imageDBRef.current) {
+      imageDBRef.current = new ImageDB();
+    }
+    
+    const loadImagesFromDB = async () => {
+      console.log("Loading images from IndexedDB...");
+      if (!imageDBRef.current) return;
+      
+      try {
+        // Загружаем изображения для всех превью
+        const updatedItems = [...previewItems];
+        let hasChanges = false;
+        
+        for (let i = 0; i < previewItems.length; i++) {
+          const item = previewItems[i];
+          const imageId = `preview_${item.id}`;
+          
+          try {
+            const imageFile = await imageDBRef.current.getImage(imageId);
+            if (imageFile) {
+              console.log(`Loaded image for preview ${imageId}`);
+              // Обновляем элемент с загруженным изображением
+              updatedItems[i] = {
+                ...updatedItems[i],
+                screenshot: {
+                  ...updatedItems[i].screenshot,
+                  file: imageFile
+                }
+              };
+              hasChanges = true;
+            }
+          } catch (error) {
+            console.error(`Error loading image for ${imageId}:`, error);
+          }
+        }
+        
+        // Обновляем состояние только если были изменения
+        if (hasChanges) {
+          setPreviewItems(updatedItems);
+        }
+      } catch (error) {
+        console.error("Error loading images from IndexedDB:", error);
+      }
+    };
+    
+    // Загружаем изображения только если есть превью
+    if (previewItems.length > 0) {
+      loadImagesFromDB();
+    }
+  }, [previewItems.length]); // Запускаем только при изменении количества превью
+
   // Сохранение данных в localStorage при изменении
   useEffect(() => {
     // Проверка доступности localStorage перед сохранением
@@ -538,33 +552,36 @@ export default function BannerGenerator() {
     return localizedContent[langCode]?.[field] || ""
   }
 
-  // Перехватываем изменение screenshot.file для сохранения в IndexedDB
+  // Полностью заменяем эту функцию
   const handleScreenshotUpload = (file: File) => {
-    // Создаем копию массива, но не используем JSON для глубокого клонирования
-    const updatedItems = [...previewItems];
+    // Для отладки
+    console.log("Starting upload for preview: ", previewIndex);
+    console.log("With position: ", previewItems[previewIndex]?.devicePosition);
     
-    if (updatedItems[previewIndex]) {
-      // Сохраняем файл и все текущие настройки
-      const currentItem = updatedItems[previewIndex];
+    // Вместо создания копии, модифицируем существующий элемент
+    const newItems = [...previewItems];
+    
+    if (newItems[previewIndex]) {
+      // Сохраняем ссылку на элемент
+      const item = newItems[previewIndex];
       
-      // Обновляем только те свойства, которые нужно изменить
-      updatedItems[previewIndex] = {
-        ...currentItem,
-        screenshot: {
-          ...currentItem.screenshot,
-          file: file // Просто заменяем файл
-        }
+      // Модифицируем только screenshot.file, оставляя все остальные свойства неизменными
+      item.screenshot = {
+        ...item.screenshot,
+        file
       };
       
-      // Установка обновленного массива превью
-      setPreviewItems(updatedItems);
+      // Устанавливаем новое состояние
+      setPreviewItems(newItems);
       
       // Сохраняем в IndexedDB
       if (imageDBRef.current) {
-        const imageId = `preview_${currentItem.id}`;
+        const imageId = `preview_${item.id}`;
         imageDBRef.current.saveImage(imageId, file)
           .catch(error => console.error('Error saving image to IndexedDB:', error));
       }
+      
+      console.log("Upload complete, position should still be:", item.devicePosition);
     }
   };
 
@@ -698,117 +715,121 @@ export default function BannerGenerator() {
     }
   }
 
-  // Get device position styles based on the selected position
+  // Полностью переписываем функцию getDevicePositionStyles с более выраженным позиционированием
   const getDevicePositionStyles = (banner) => {
-    // Base width for the device - this will be scaled
-    const baseWidth = 220
-    const devicePosition = banner.devicePosition
-    const deviceScale = banner.deviceScale
-    const deviceOffset = banner.verticalOffset?.device || 0
-
-    // Базовые стили в зависимости от позиции
-    let baseStyles = {}
-
+    // Проверка наличия объекта баннера
+    if (!banner) {
+      return {
+        position: "absolute",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+        width: "220px",
+      };
+    }
+    
+    // Получаем значения с проверкой наличия
+    const devicePosition = banner.devicePosition || "center";
+    const deviceScale = banner.deviceScale || 100;
+    const deviceOffset = banner.verticalOffset?.device || 0;
+    const deviceRotation = banner.rotation?.device || 0;
+    
+    // Базовая ширина устройства
+    const baseWidth = 220;
+    const width = `${(baseWidth * deviceScale) / 100}px`;
+    
+    // Объект стилей для различных позиций с более контрастными значениями
+    let styles = {
+      position: "absolute",
+      width
+    };
+    
+    // Определяем позицию в зависимости от выбранного значения
+    // Более контрастное позиционирование для большей различимости
     switch (devicePosition) {
       case "top-left":
-        baseStyles = {
-          top: "20%",
-          left: "25%",
-        }
-        break
+        styles = {
+          ...styles,
+          top: "-35%", // Устройство будет выступать на 85% сверху
+          left: "-15%", // Устройство будет выступать на 15% слева
+          transform: `translateY(${deviceOffset}px) rotate(${deviceRotation}deg)`
+        };
+        break;
       case "top-center":
-        baseStyles = {
-          top: "20%",
+        styles = {
+          ...styles,
+          top: "-35%", // Устройство будет выступать на 85% сверху
           left: "50%",
-        }
-        break
+          transform: `translateX(-50%) translateY(${deviceOffset}px) rotate(${deviceRotation}deg)`
+        };
+        break;
       case "top-right":
-        baseStyles = {
-          top: "20%",
-          right: "25%",
-        }
-        break
+        styles = {
+          ...styles,
+          top: "-35%", // Устройство будет выступать на 85% сверху
+          right: "-15%", // Устройство будет выступать на 15% справа
+          transform: `translateY(${deviceOffset}px) rotate(${deviceRotation}deg)`
+        };
+        break;
       case "center-left":
-        baseStyles = {
+        styles = {
+          ...styles,
           top: "50%",
-          left: "25%",
-        }
-        break
+          left: "-25%", // Устройство будет выступать на 25% слева
+          transform: `translateY(-50%) translateY(${deviceOffset}px) rotate(${deviceRotation}deg)`
+        };
+        break;
       case "center":
-        baseStyles = {
+        styles = {
+          ...styles,
           top: "50%",
           left: "50%",
-        }
-        break
+          transform: `translate(-50%, -50%) translateY(${deviceOffset}px) rotate(${deviceRotation}deg)`
+        };
+        break;
       case "center-right":
-        baseStyles = {
+        styles = {
+          ...styles,
           top: "50%",
-          right: "25%",
-        }
-        break
+          right: "-25%", // Устройство будет выступать на 25% справа
+          transform: `translateY(-50%) translateY(${deviceOffset}px) rotate(${deviceRotation}deg)`
+        };
+        break;
       case "bottom-left":
-        baseStyles = {
-          bottom: "20%",
-          left: "25%",
-        }
-        break
+        styles = {
+          ...styles,
+          bottom: "-35%", // Устройство будет выступать на 85% снизу
+          left: "-15%", // Устройство будет выступать на 15% слева
+          transform: `translateY(${deviceOffset}px) rotate(${deviceRotation}deg)`
+        };
+        break;
       case "bottom-center":
-        baseStyles = {
-          bottom: "20%",
+        styles = {
+          ...styles,
+          bottom: "-35%", // Устройство будет выступать на 85% снизу
           left: "50%",
-        }
-        break
+          transform: `translateX(-50%) translateY(${deviceOffset}px) rotate(${deviceRotation}deg)`
+        };
+        break;
       case "bottom-right":
-        baseStyles = {
-          bottom: "20%",
-          right: "25%",
-        }
-        break
+        styles = {
+          ...styles,
+          bottom: "-35%", // Устройство будет выступать на 85% снизу
+          right: "-15%", // Устройство будет выступать на 15% справа
+          transform: `translateY(${deviceOffset}px) rotate(${deviceRotation}deg)`
+        };
+        break;
       default:
-        baseStyles = {
+        styles = {
+          ...styles,
           top: "50%",
           left: "50%",
-        }
+          transform: `translate(-50%, -50%) translateY(${deviceOffset}px) rotate(${deviceRotation}deg)`
+        };
     }
-
-    // Создаем трансформацию с учетом позиции, масштаба и вертикального смещения
-    let transform = ""
-
-    // Добавляем translate в зависимости от позиции
-    if (devicePosition.includes("left")) {
-      transform += "translateX(-50%) "
-    } else if (devicePosition.includes("right")) {
-      transform += "translateX(50%) "
-    } else {
-      transform += "translateX(-50%) "
-    }
-
-    if (devicePosition.includes("top")) {
-      transform += "translateY(-50%) "
-    } else if (devicePosition.includes("bottom")) {
-      transform += "translateY(50%) "
-    } else {
-      transform += "translateY(-50%) "
-    }
-
-    // Добавляем масштаб
-    transform += `scale(${deviceScale / 100}) `
-
-    // Добавляем вертикальное смещение
-    if (deviceOffset !== 0) {
-      transform += `translateY(${deviceOffset}px)`
-    }
-
-    // Добавляем поворот к трансформации
-    transform += `rotate(${banner.rotation?.device || 0}deg) `
-
-    return {
-      ...baseStyles,
-      transform,
-      transformOrigin: "center",
-      width: `${baseWidth}px`,
-    }
-  }
+    
+    return styles;
+  };
 
   // Get title and description positions based on device position
   const getContentPositions = (devicePosition) => {
@@ -929,33 +950,37 @@ export default function BannerGenerator() {
     }
   }
 
-  // Handle drag and drop for the entire application
+  // Также обновим обработчик drag & drop для всего приложения
   useEffect(() => {
     const handleDragOver = (e: DragEvent) => {
-      e.preventDefault()
-      e.stopPropagation()
-    }
+      e.preventDefault();
+      e.stopPropagation();
+    };
 
     const handleDrop = (e: DragEvent) => {
-      e.preventDefault()
-      e.stopPropagation()
-
-      // If we have a file, add it to the current banner
+      e.preventDefault();
+      e.stopPropagation();
+      
+      console.log("Drop event received");
+      
+      // Предотвращаем всплытие события, чтобы избежать двойной обработки
       if (e.dataTransfer?.files && e.dataTransfer.files[0]) {
-        handleScreenshotUpload(e.dataTransfer.files[0])
+        console.log("File dropped, current position:", previewItems[previewIndex]?.devicePosition);
+        handleScreenshotUpload(e.dataTransfer.files[0]);
+        return false;
       }
-    }
+    };
 
     // Add event listeners to the window
-    window.addEventListener("dragover", handleDragOver)
-    window.addEventListener("drop", handleDrop)
+    window.addEventListener("dragover", handleDragOver);
+    window.addEventListener("drop", handleDrop);
 
     // Clean up
     return () => {
-      window.removeEventListener("dragover", handleDragOver)
-      window.removeEventListener("drop", handleDrop)
-    }
-  }, [previewIndex])
+      window.removeEventListener("dragover", handleDragOver);
+      window.removeEventListener("drop", handleDrop);
+    };
+  }, [previewIndex, previewItems]); // Важно: добавляем previewItems в зависимости
 
   // Handle export
   const handleExport = async () => {
@@ -1003,7 +1028,7 @@ export default function BannerGenerator() {
         tempCanvas.style.backgroundColor = banner.backgroundColor;
         
         // Создаем структуру канваса соответствующую структуре оригинального баннера
-        const { titlePosition, descriptionPosition, separateElements } = getContentPositions(banner.devicePosition);
+        const { titlePosition, descriptionPosition, separateElements } = getContentPositions(banner.devicePosition || "center");
         const currentOffset = banner.verticalOffset || { combined: 0, title: 0, description: 0, device: 0 };
         
         // Для каждого языка создаем изображение и добавляем в соответствующую папку в ZIP
@@ -1728,9 +1753,9 @@ export default function BannerGenerator() {
                   <Label>Vertical Position</Label>
                 </div>
                 <NumberInputWithSlider
-                  value={currentBanner.verticalOffset?.device || 0}
+                  value={previewItems[previewIndex]?.verticalOffset?.device || 0}
                   onChange={(value) => {
-                    const updatedItems = [...previewItems];
+                    const updatedItems = [...previewItems]
                     if (updatedItems[previewIndex]) {
                       updatedItems[previewIndex] = {
                         ...updatedItems[previewIndex],
@@ -1738,12 +1763,12 @@ export default function BannerGenerator() {
                           ...updatedItems[previewIndex].verticalOffset,
                           device: value,
                         },
-                      };
-                      setPreviewItems(updatedItems);
+                      }
+                      setPreviewItems(updatedItems)
                     }
                   }}
-                  min={-100}
-                  max={100}
+                  min={-300}
+                  max={300}
                   unit="px"
                 />
               </div>
@@ -1828,8 +1853,15 @@ export default function BannerGenerator() {
   // Функция для рендеринга баннера
   const renderBanner = (item, index) => {
     const isActive = index === previewIndex
-    const { titlePosition, descriptionPosition, separateElements } = getContentPositions(item.devicePosition)
+    
+    // Принудительно устанавливаем сохраненную позицию устройства
+    const devicePosition = item.devicePosition || "center";
+    
+    console.log(`Rendering banner ${index}, device position:`, devicePosition);
+    
+    const { titlePosition, descriptionPosition, separateElements } = getContentPositions(devicePosition)
     const currentOffset = item.verticalOffset || { combined: 0, title: 0, description: 0, device: 0 }
+    const currentRotation = item.rotation || { device: 0, title: 0, description: 0, textBlock: 0 }
 
     return (
       <div
@@ -1872,7 +1904,7 @@ export default function BannerGenerator() {
                   }
                 }}
               >
-                <h2 className="text-2xl font-bold text-center" style={getTextStyle("title", item.rotation?.title || 0)}>
+                <h2 className="text-2xl font-bold text-center" style={getTextStyle("title", currentRotation.device)}>
                   {getPreviewContent(activeLanguage, item.id, "title") || "Title"}
                 </h2>
               </div>
@@ -1891,7 +1923,7 @@ export default function BannerGenerator() {
                   }
                 }}
               >
-                <p className="text-base text-center" style={getTextStyle("description", item.rotation?.description || 0)}>
+                <p className="text-base text-center" style={getTextStyle("description", currentRotation.description)}>
                   {getPreviewContent(activeLanguage, item.id, "description") || "Description"}
                 </p>
               </div>
@@ -1901,7 +1933,7 @@ export default function BannerGenerator() {
               className={`absolute ${isActive ? "cursor-pointer hover:ring-2 hover:ring-blue-300 hover:ring-opacity-50 rounded-md p-1" : ""}`}
               style={{
                 ...titlePosition,
-                transform: `${titlePosition.transform || ""} translateY(${currentOffset.combined}px) rotate(${item.rotation?.textBlock || 0}deg)`,
+                transform: `${titlePosition.transform || ""} translateY(${currentOffset.combined}px) rotate(${currentRotation.textBlock}deg)`,
               }}
               onDoubleClick={(e) => {
                 if (isActive) {
@@ -1981,12 +2013,23 @@ export default function BannerGenerator() {
                 onDrop={
                   isActive
                     ? (e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        e.currentTarget.classList.remove("border-primary")
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.currentTarget.classList.remove("border-primary");
+
+                        // Сохраняем текущую позицию для логирования
+                        const currentPosition = item.devicePosition;
+                        console.log("Before drop in banner - device position:", currentPosition);
 
                         if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                          handleScreenshotUpload(e.dataTransfer.files[0])
+                          // Вызываем handleScreenshotUpload с сохранением позиции
+                          handleScreenshotUpload(e.dataTransfer.files[0]);
+                          
+                          // Дополнительная проверка позиции через 100мс
+                          setTimeout(() => {
+                            console.log("100ms after drop - device position:", previewItems[previewIndex]?.devicePosition);
+                            console.log("Should match original position:", currentPosition);
+                          }, 100);
                         }
                       }
                     : undefined
