@@ -1462,29 +1462,33 @@ export default function BannerGenerator() {
               exportElement.style.zIndex = '-1';
               exportElement.style.transform = 'none';
               exportElement.style.margin = '0';
+              exportElement.style.padding = '0';
               exportElement.style.borderRadius = '0';
               exportElement.style.border = 'none';
-              exportElement.style.overflow = 'hidden';
-              exportElement.style.width = '320px';
-              exportElement.style.height = '690px';
+              exportElement.style.width = '323px';
+              exportElement.style.height = '699px';
+              exportElement.style.boxSizing = 'border-box';
+              
+              // Удаляем нижние отступы и прочие элементы, которые могут вызывать пространство внизу
+              const allElements = exportElement.querySelectorAll('*');
+              allElements.forEach(el => {
+                if (el instanceof HTMLElement) {
+                  el.style.marginBottom = '0';
+                  el.style.paddingBottom = '0';
+                  el.style.borderBottom = 'none';
+                }
+              });
               
               // Используем html2canvas для рендеринга
               const canvas = await html2canvas(exportElement as HTMLElement, {
-                scale: 4, // Увеличиваем масштаб с 2 до 4 для более высокого разрешения
+                scale: 4,
                 useCORS: true,
                 allowTaint: true,
                 backgroundColor: banner.backgroundColor || '#ffffff',
-                width: 320, // Базовая ширина (будет умножена на scale)
-                height: 690, // Базовая высота (будет умножена на scale)
+                width: 323,
+                height: 699,
                 logging: false,
-                removeContainer: false,
-                imageTimeout: 0, // Убираем таймаут для загрузки изображений
-                onclone: (clonedDoc, element) => {
-                  // Дополнительная очистка в клонированном документе
-                  element.style.paddingBottom = '0';
-                  element.style.marginBottom = '0';
-                  return element;
-                }
+                removeContainer: false
               });
               
               // Создаем новый canvas с точными размерами
@@ -1492,29 +1496,9 @@ export default function BannerGenerator() {
               finalCanvas.width = 1290;
               finalCanvas.height = 2796;
               const finalCtx = finalCanvas.getContext('2d');
-              
               if (finalCtx) {
-                // Заполняем фон
-                finalCtx.fillStyle = banner.backgroundColor || '#ffffff';
-                finalCtx.fillRect(0, 0, 1290, 2796);
-                
-                // Вычисляем размеры для сохранения пропорций, но с точной высотой
-                const aspectRatio = canvas.width / canvas.height;
-                let drawWidth = 1290;
-                let drawHeight = drawWidth / aspectRatio;
-                
-                // Если полученная высота больше целевой, корректируем ширину
-                if (drawHeight > 2796) {
-                  drawHeight = 2796;
-                  drawWidth = drawHeight * aspectRatio;
-                }
-                
-                // Центрируем изображение
-                const x = (1290 - drawWidth) / 2;
-                const y = 0; // Выравниваем по верхнему краю
-                
-                // Рисуем изображение на новом canvas
-                finalCtx.drawImage(canvas, x, y, drawWidth, drawHeight);
+                // Рисуем исходный canvas на финальный с точными размерами
+                finalCtx.drawImage(canvas, 0, 0, 1290, 2796);
               }
               
               // Получаем данные из финального canvas
