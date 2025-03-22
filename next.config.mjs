@@ -5,6 +5,10 @@ try {
   // ignore error
 }
 
+// Определяем, находимся ли мы на GitHub Pages
+const isGithubPages = process.env.GITHUB_ACTIONS === 'true' || process.env.DEPLOY_TARGET === 'gh-pages'
+const repoName = 'App_screen'
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
@@ -21,8 +25,14 @@ const nextConfig = {
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
   },
-  useFileSystemPublicRoutes: true,
-  swcMinify: true,
+  // Настройки для GitHub Pages, применяются только когда мы деплоим на GitHub
+  ...(isGithubPages && {
+    output: 'export',
+    basePath: `/${repoName}`,
+    assetPrefix: `/${repoName}/`,
+    trailingSlash: true,
+  }),
+  // Настройки для React компонентов
   reactStrictMode: true,
   env: {
     APP_ENV: process.env.APP_ENV || 'production',
