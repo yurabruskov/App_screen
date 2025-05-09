@@ -8,8 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "export": "next export",
-    "predeploy": "DEPLOY_TARGET=gh-pages next build",
-    "deploy": "touch out/.nojekyll && gh-pages -d out"
+    "deploy": "DEPLOY_TARGET=gh-pages next build && touch out/.nojekyll && git push origin `git subtree split --prefix out main`:gh-pages --force"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
