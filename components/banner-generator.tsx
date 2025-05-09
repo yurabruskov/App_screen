@@ -90,7 +90,7 @@ class ImageDB {
   }
 
   // Инициализация базы данных
-  private initDB(): Promise<void> {
+  public initDB(): Promise<void> {
     return new Promise((resolve, reject) => {
       if (!window.indexedDB) {
         console.error('Ваш браузер не поддерживает IndexedDB');
@@ -113,6 +113,7 @@ class ImageDB {
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
         if (!db.objectStoreNames.contains(this.storeName)) {
+          // Используем id как явный ключ (keyPath), а не автоинкремент
           db.createObjectStore(this.storeName, { keyPath: 'id' });
         }
       };
@@ -133,18 +134,24 @@ class ImageDB {
             const transaction = this.db!.transaction([this.storeName], 'readwrite');
             const store = transaction.objectStore(this.storeName);
             
+            // Убедимся, что id является явным ключом объекта, соответствующим keyPath
             const imageData = {
-              id,
+              id: id,  // Явно присваиваем id для соответствия keyPath
               data: reader.result,
               type: file.type,
               lastModified: new Date().getTime()
             };
             
+            // put с одним параметром - IndexedDB будет использовать id из объекта как ключ
             const request = store.put(imageData);
             
             request.onsuccess = () => resolve();
-            request.onerror = (event) => reject(event);
+            request.onerror = (event) => {
+              console.error("Error putting data in IndexedDB:", event);
+              reject(event);
+            };
           } catch (err) {
+            console.error("Catch error in transaction:", err);
             reject(err);
           }
         };
@@ -152,6 +159,7 @@ class ImageDB {
         reader.onerror = (event) => reject(event);
         reader.readAsDataURL(file);
       } catch (err) {
+        console.error("Outer catch error:", err);
         reject(err);
       }
     });
@@ -399,11 +407,40 @@ export default function BannerGenerator() {
     return { title: 0, description: 0 };
   });
   const canvasRef = useRef(null)
-  const scrollContainerRef = useRef(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null); // Укажем тип для ref
   const [activeElement, setActiveElement] = useState("banner") // banner, title, description, device
+  
+  // Состояние для отслеживания перетаскиваемого элемента
+  const [draggingElementInfo, setDraggingElementInfo] = useState<{
+    bannerId: number;
+    elementType: "title" | "description" | "device" | "text-block";
+    initialMouseX: number;
+    initialMouseY: number;
+    initialElementOffsetX: number;
+    initialElementOffsetY: number;
+  } | null>(null);
   
   // Создаем экземпляр ImageDB
   const imageDBRef = useRef<ImageDB | null>(null);
+
+  // Инициализация IndexedDB при монтировании компонента
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Создаем экземпляр ImageDB только один раз
+      if (!imageDBRef.current) {
+        imageDBRef.current = new ImageDB();
+        // Явно инициализируем базу данных
+        imageDBRef.current.initDB().catch(err => 
+          console.error('Ошибка при инициализации IndexedDB:', err)
+        );
+      }
+    }
+    
+    // Очистка при размонтировании
+    return () => {
+      // Нет необходимости в особой очистке
+    };
+  }, []);
 
   // Обновим установку начальных значений, добавим проверку localStorage перед установкой дефолтного состояния
   const [previewItems, setPreviewItems] = useState<PreviewItem[]>(() => {
@@ -935,7 +972,10 @@ export default function BannerGenerator() {
           ...styles,
           top: "50%",
           left: "50%",
-          transform: `translate(-50%, -50%) translateY(${deviceOffset}px) rotate(${deviceRotation}deg)`
+          transform: `translate(-50%, -50%) translateY(${deviceOffset}px) rotate(${deviceRotation}deg)`,
+          zIndex: "10", // Добавляем z-index, чтобы устройство было поверх текста
+          maxWidth: "75%", // Ограничиваем максимальную ширину для лучшего вида
+          margin: "0 auto" // Центрируем горизонтально
         };
         break;
       case "center-right":
@@ -991,18 +1031,24 @@ export default function BannerGenerator() {
 
     // If device is centered, title at top and description below device
     if (devicePosition === "center") {
+      // Title at the top
       titlePosition = {
-        top: "15%",
+        top: "8%",  // Увеличиваем отступ сверху
         left: "50%",
         transform: "translateX(-50%)",
         width: "250px",
+        textAlign: "center",
+        zIndex: "5"  // Обеспечиваем отображение поверх фона
       }
 
+      // Description at the bottom, гарантированно под устройством
       descriptionPosition = {
-        bottom: "15%",
+        bottom: "15%",  // Увеличиваем отступ снизу для большей заметности
         left: "50%",
         transform: "translateX(-50%)",
         width: "250px",
+        textAlign: "center",
+        zIndex: "5"  // Обеспечиваем отображение поверх фона
       }
 
       separateElements = true
@@ -1918,31 +1964,97 @@ export default function BannerGenerator() {
 
               <div>
                 <Label>Position</Label>
-                <div className="grid grid-cols-3 gap-1 mt-2">
-                  {DEVICE_POSITIONS.map((position) => (
-                    <button
-                      key={position.value}
-                      type="button"
-                      onClick={() => {
-                        const updatedItems = [...previewItems]
-                        if (updatedItems[previewIndex]) {
-                          updatedItems[previewIndex] = {
-                            ...updatedItems[previewIndex],
-                            devicePosition: position.value,
+                <div className="grid grid-cols-3 gap-0.5 mt-1">
+                  {DEVICE_POSITIONS.map((position) => {
+                    // Определение иконки-схемы для каждой позиции
+                    const getPositionIcon = () => {
+                      // SVG схема для каждой позиции
+                      const icons = {
+                        'top-left': (
+                          <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3 mx-auto">
+                            <rect x="4" y="4" width="6" height="6" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                            <rect x="4" y="14" width="16" height="6" stroke="currentColor" strokeWidth="1.5" fill="none" strokeDasharray="2 2" />
+                          </svg>
+                        ),
+                        'top-center': (
+                          <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3 mx-auto">
+                            <rect x="9" y="4" width="6" height="6" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                            <rect x="4" y="14" width="16" height="6" stroke="currentColor" strokeWidth="1.5" fill="none" strokeDasharray="2 2" />
+                          </svg>
+                        ),
+                        'top-right': (
+                          <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3 mx-auto">
+                            <rect x="14" y="4" width="6" height="6" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                            <rect x="4" y="14" width="16" height="6" stroke="currentColor" strokeWidth="1.5" fill="none" strokeDasharray="2 2" />
+                          </svg>
+                        ),
+                        'center-left': (
+                          <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3 mx-auto">
+                            <rect x="4" y="9" width="6" height="6" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                            <rect x="14" y="9" width="6" height="6" stroke="currentColor" strokeWidth="1.5" fill="none" strokeDasharray="2 2" />
+                          </svg>
+                        ),
+                        'center': (
+                          <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3 mx-auto">
+                            <rect x="4" y="2" width="16" height="4" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                            <rect x="9" y="9" width="6" height="6" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                            <rect x="4" y="18" width="16" height="4" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                          </svg>
+                        ),
+                        'center-right': (
+                          <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3 mx-auto">
+                            <rect x="14" y="9" width="6" height="6" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                            <rect x="4" y="9" width="6" height="6" stroke="currentColor" strokeWidth="1.5" fill="none" strokeDasharray="2 2" />
+                          </svg>
+                        ),
+                        'bottom-left': (
+                          <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3 mx-auto">
+                            <rect x="4" y="14" width="6" height="6" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                            <rect x="4" y="4" width="16" height="6" stroke="currentColor" strokeWidth="1.5" fill="none" strokeDasharray="2 2" />
+                          </svg>
+                        ),
+                        'bottom-center': (
+                          <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3 mx-auto">
+                            <rect x="9" y="14" width="6" height="6" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                            <rect x="4" y="4" width="16" height="6" stroke="currentColor" strokeWidth="1.5" fill="none" strokeDasharray="2 2" />
+                          </svg>
+                        ),
+                        'bottom-right': (
+                          <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3 mx-auto">
+                            <rect x="14" y="14" width="6" height="6" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                            <rect x="4" y="4" width="16" height="6" stroke="currentColor" strokeWidth="1.5" fill="none" strokeDasharray="2 2" />
+                          </svg>
+                        )
+                      };
+                      
+                      return icons[position.value] || <Smartphone className="h-4 w-4 mx-auto" />;
+                    };
+                    
+                    return (
+                      <button
+                        key={position.value}
+                        type="button"
+                        onClick={() => {
+                          const updatedItems = [...previewItems]
+                          if (updatedItems[previewIndex]) {
+                            updatedItems[previewIndex] = {
+                              ...updatedItems[previewIndex],
+                              devicePosition: position.value,
+                            }
+                            setPreviewItems(updatedItems)
                           }
-                          setPreviewItems(updatedItems)
-                        }
-                      }}
-                      className={`p-1 rounded-md border ${
-                        currentBanner.devicePosition === position.value
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-background hover:bg-muted"
-                      }`}
-                      title={position.label}
-                    >
-                      <Smartphone className="h-4 w-4 mx-auto" />
-                    </button>
-                  ))}
+                        }}
+                        className={`p-0.5 rounded-md border ${
+                          currentBanner.devicePosition === position.value
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-background hover:bg-muted"
+                        }`}
+                        title={position.label}
+                      >
+                        {getPositionIcon()}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -2229,11 +2341,12 @@ export default function BannerGenerator() {
             <>
               {/* Title at the top */}
               <div
-                className={`absolute ${isActive ? "hover:ring-2 hover:ring-blue-300 hover:ring-opacity-50 rounded-md p-1" : ""}`}
+                className={`absolute ${isActive ? "hover:ring-2 hover:ring-blue-300 hover:ring-opacity-50 rounded-md p-1" : ""} ${isActive && draggingElementInfo?.elementType !== 'title' ? 'cursor-grab' : ''} ${draggingElementInfo?.elementType === 'title' ? 'cursor-grabbing' : ''}`}
                 style={{
                   ...titlePosition,
-                  transform: `${titlePosition.transform || ""} translateY(${currentOffset.title}px) translateX(${currentHorizontalOffset.title}px)`,
+                  transform: `${(titlePosition as any).transform || ""} translateY(${currentOffset.title}px) translateX(${currentHorizontalOffset.title}px)`,
                 }}
+                onMouseDown={(e) => isActive && handleMouseDown(e, item.id, "title")}
                 onDoubleClick={(e) => {
                   if (isActive) {
                     e.stopPropagation()
@@ -2250,11 +2363,12 @@ export default function BannerGenerator() {
 
               {/* Description at the bottom */}
               <div
-                className={`absolute ${isActive ? "hover:ring-2 hover:ring-blue-300 hover:ring-opacity-50 rounded-md p-1" : ""}`}
+                className={`absolute ${isActive ? "hover:ring-2 hover:ring-blue-300 hover:ring-opacity-50 rounded-md p-1" : ""} ${isActive && draggingElementInfo?.elementType !== 'description' ? 'cursor-grab' : ''} ${draggingElementInfo?.elementType === 'description' ? 'cursor-grabbing' : ''}`}
                 style={{
                   ...descriptionPosition,
-                  transform: `${descriptionPosition.transform || ""} translateY(${currentOffset.description}px) translateX(${currentHorizontalOffset.description}px)`,
+                  transform: `${(descriptionPosition as any).transform || ""} translateY(${currentOffset.description}px) translateX(${currentHorizontalOffset.description}px)`,
                 }}
+                onMouseDown={(e) => isActive && handleMouseDown(e, item.id, "description")}
                 onDoubleClick={(e) => {
                   if (isActive) {
                     e.stopPropagation()
@@ -2271,11 +2385,12 @@ export default function BannerGenerator() {
             </>
           ) : (
             <div
-              className={`absolute ${isActive ? "hover:ring-2 hover:ring-blue-300 hover:ring-opacity-50 rounded-md p-1" : ""}`}
+              className={`absolute ${isActive ? "hover:ring-2 hover:ring-blue-300 hover:ring-opacity-50 rounded-md p-1" : ""} ${isActive && draggingElementInfo?.elementType !== 'text-block' ? 'cursor-grab' : ''} ${draggingElementInfo?.elementType === 'text-block' ? 'cursor-grabbing' : ''}`}
               style={{
-                ...titlePosition,
-                transform: `${titlePosition.transform || ""} translateY(${currentOffset.combined}px) translateX(${currentHorizontalOffset.combined}px) rotate(${currentRotation.textBlock}deg)`,
+                ...titlePosition, // Используем titlePosition как базу для всего блока
+                transform: `${(titlePosition as any).transform || ""} translateY(${currentOffset.combined}px) translateX(${currentHorizontalOffset.combined}px) rotate(${currentRotation.textBlock}deg)`,
               }}
+              onMouseDown={(e) => isActive && handleMouseDown(e, item.id, "text-block")}
               onDoubleClick={(e) => {
                 if (isActive) {
                   e.stopPropagation()
@@ -2299,9 +2414,10 @@ export default function BannerGenerator() {
 
           {/* Device/Screenshot */}
           <div
-            className={`absolute banner-device-target ${isActive ? "cursor-pointer hover:ring-2 hover:ring-blue-300 hover:ring-opacity-50" : ""}`}
+            className={`absolute banner-device-target ${isActive ? "hover:ring-2 hover:ring-blue-300 hover:ring-opacity-50" : ""} ${isActive && draggingElementInfo?.elementType !== 'device' ? 'cursor-grab' : ''} ${draggingElementInfo?.elementType === 'device' ? 'cursor-grabbing' : ''}`}
             data-banner-id={index}
-            style={getDevicePositionStyles(item)}
+            style={getDevicePositionStyles(item) as React.CSSProperties}
+            onMouseDown={(e) => isActive && handleMouseDown(e, item.id, "device")}
             onDoubleClick={(e) => {
               if (isActive) {
                 e.stopPropagation()
@@ -2592,16 +2708,116 @@ export default function BannerGenerator() {
     return ctx;
   };
 
-  // Убедиться, что IndexedDB инициализируется корректно
-  useEffect(() => {
-    // Инициализируем БД для хранения изображений только на клиенте
-    if (typeof window !== 'undefined') {
-      if (!imageDBRef.current) {
-        imageDBRef.current = new ImageDB();
-        console.log('IndexedDB initialized');
-      }
+  // Обработчик начала перетаскивания
+  const handleMouseDown = (
+    event: React.MouseEvent,
+    bannerId: number,
+    elementType: "title" | "description" | "device" | "text-block"
+  ) => {
+    event.preventDefault();
+    event.stopPropagation(); // Останавливаем всплытие, чтобы не конфликтовать с выбором активного баннера
+
+    const banner = previewItems.find(p => p.id === bannerId);
+    if (!banner) return;
+
+    let initialElementOffsetX = 0;
+    let initialElementOffsetY = 0;
+
+    const verticalOffsets = banner.verticalOffset || { combined: 0, title: 0, description: 0, device: 0 };
+    const horizontalOffsets = banner.horizontalOffset || { combined: 0, title: 0, description: 0 };
+
+    if (elementType === "title") {
+      initialElementOffsetX = horizontalOffsets.title;
+      initialElementOffsetY = verticalOffsets.title;
+    } else if (elementType === "description") {
+      initialElementOffsetX = horizontalOffsets.description;
+      initialElementOffsetY = verticalOffsets.description;
+    } else if (elementType === "device") {
+      initialElementOffsetX = 0; // Горизонтальное смещение устройства управляется его CSS-позицией
+      initialElementOffsetY = verticalOffsets.device;
+    } else if (elementType === "text-block") {
+      initialElementOffsetX = horizontalOffsets.combined;
+      initialElementOffsetY = verticalOffsets.combined;
     }
-  }, []);
+    
+    // Устанавливаем активный элемент, если перетаскиваем его
+    if (elementType === "title" || elementType === "description" || elementType === "device" || elementType === "text-block") {
+      setActiveElement(elementType === "text-block" ? "title" : elementType); // Для text-block выбираем title, чтобы настройки открылись
+    }
+
+
+    setDraggingElementInfo({
+      bannerId,
+      elementType,
+      initialMouseX: event.clientX,
+      initialMouseY: event.clientY,
+      initialElementOffsetX,
+      initialElementOffsetY,
+    });
+  };
+
+  // Обработчик перемещения мыши (будет добавлен глобально)
+  const handleMouseMove = useCallback((event: MouseEvent) => {
+    if (!draggingElementInfo) return;
+
+    const deltaX = event.clientX - draggingElementInfo.initialMouseX;
+    const deltaY = event.clientY - draggingElementInfo.initialMouseY;
+
+    const newOffsetX = draggingElementInfo.initialElementOffsetX + deltaX;
+    const newOffsetY = draggingElementInfo.initialElementOffsetY + deltaY;
+
+    setPreviewItems(prevItems => 
+      prevItems.map(item => {
+        if (item.id === draggingElementInfo.bannerId) {
+          const updatedItem = { ...item };
+          let elementType = draggingElementInfo.elementType;
+
+          if (elementType === "title") {
+            updatedItem.horizontalOffset = { ...item.horizontalOffset, title: newOffsetX };
+            updatedItem.verticalOffset = { ...item.verticalOffset, title: newOffsetY };
+          } else if (elementType === "description") {
+            updatedItem.horizontalOffset = { ...item.horizontalOffset, description: newOffsetX };
+            updatedItem.verticalOffset = { ...item.verticalOffset, description: newOffsetY };
+          } else if (elementType === "device") {
+            updatedItem.verticalOffset = { ...item.verticalOffset, device: newOffsetY };
+            // Горизонтальное пока не трогаем, оно через CSS left/right/transform
+          } else if (elementType === "text-block") {
+            updatedItem.horizontalOffset = { ...item.horizontalOffset, combined: newOffsetX };
+            updatedItem.verticalOffset = { ...item.verticalOffset, combined: newOffsetY };
+          }
+          return updatedItem;
+        }
+        return item;
+      })
+    );
+  }, [draggingElementInfo, setPreviewItems]);
+
+  // Обработчик отпускания кнопки мыши (будет добавлен глобально)
+  const handleMouseUp = useCallback(() => {
+    if (draggingElementInfo) {
+      setDraggingElementInfo(null);
+    }
+  }, [draggingElementInfo]);
+
+  // Эффект для добавления и удаления глобальных обработчиков мыши
+  useEffect(() => {
+    if (draggingElementInfo) {
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+      // Добавим стиль для body, чтобы предотвратить выделение текста при перетаскивании
+      document.body.style.userSelect = "none";
+    } else {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.userSelect = "";
+    }
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.userSelect = "";
+    };
+  }, [draggingElementInfo, handleMouseMove, handleMouseUp]);
 
   return (
     <>
