@@ -287,7 +287,7 @@ const NumberInputWithSlider = ({ value, onChange, min, max, step = 1, unit, clas
           className="w-full"
         />
       </div>
-      <div className="flex items-center gap-2 min-w-[100px]">
+      <div className="flex items-center gap-1 min-w-[90px]">
         <Input
           type="number"
           value={value}
@@ -297,12 +297,12 @@ const NumberInputWithSlider = ({ value, onChange, min, max, step = 1, unit, clas
               onChange(Math.min(Math.max(newValue, min), max));
             }
           }}
-          className="w-[80px]"
+          className="w-[60px] h-6 px-2 text-[10px] font-mono"
           min={min}
           max={max}
           step={step}
         />
-        {unit && <span className="text-sm text-gray-500">{unit}</span>}
+        {unit && <span className="text-[10px] font-mono text-gray-500">{unit}</span>}
       </div>
     </div>
   );
@@ -1660,7 +1660,7 @@ export default function BannerGenerator() {
 
   // Обновляем функцию renderSettingsPanel, чтобы добавить настройки высоты
   const renderSettingsPanel = () => {
-    const currentBanner = previewItems[previewIndex] || {}
+    const currentBanner = previewItems[previewIndex] || {} as PreviewItem; // Added type assertion
 
     switch (activeElement) {
       case "none":
@@ -1668,10 +1668,10 @@ export default function BannerGenerator() {
         return (
           <div className="space-y-6">
             <div className="space-y-4">
-              <h3 className="text-lg font-medium">Banner Settings</h3>
+              <h3 className="text-lg font-medium font-mono">Banner Settings</h3>
 
               <div>
-                <Label>Orientation</Label>
+                <Label className="font-mono">Orientation</Label>
                 <RadioGroup
                   defaultValue={bannerSettings.orientation}
                   className="flex gap-4 mt-2"
@@ -1689,7 +1689,7 @@ export default function BannerGenerator() {
               </div>
 
               <div>
-                <Label>Background Color</Label>
+                <Label className="font-mono">Background Color</Label>
                 <div className="mt-2">
                   <ColorPicker
                     color={currentBanner.backgroundColor || "#007AFF"}
@@ -1710,10 +1710,10 @@ export default function BannerGenerator() {
               <Separator className="my-4" />
 
               <div className="space-y-4">
-                <h4 className="text-sm font-medium text-gray-500">Localized App Information</h4>
+                <h4 className="text-sm font-medium text-gray-500 font-mono">Localized App Information</h4>
                 
                 <div>
-                  <Label className="text-sm">Promotional Text</Label>
+                  <Label className="text-sm font-mono">Promotional Text</Label>
                   <Textarea
                     value={getGlobalContent(activeLanguage, "promotionalText") || ""}
                     onChange={(e) => {
@@ -1726,7 +1726,7 @@ export default function BannerGenerator() {
                 </div>
 
                 <div>
-                  <Label className="text-sm">Description</Label>
+                  <Label className="text-sm font-mono">Description</Label>
                   <Textarea
                     value={getGlobalContent(activeLanguage, "description") || ""}
                     onChange={(e) => {
@@ -1739,7 +1739,7 @@ export default function BannerGenerator() {
                 </div>
 
                 <div>
-                  <Label className="text-sm">What's New in This Version</Label>
+                  <Label className="text-sm font-mono">What's New in This Version</Label>
                   <Textarea
                     value={getGlobalContent(activeLanguage, "whatsNew") || ""}
                     onChange={(e) => {
@@ -1752,7 +1752,7 @@ export default function BannerGenerator() {
                 </div>
 
                 <div>
-                  <Label className="text-sm">Keywords</Label>
+                  <Label className="text-sm font-mono">Keywords</Label>
                   <Input
                     value={getGlobalContent(activeLanguage, "keywords") || ""}
                     onChange={(e) => {
@@ -1774,10 +1774,10 @@ export default function BannerGenerator() {
           <div className="space-y-4">
             <div className="space-y-2">
               <div className="flex flex-col">
-                <h3 className="text-lg font-semibold">
+                <h3 className="text-lg font-semibold font-mono">
                   {isTitle ? "Заголовок" : "Описание"}
                 </h3>
-                <Label className="text-sm text-gray-500">
+                <Label className="text-sm text-gray-500 font-mono">
                   {isTitle ? "Текст заголовка" : "Текст описания"}
                 </Label>
                 <Textarea
@@ -1793,7 +1793,7 @@ export default function BannerGenerator() {
               <div className="space-y-3 mt-4">
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <Label>{isTitle ? "Вертикальное смещение заголовка" : "Вертикальное смещение описания"}</Label>
+                    <Label className="font-mono">{isTitle ? "Вертикальное смещение заголовка" : "Вертикальное смещение описания"}</Label>
                   </div>
                   <NumberInputWithSlider
                     value={currentBanner.verticalOffset?.[isTitle ? "title" : "description"] || 0}
@@ -1818,7 +1818,7 @@ export default function BannerGenerator() {
                 
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <Label>{isTitle ? "Горизонтальное смещение заголовка" : "Горизонтальное смещение описания"}</Label>
+                    <Label className="font-mono">{isTitle ? "Горизонтальное смещение заголовка" : "Горизонтальное смещение описания"}</Label>
                   </div>
                   <NumberInputWithSlider
                     value={currentBanner.horizontalOffset?.[isTitle ? "title" : "description"] || 0}
@@ -1843,7 +1843,7 @@ export default function BannerGenerator() {
 
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <Label>{isTitle ? "Поворот заголовка" : "Поворот описания"}</Label>
+                    <Label className="font-mono">{isTitle ? "Поворот заголовка" : "Поворот описания"}</Label>
                   </div>
                   <NumberInputWithSlider
                     value={currentBanner.rotation?.[isTitle ? "title" : "description"] || 0}
@@ -1874,12 +1874,12 @@ export default function BannerGenerator() {
         return (
           <div className="space-y-4">
             <div className="space-y-2">
-              <h3 className="text-lg font-semibold">Блок текста</h3>
+              <h3 className="text-lg font-semibold font-mono">Блок текста</h3>
               
               <div className="space-y-3 mt-4">
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <Label>Вертикальное смещение блока</Label>
+                    <Label className="font-mono">Вертикальное смещение блока</Label>
                   </div>
                   <NumberInputWithSlider
                     value={currentBanner.verticalOffset?.combined || 0}
@@ -1904,7 +1904,7 @@ export default function BannerGenerator() {
                 
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <Label>Горизонтальное смещение блока</Label>
+                    <Label className="font-mono">Горизонтальное смещение блока</Label>
                   </div>
                   <NumberInputWithSlider
                     value={currentBanner.horizontalOffset?.combined || 0}
@@ -1929,7 +1929,7 @@ export default function BannerGenerator() {
 
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <Label>Поворот блока</Label>
+                    <Label className="font-mono">Поворот блока</Label>
                   </div>
                   <NumberInputWithSlider
                     value={currentBanner.rotation?.textBlock || 0}
@@ -1960,10 +1960,10 @@ export default function BannerGenerator() {
         return (
           <div className="space-y-6">
             <div className="space-y-4">
-              <h3 className="text-lg font-medium">Device Settings</h3>
+              <h3 className="text-lg font-medium font-mono">Device Settings</h3>
 
               <div>
-                <Label>Position</Label>
+                <Label className="font-mono">Position</Label>
                 <div className="grid grid-cols-3 gap-0.5 mt-1">
                   {DEVICE_POSITIONS.map((position) => {
                     // Определение иконки-схемы для каждой позиции
@@ -2060,7 +2060,7 @@ export default function BannerGenerator() {
 
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <Label>Device Scale</Label>
+                  <Label className="font-mono">Device Scale</Label>
                 </div>
                 <NumberInputWithSlider
                   value={currentBanner.deviceScale || 100}
@@ -2082,7 +2082,7 @@ export default function BannerGenerator() {
 
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <Label>Vertical Position</Label>
+                  <Label className="font-mono">Vertical Position</Label>
                 </div>
                 <NumberInputWithSlider
                   value={previewItems[previewIndex]?.verticalOffset?.device || 0}
@@ -2108,11 +2108,11 @@ export default function BannerGenerator() {
               <Separator />
 
               <div className="space-y-4">
-                <h3 className="text-lg font-medium">Border Settings</h3>
+                <h3 className="text-lg font-medium font-mono">Border Settings</h3>
 
                 <div className="space-y-3">
                   <div>
-                    <Label>Border Color</Label>
+                    <Label className="font-mono">Border Color</Label>
                     <div className="mt-2">
                       <ColorPicker
                         color={currentBanner.screenshot?.borderColor || "#000000"}
@@ -2123,7 +2123,7 @@ export default function BannerGenerator() {
 
                   <div>
                     <div className="flex justify-between items-center mb-2">
-                      <Label>Border Width</Label>
+                      <Label className="font-mono">Border Width</Label>
                     </div>
                     <NumberInputWithSlider
                       value={currentBanner.screenshot?.borderWidth || 8}
@@ -2136,7 +2136,7 @@ export default function BannerGenerator() {
 
                   <div>
                     <div className="flex justify-between items-center mb-2">
-                      <Label>Border Radius</Label>
+                      <Label className="font-mono">Border Radius</Label>
                     </div>
                     <NumberInputWithSlider
                       value={currentBanner.screenshot?.borderRadius || 30}
@@ -2151,7 +2151,7 @@ export default function BannerGenerator() {
 
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <Label>Rotation</Label>
+                  <Label className="font-mono">Rotation</Label>
                 </div>
                 <NumberInputWithSlider
                   value={currentBanner.rotation?.device || 0}
@@ -2827,7 +2827,7 @@ export default function BannerGenerator() {
           <header className="fixed top-0 left-0 right-0 bg-white border-b py-4 px-6 z-50 shadow-sm">
             <div className="container mx-auto">
               <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold">App Store Banner Generator</h1>
+                <h1 className="text-2xl font-bold">ASB Generator</h1>
                 
                 <div className="flex items-center gap-4">
                   <Dialog>
