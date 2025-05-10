@@ -2565,10 +2565,6 @@ export default function BannerGenerator() {
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5), 0 0 0 6px rgba(59, 130, 246, 0.3);
         transition: box-shadow 0.2s ease-in-out;
       }
-      
-      .banner-device-target {
-        transition: all 0.2s ease-in-out;
-      }
     `;
     
     // Append the style element to the head
@@ -2988,7 +2984,7 @@ export default function BannerGenerator() {
               {/* Right panel - Settings */}
               <div>
                 {/* Панель настроек, растянутая на всю высоту экрана, но ниже шапки */}
-                <div className="fixed top-0 right-0 h-screen w-[320px]" style={{ paddingTop: '65px' }}>
+                <div className="fixed top-0 right-0 h-screen w-[320px] z-40" style={{ paddingTop: '65px' }}>
                   <Card className="h-full rounded-none border-l border-t-0 border-r-0 border-b-0">
                     <CardContent className="p-6 h-full overflow-y-auto">
                       {/* Context-sensitive settings panel */}
