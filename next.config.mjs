@@ -5,8 +5,8 @@ try {
   // ignore error
 }
 
-// Определяем, находимся ли мы на GitHub Pages
-const isGithubPages = process.env.GITHUB_ACTIONS === 'true' || process.env.DEPLOY_TARGET === 'gh-pages'
+// Определяем, находимся ли мы в режиме деплоя
+const isGhPages = process.env.DEPLOY_TARGET === 'gh-pages'
 const repoName = 'App_screen'
 
 /** @type {import('next').NextConfig} */
@@ -28,19 +28,17 @@ const nextConfig = {
     parallelServerCompiles: true,
   },
   // Настройки для GitHub Pages, применяются только когда мы деплоим на GitHub
-  ...(isGithubPages && {
+  ...(isGhPages && {
     output: 'export',
     basePath: `/${repoName}`,
     assetPrefix: `/${repoName}/`,
     trailingSlash: true,
+    distDir: 'out',
   }),
   // Настройки для React компонентов
   reactStrictMode: true,
   env: {
     APP_ENV: process.env.APP_ENV || 'production',
-  },
-  redirects: () => {
-    return []
   },
 }
 
