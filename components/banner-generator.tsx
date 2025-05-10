@@ -2298,7 +2298,7 @@ export default function BannerGenerator() {
       <div
         key={`banner-${item.id}`}
         id={`preview-${item.id}`}
-        className={`relative rounded-lg pb-4 overflow-hidden banner border ${isActive ? "border-blue-500 shadow-xl" : "border-transparent"}`}
+        className={`relative rounded-lg pb-4 overflow-hidden banner border ${isActive ? "shadow-xl border-transparent" : "border-transparent"}`}
         onClick={() => setPreviewIndex(index)}
         style={{
           backgroundColor: item.backgroundColor || "#007AFF",
@@ -2988,7 +2988,7 @@ export default function BannerGenerator() {
               {/* Right panel - Settings */}
               <div>
                 {/* Панель настроек, растянутая на всю высоту экрана, но ниже шапки */}
-                <div className="fixed top-0 right-0 h-screen w-[320px]" style={{ paddingTop: 'calc(6rem + 1px)' }}>
+                <div className="fixed top-0 right-0 h-screen w-[320px]" style={{ paddingTop: '65px' }}>
                   <Card className="h-full rounded-none border-l border-t-0 border-r-0 border-b-0">
                     <CardContent className="p-6 h-full overflow-y-auto">
                       {/* Context-sensitive settings panel */}
