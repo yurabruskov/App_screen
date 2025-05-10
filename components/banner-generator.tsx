@@ -2805,7 +2805,7 @@ export default function BannerGenerator() {
           <header className="fixed top-0 left-0 right-0 bg-white border-b py-4 px-6 z-50 shadow-sm">
             <div className="container mx-auto">
               <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold">ASB Generator</h1>
+                <h1 className="text-2xl font-bold">ASB Generator v2</h1>
                 
                 <div className="flex items-center gap-4">
                   <Dialog>
