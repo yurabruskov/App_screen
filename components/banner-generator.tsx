@@ -1554,7 +1554,7 @@ export default function BannerGenerator() {
                 useCORS: true,
                 allowTaint: true,
                 backgroundColor: banner.backgroundColor || '#ffffff',
-                width: 323,
+                width: 322.5,
                 height: 699,
                 logging: false,
                 removeContainer: false,
