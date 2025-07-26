@@ -1503,7 +1503,7 @@ export default function BannerGenerator() {
               exportElement.style.margin = '0';
               exportElement.style.padding = '0';
               exportElement.style.borderRadius = '0';
-              exportElement.style.width = '323px';
+              exportElement.style.width = '322.5px';
               exportElement.style.height = '699px';
               exportElement.style.boxSizing = 'border-box';
               
