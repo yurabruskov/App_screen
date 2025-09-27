@@ -76,7 +76,31 @@ interface PreviewItem {
     borderWidth: number;
     borderRadius: number;
   };
+  localizedScreenshots?: {
+    [languageCode: string]: {
+      file: File | null;
+      borderColor: string;
+      borderWidth: number;
+      borderRadius: number;
+    };
+  };
 }
+
+// Функция для получения скриншота с fallback на английский язык
+const getCurrentScreenshot = (previewItem: PreviewItem, currentLanguage: string) => {
+  // Сначала проверяем есть ли скриншот для текущего языка
+  if (previewItem.localizedScreenshots?.[currentLanguage]?.file) {
+    return previewItem.localizedScreenshots[currentLanguage];
+  }
+
+  // Fallback на английский
+  if (previewItem.localizedScreenshots?.en?.file) {
+    return previewItem.localizedScreenshots.en;
+  }
+
+  // Fallback на общий скриншот
+  return previewItem.screenshot;
+};
 
 // Класс для работы с IndexedDB
 class ImageDB {
@@ -566,21 +590,21 @@ export default function BannerGenerator() {
     const loadImagesFromDB = async () => {
       console.log("Loading images from IndexedDB...");
       if (!imageDBRef.current) return;
-      
+
       try {
         // Загружаем изображения для всех превью
         const updatedItems = [...previewItems];
         let hasChanges = false;
-        
+
         for (let i = 0; i < previewItems.length; i++) {
           const item = previewItems[i];
-          const imageId = `preview_${item.id}`;
-          
+
+          // Загружаем основной скриншот (fallback)
+          const imageId = `preview_${item.id}_default`;
           try {
             const imageFile = await imageDBRef.current.getImage(imageId);
             if (imageFile) {
-              console.log(`Loaded image for preview ${imageId}`);
-              // Обновляем элемент с загруженным изображением
+              console.log(`Loaded default image for preview ${imageId}`);
               updatedItems[i] = {
                 ...updatedItems[i],
                 screenshot: {
@@ -591,7 +615,31 @@ export default function BannerGenerator() {
               hasChanges = true;
             }
           } catch (error) {
-            console.error(`Error loading image for ${imageId}:`, error);
+            console.error(`Error loading default image for ${imageId}:`, error);
+          }
+
+          // Загружаем локализованные скриншоты
+          if (!updatedItems[i].localizedScreenshots) {
+            updatedItems[i].localizedScreenshots = {};
+          }
+
+          for (const lang of LANGUAGES) {
+            const langImageId = `preview_${item.id}_${lang.code}`;
+            try {
+              const langImageFile = await imageDBRef.current.getImage(langImageId);
+              if (langImageFile) {
+                console.log(`Loaded localized image for ${langImageId}`);
+                updatedItems[i].localizedScreenshots![lang.code] = {
+                  file: langImageFile,
+                  borderColor: item.screenshot.borderColor,
+                  borderWidth: item.screenshot.borderWidth,
+                  borderRadius: item.screenshot.borderRadius,
+                };
+                hasChanges = true;
+              }
+            } catch (error) {
+              console.error(`Error loading localized image for ${langImageId}:`, error);
+            }
           }
         }
         
@@ -736,34 +784,49 @@ export default function BannerGenerator() {
   };
 
   // Полностью заменяем эту функцию
-  const handleScreenshotUpload = (file: File) => {
+  const handleScreenshotUpload = (file: File, forLanguage: string = activeLanguage) => {
     // Для отладки
-    console.log("Starting upload for preview: ", previewIndex);
+    console.log("Starting upload for preview: ", previewIndex, "for language:", forLanguage);
     console.log("With position: ", previewItems[previewIndex]?.devicePosition);
-    
+
     // Вместо создания копии, модифицируем существующий элемент
     const newItems = [...previewItems];
-    
+
     if (newItems[previewIndex]) {
       // Сохраняем ссылку на элемент
       const item = newItems[previewIndex];
-      
-      // Модифицируем только screenshot.file, оставляя все остальные свойства неизменными
-      item.screenshot = {
-        ...item.screenshot,
-        file
-      };
-      
+
+      // Инициализируем localizedScreenshots если его нет
+      if (!item.localizedScreenshots) {
+        item.localizedScreenshots = {};
+      }
+
+      // Если загружаем для текущего языка, сохраняем в localizedScreenshots
+      if (forLanguage !== 'default') {
+        item.localizedScreenshots[forLanguage] = {
+          file,
+          borderColor: item.screenshot.borderColor,
+          borderWidth: item.screenshot.borderWidth,
+          borderRadius: item.screenshot.borderRadius,
+        };
+      } else {
+        // Для default сохраняем в основной screenshot (fallback)
+        item.screenshot = {
+          ...item.screenshot,
+          file
+        };
+      }
+
       // Устанавливаем новое состояние
       setPreviewItems(newItems);
-      
+
       // Сохраняем в IndexedDB
       if (imageDBRef.current) {
-        const imageId = `preview_${item.id}`;
+        const imageId = `preview_${item.id}_${forLanguage}`;
         imageDBRef.current.saveImage(imageId, file)
           .catch(error => console.error('Error saving image to IndexedDB:', error));
       }
-      
+
       console.log("Upload complete, position should still be:", item.devicePosition);
     }
   };
@@ -2407,26 +2470,28 @@ export default function BannerGenerator() {
               }
             }}
           >
-            {item.screenshot?.file ? (
-              <div
-                style={{
-                  borderWidth: `${item.screenshot.borderWidth}px`,
-                  borderStyle: "solid",
-                  borderColor: item.screenshot.borderColor,
-                  borderRadius: `${item.screenshot.borderRadius}px`,
-                  overflow: "hidden",
-                }}
-              >
-                <img
-                  src={URL.createObjectURL(item.screenshot.file) || "/placeholder.svg"}
-                  alt={`Screenshot ${item.id}`}
+            {(() => {
+              const currentScreenshot = getCurrentScreenshot(item, activeLanguage);
+              return currentScreenshot?.file ? (
+                <div
                   style={{
-                    width: "100%",
-                    display: "block",
+                    borderWidth: `${currentScreenshot.borderWidth}px`,
+                    borderStyle: "solid",
+                    borderColor: currentScreenshot.borderColor,
+                    borderRadius: `${currentScreenshot.borderRadius}px`,
+                    overflow: "hidden",
                   }}
-                />
-              </div>
-            ) : (
+                >
+                  <img
+                    src={URL.createObjectURL(currentScreenshot.file) || "/placeholder.svg"}
+                    alt={`Screenshot ${item.id}`}
+                    style={{
+                      width: "100%",
+                      display: "block",
+                    }}
+                  />
+                </div>
+              ) : (
               <div
                 className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50"
                 style={{
@@ -2463,7 +2528,8 @@ export default function BannerGenerator() {
                   </>
                 )}
               </div>
-            )}
+              );
+            })()}
           </div>
 
           {/* Action buttons */}
@@ -2861,6 +2927,31 @@ export default function BannerGenerator() {
                   </Button>
                   
                   <LanguageSelector languages={LANGUAGES} activeLanguage={activeLanguage} onChange={handleLanguageChange} />
+
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor={`lang-screenshot-upload-${activeLanguage}`} className="text-sm">
+                      Screenshot for {LANGUAGES.find(l => l.code === activeLanguage)?.name || activeLanguage}:
+                    </Label>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => document.getElementById(`lang-screenshot-upload-${activeLanguage}`)?.click()}
+                    >
+                      <Upload className="mr-2 h-4 w-4" />
+                      Upload for {activeLanguage}
+                    </Button>
+                    <input
+                      type="file"
+                      id={`lang-screenshot-upload-${activeLanguage}`}
+                      className="hidden"
+                      accept="image/*"
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        if (e.target.files && e.target.files[0]) {
+                          handleScreenshotUpload(e.target.files[0], activeLanguage);
+                        }
+                      }}
+                    />
+                  </div>
                   
                   <Dialog>
                     <DialogTrigger asChild>
