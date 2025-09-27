@@ -2573,7 +2573,7 @@ export default function BannerGenerator() {
 
     return (
       <div
-        key={`banner-${item.id}`}
+        key={`banner-${item.id}-${deviceType}`}
         id={`preview-${item.id}`}
         className={`relative rounded-lg pb-4 overflow-hidden banner border ${isActive ? "shadow-xl border-transparent" : "border-transparent"}`}
         onClick={() => setPreviewIndex(index)}
