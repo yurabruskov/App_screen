@@ -101,16 +101,17 @@ interface PreviewItem {
 // Функция для получения скриншота с fallback на английский язык
 const getCurrentScreenshot = (previewItem: PreviewItem, currentLanguage: string) => {
   console.log(`getCurrentScreenshot: Looking for screenshot for preview ${previewItem.id}, language ${currentLanguage}`);
+  console.log(`getCurrentScreenshot: Available languages:`, Object.keys(previewItem.localizedScreenshots || {}));
 
   // Сначала проверяем есть ли скриншот для текущего языка
   if (previewItem.localizedScreenshots?.[currentLanguage]?.file || previewItem.localizedScreenshots?.[currentLanguage]?.dataUrl) {
-    console.log(`✓ Found localized screenshot for ${currentLanguage}`);
+    console.log(`✓ Found localized screenshot for ${currentLanguage} (file: ${!!previewItem.localizedScreenshots[currentLanguage].file}, dataUrl: ${!!previewItem.localizedScreenshots[currentLanguage].dataUrl})`);
     return previewItem.localizedScreenshots[currentLanguage];
   }
 
   // Fallback на английский
   if (previewItem.localizedScreenshots?.en?.file || previewItem.localizedScreenshots?.en?.dataUrl) {
-    console.log(`⚠️ No screenshot for ${currentLanguage}, using English fallback`);
+    console.log(`⚠️ No screenshot for ${currentLanguage}, using English fallback (file: ${!!previewItem.localizedScreenshots.en.file}, dataUrl: ${!!previewItem.localizedScreenshots.en.dataUrl})`);
     return previewItem.localizedScreenshots.en;
   }
 
@@ -739,13 +740,14 @@ export default function BannerGenerator() {
 
         // Загружаем изображение для текущего языка
         const langImageId = `preview_${item.id}_${activeLanguage}`;
-        console.log(`Attempting to load image: ${langImageId}`);
+        console.log(`🔄 useEffect: Attempting to load image: ${langImageId} for preview ${item.id}`);
 
         try {
           const langImageFile = await imageDBRef.current.getImage(langImageId);
           if (langImageFile) {
-            console.log(`✅ Loaded localized image for ${langImageId}, size: ${langImageFile.size} bytes`);
+            console.log(`✅ useEffect: Loaded localized image for ${langImageId}, size: ${langImageFile.size} bytes`);
             const dataUrl = await fileToDataURL(langImageFile);
+            console.log(`🔄 useEffect: Before setting - available languages for preview ${item.id}:`, Object.keys(updatedItems[i].localizedScreenshots || {}));
             updatedItems[i].localizedScreenshots![activeLanguage] = {
               file: langImageFile,
               dataUrl,
@@ -753,9 +755,10 @@ export default function BannerGenerator() {
               borderWidth: item.screenshot.borderWidth,
               borderRadius: item.screenshot.borderRadius,
             };
+            console.log(`🔄 useEffect: After setting - available languages for preview ${item.id}:`, Object.keys(updatedItems[i].localizedScreenshots || {}));
             hasChanges = true;
           } else {
-            console.log(`❌ No image found for ${langImageId}`);
+            console.log(`❌ useEffect: No image found for ${langImageId}`);
           }
         } catch (error) {
           console.error(`💥 Error loading localized image for ${langImageId}:`, error);
@@ -1590,6 +1593,7 @@ export default function BannerGenerator() {
         if (newItems[bannerIndex]) {
           const item = newItems[bannerIndex];
           console.log(`📤 uploadScreenshotToBanner: Processing banner ${item.id}`);
+          console.log(`📤 uploadScreenshotToBanner: Current localizedScreenshots:`, Object.keys(item.localizedScreenshots || {}));
 
           // Инициализируем localizedScreenshots если его нет
           if (!item.localizedScreenshots) {
@@ -1598,6 +1602,7 @@ export default function BannerGenerator() {
           }
 
           // Сохраняем для текущего языка
+          console.log(`📤 uploadScreenshotToBanner: Before setting - localizedScreenshots keys:`, Object.keys(item.localizedScreenshots));
           item.localizedScreenshots[activeLanguage] = {
             file,
             dataUrl,
@@ -1605,6 +1610,7 @@ export default function BannerGenerator() {
             borderWidth: item.screenshot.borderWidth,
             borderRadius: item.screenshot.borderRadius,
           };
+          console.log(`📤 uploadScreenshotToBanner: After setting - localizedScreenshots keys:`, Object.keys(item.localizedScreenshots));
           console.log(`📤 uploadScreenshotToBanner: Set localized screenshot for ${activeLanguage} in state with dataUrl`);
 
           // СНАЧАЛА обновляем состояние
