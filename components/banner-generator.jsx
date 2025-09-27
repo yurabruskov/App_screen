@@ -1503,8 +1503,8 @@ export default function BannerGenerator() {
               exportElement.style.margin = '0';
               exportElement.style.padding = '0';
               exportElement.style.borderRadius = '0';
-              exportElement.style.width = '322.5px';
-              exportElement.style.height = '699px';
+              exportElement.style.width = '321px';
+              exportElement.style.height = '694.5px';
               exportElement.style.boxSizing = 'border-box';
               
               // Сохраняем оригинальные вертикальные отступы
@@ -1527,8 +1527,8 @@ export default function BannerGenerator() {
                 useCORS: true,
                 allowTaint: true,
                 backgroundColor: banner.backgroundColor || '#ffffff',
-                width: 322.5,
-                height: 699,
+                width: 321,
+                height: 694.5,
                 logging: false,
                 removeContainer: false,
                 onclone: (clonedDoc, element) => {
@@ -1550,12 +1550,12 @@ export default function BannerGenerator() {
               
               // Создаем новый canvas с точными размерами
               const finalCanvas = document.createElement('canvas');
-              finalCanvas.width = 1290;
-              finalCanvas.height = 2796;
+              finalCanvas.width = 1284;
+              finalCanvas.height = 2778;
               const finalCtx = finalCanvas.getContext('2d');
               if (finalCtx) {
                 // Рисуем исходный canvas на финальный с точными размерами
-                finalCtx.drawImage(canvas, 0, 0, 1290, 2796);
+                finalCtx.drawImage(canvas, 0, 0, 1284, 2778);
               }
               
               // Получаем данные из финального canvas
