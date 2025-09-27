@@ -104,12 +104,34 @@ interface PreviewItem {
     textBlock: number;
   };
   verticalOffset?: {
+    iphone?: {
+      combined: number;
+      title: number;
+      description: number;
+      device: number;
+    };
+    ipad?: {
+      combined: number;
+      title: number;
+      description: number;
+      device: number;
+    };
     combined: number;
     title: number;
     description: number;
     device: number;
   };
   horizontalOffset?: {
+    iphone?: {
+      combined: number;
+      title: number;
+      description: number;
+    };
+    ipad?: {
+      combined: number;
+      title: number;
+      description: number;
+    };
     combined: number;
     title: number;
     description: number;
@@ -1022,12 +1044,34 @@ export default function BannerGenerator() {
         devicePosition: "center",
         deviceScale: 100,
         verticalOffset: {
+          iphone: {
+            combined: 0,
+            title: 0,
+            description: 0,
+            device: 0,
+          },
+          ipad: {
+            combined: 0,
+            title: 0,
+            description: 0,
+            device: 0,
+          },
           combined: 0,
           title: 0,
           description: 0,
           device: 0,
         },
         horizontalOffset: {
+          iphone: {
+            combined: 0,
+            title: 0,
+            description: 0
+          },
+          ipad: {
+            combined: 0,
+            title: 0,
+            description: 0
+          },
           combined: 0,
           title: 0,
           description: 0
@@ -1151,14 +1195,14 @@ export default function BannerGenerator() {
         top: "50%",
         left: "50%",
         transform: "translate(-50%, -50%)",
-        width: "220px",
+        width: `${deviceConfig.deviceBaseWidth}px`,
       };
     }
-    
+
     // Получаем значения с проверкой наличия
     const devicePosition = banner.devicePosition || "center";
     const deviceScale = banner.deviceScale || 100;
-    const deviceOffset = banner.verticalOffset?.device || 0;
+    const deviceOffset = (banner.verticalOffset?.[deviceType]?.device || banner.verticalOffset?.device) || 0;
     const deviceRotation = banner.rotation?.device || 0;
     
     // Базовая ширина устройства
@@ -2359,17 +2403,16 @@ export default function BannerGenerator() {
                   <Label className="text-xs font-mono">Vertical Position</Label>
                 </div>
                 <NumberInputWithSlider
-                  value={previewItems[previewIndex]?.verticalOffset?.device || 0}
+                  value={previewItems[previewIndex]?.verticalOffset?.[deviceType]?.device || previewItems[previewIndex]?.verticalOffset?.device || 0}
                   onChange={(value) => {
                     const updatedItems = [...previewItems]
                     if (updatedItems[previewIndex]) {
-                      updatedItems[previewIndex] = {
-                        ...updatedItems[previewIndex],
-                        verticalOffset: {
-                          ...updatedItems[previewIndex].verticalOffset,
-                          device: value,
-                        },
+                      const currentItem = updatedItems[previewIndex];
+                      if (!currentItem.verticalOffset) currentItem.verticalOffset = {};
+                      if (!currentItem.verticalOffset[deviceType]) {
+                        currentItem.verticalOffset[deviceType] = { combined: 0, title: 0, description: 0, device: 0 };
                       }
+                      currentItem.verticalOffset[deviceType].device = value;
                       setPreviewItems(updatedItems)
                     }
                   }}
@@ -2508,8 +2551,8 @@ export default function BannerGenerator() {
     console.log(`Rendering banner ${index}, device position:`, devicePosition);
     
     const { titlePosition, descriptionPosition, separateElements } = getContentPositions(devicePosition)
-    const currentOffset = item.verticalOffset || { combined: 0, title: 0, description: 0, device: 0 }
-    const currentHorizontalOffset = item.horizontalOffset || { combined: 0, title: 0, description: 0 }
+    const currentOffset = item.verticalOffset?.[deviceType] || item.verticalOffset || { combined: 0, title: 0, description: 0, device: 0 }
+    const currentHorizontalOffset = item.horizontalOffset?.[deviceType] || item.horizontalOffset || { combined: 0, title: 0, description: 0 }
     const currentRotation = item.rotation || { device: 0, title: 0, description: 0, textBlock: 0 }
 
     // Helper function to render editable text
@@ -2997,8 +3040,8 @@ export default function BannerGenerator() {
     let initialElementOffsetX = 0;
     let initialElementOffsetY = 0;
 
-    const verticalOffsets = banner.verticalOffset || { combined: 0, title: 0, description: 0, device: 0 };
-    const horizontalOffsets = banner.horizontalOffset || { combined: 0, title: 0, description: 0 };
+    const verticalOffsets = banner.verticalOffset?.[deviceType] || banner.verticalOffset || { combined: 0, title: 0, description: 0, device: 0 };
+    const horizontalOffsets = banner.horizontalOffset?.[deviceType] || banner.horizontalOffset || { combined: 0, title: 0, description: 0 };
 
     if (elementType === "title") {
       initialElementOffsetX = horizontalOffsets.title;
@@ -3040,24 +3083,34 @@ export default function BannerGenerator() {
     const newOffsetX = draggingElementInfo.initialElementOffsetX + deltaX;
     const newOffsetY = draggingElementInfo.initialElementOffsetY + deltaY;
 
-    setPreviewItems(prevItems => 
+    setPreviewItems(prevItems =>
       prevItems.map(item => {
         if (item.id === draggingElementInfo.bannerId) {
           const updatedItem = { ...item };
           let elementType = draggingElementInfo.elementType;
 
+          // Инициализируем device-specific оффсеты если нужно
+          if (!updatedItem.verticalOffset) updatedItem.verticalOffset = {};
+          if (!updatedItem.horizontalOffset) updatedItem.horizontalOffset = {};
+          if (!updatedItem.verticalOffset[deviceType]) {
+            updatedItem.verticalOffset[deviceType] = { combined: 0, title: 0, description: 0, device: 0 };
+          }
+          if (!updatedItem.horizontalOffset[deviceType]) {
+            updatedItem.horizontalOffset[deviceType] = { combined: 0, title: 0, description: 0 };
+          }
+
           if (elementType === "title") {
-            updatedItem.horizontalOffset = { ...item.horizontalOffset, title: newOffsetX };
-            updatedItem.verticalOffset = { ...item.verticalOffset, title: newOffsetY };
+            updatedItem.horizontalOffset[deviceType].title = newOffsetX;
+            updatedItem.verticalOffset[deviceType].title = newOffsetY;
           } else if (elementType === "description") {
-            updatedItem.horizontalOffset = { ...item.horizontalOffset, description: newOffsetX };
-            updatedItem.verticalOffset = { ...item.verticalOffset, description: newOffsetY };
+            updatedItem.horizontalOffset[deviceType].description = newOffsetX;
+            updatedItem.verticalOffset[deviceType].description = newOffsetY;
           } else if (elementType === "device") {
-            updatedItem.verticalOffset = { ...item.verticalOffset, device: newOffsetY };
+            updatedItem.verticalOffset[deviceType].device = newOffsetY;
             // Горизонтальное пока не трогаем, оно через CSS left/right/transform
           } else if (elementType === "text-block") {
-            updatedItem.horizontalOffset = { ...item.horizontalOffset, combined: newOffsetX };
-            updatedItem.verticalOffset = { ...item.verticalOffset, combined: newOffsetY };
+            updatedItem.horizontalOffset[deviceType].combined = newOffsetX;
+            updatedItem.verticalOffset[deviceType].combined = newOffsetY;
           }
           return updatedItem;
         }
