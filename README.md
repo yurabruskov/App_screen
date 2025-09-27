@@ -65,4 +65,4 @@ docker run -p 3000:3000 banner-generator
 - React
 - IndexedDB для локального хранения
 - html2canvas для рендеринга
-- JSZip для создания архивов с баннерами 
+- JSZip для создания архивов с баннерами # Trigger deploy
