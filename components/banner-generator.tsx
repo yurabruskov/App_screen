@@ -57,6 +57,40 @@ const fileToDataURL = (file: File): Promise<string> => {
   });
 };
 
+type DeviceType = "iphone" | "ipad";
+
+const DEVICE_CONFIG: Record<DeviceType, {
+  previewWidth: number;
+  previewHeight: number;
+  exportWidth: number;
+  exportHeight: number;
+  html2canvasScale: number;
+  deviceBaseWidth: number;
+  textBlockWidth: number;
+  placeholderHeight: number;
+}> = {
+  iphone: {
+    previewWidth: 321,
+    previewHeight: 694.5,
+    exportWidth: 1284,
+    exportHeight: 2778,
+    html2canvasScale: 4,
+    deviceBaseWidth: 220,
+    textBlockWidth: 250,
+    placeholderHeight: 400,
+  },
+  ipad: {
+    previewWidth: 512,
+    previewHeight: 683,
+    exportWidth: 2048,
+    exportHeight: 2732,
+    html2canvasScale: 4,
+    deviceBaseWidth: 280,
+    textBlockWidth: 320,
+    placeholderHeight: 460,
+  },
+};
+
 interface PreviewItem {
   id: number;
   name: string;
@@ -378,26 +412,13 @@ const NumberInputWithSlider = ({ value, onChange, min, max, step = 1, unit, clas
 export default function BannerGenerator() {
   const [activeLanguage, setActiveLanguage] = useState("ru")
   const activeLanguageRef = useRef(activeLanguage)
-
-  // Тип устройства для экспорта (iPhone/iPad)
-  const [deviceType, setDeviceType] = useState(() => {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      return localStorage.getItem('deviceType') || 'iphone'
-    }
-    return 'iphone'
-  })
+  const [deviceType, setDeviceType] = useState<DeviceType>('iphone')
+  const deviceConfig = DEVICE_CONFIG[deviceType]
 
   // Синхронизируем ref с состоянием
   useEffect(() => {
     activeLanguageRef.current = activeLanguage
   }, [activeLanguage])
-
-  // Сохраняем deviceType в localStorage
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem('deviceType', deviceType)
-    }
-  }, [deviceType])
   const [bannerSettings, setBannerSettings] = useState(() => {
     if (typeof window !== 'undefined' && window.localStorage) {
       try {
@@ -885,9 +906,8 @@ export default function BannerGenerator() {
     console.log(`🌐 handleLanguageChange: Language changed to ${language}`)
   }
 
-  // Handle device type change
-  const handleDeviceTypeChange = (type: 'iphone' | 'ipad') => {
-    console.log(`📱 handleDeviceTypeChange: Changing device type to ${type}`)
+  const handleDeviceTypeChange = (type: DeviceType) => {
+    console.log(`📱 Device type changed to ${type}`)
     setDeviceType(type)
   }
 
@@ -1141,8 +1161,8 @@ export default function BannerGenerator() {
     const deviceOffset = banner.verticalOffset?.device || 0;
     const deviceRotation = banner.rotation?.device || 0;
     
-    // Базовая ширина устройства (адаптируем под тип устройства)
-    const baseWidth = deviceType === 'ipad' ? 280 : 220; // iPad устройства чуть больше
+    // Базовая ширина устройства
+    const baseWidth = deviceConfig.deviceBaseWidth;
     const width = `${(baseWidth * deviceScale) / 100}px`;
     
     // Объект стилей для различных позиций с более контрастными значениями
@@ -1255,7 +1275,7 @@ export default function BannerGenerator() {
         top: "8%",  // Увеличиваем отступ сверху
         left: "50%",
         transform: "translateX(-50%)",
-        width: "250px",
+        width: `${DEVICE_CONFIG[deviceType].textBlockWidth}px`,
         textAlign: "center",
         zIndex: "5"  // Обеспечиваем отображение поверх фона
       }
@@ -1265,7 +1285,7 @@ export default function BannerGenerator() {
         bottom: "15%",  // Увеличиваем отступ снизу для большей заметности
         left: "50%",
         transform: "translateX(-50%)",
-        width: "250px",
+        width: `${DEVICE_CONFIG[deviceType].textBlockWidth}px`,
         textAlign: "center",
         zIndex: "5"  // Обеспечиваем отображение поверх фона
       }
@@ -1276,7 +1296,7 @@ export default function BannerGenerator() {
 
     // If device is at the top, put content at the bottom
     else if (devicePosition.startsWith("top")) {
-      titlePosition = { bottom: "15%", left: "50%", transform: "translateX(-50%)", width: "250px" }
+      titlePosition = { bottom: "15%", left: "50%", transform: "translateX(-50%)", width: `${DEVICE_CONFIG[deviceType].textBlockWidth}px` }
       descriptionPosition = {}
       separateElements = false
       return {
@@ -1288,7 +1308,7 @@ export default function BannerGenerator() {
 
     // If device is at the bottom, put content at the top
     else if (devicePosition.startsWith("bottom")) {
-      titlePosition = { top: "15%", left: "50%", transform: "translateX(-50%)", width: "250px" }
+      titlePosition = { top: "15%", left: "50%", transform: "translateX(-50%)", width: `${DEVICE_CONFIG[deviceType].textBlockWidth}px` }
       descriptionPosition = {}
       separateElements = false
       return {
@@ -1300,7 +1320,7 @@ export default function BannerGenerator() {
 
     // If device is on the left, put content on the right
     else if (devicePosition.endsWith("left")) {
-      titlePosition = { top: "50%", right: "15%", transform: "translateY(-50%)", width: "250px" }
+      titlePosition = { top: "50%", right: "15%", transform: "translateY(-50%)", width: `${DEVICE_CONFIG[deviceType].textBlockWidth}px` }
       descriptionPosition = {}
       separateElements = false
       return {
@@ -1312,7 +1332,7 @@ export default function BannerGenerator() {
 
     // If device is on the right, put content on the left
     else if (devicePosition.endsWith("right")) {
-      titlePosition = { top: "50%", left: "15%", transform: "translateY(-50%)", width: "250px" }
+      titlePosition = { top: "50%", left: "15%", transform: "translateY(-50%)", width: `${DEVICE_CONFIG[deviceType].textBlockWidth}px` }
       descriptionPosition = {}
       separateElements = false
       return {
@@ -1802,8 +1822,8 @@ export default function BannerGenerator() {
               exportElement.style.margin = '0';
               exportElement.style.padding = '0';
               exportElement.style.borderRadius = '0';
-              exportElement.style.width = '321px';
-              exportElement.style.height = '694.5px';
+            exportElement.style.width = `${DEVICE_CONFIG[deviceType].previewWidth}px`;
+            exportElement.style.height = `${DEVICE_CONFIG[deviceType].previewHeight}px`;
               exportElement.style.boxSizing = 'border-box';
               
               // Сохраняем оригинальные вертикальные отступы
@@ -1820,19 +1840,14 @@ export default function BannerGenerator() {
                 originalTextTransform = textElement.style.transform;
               }
               
-              // Определяем размеры экспорта в зависимости от типа устройства
-              const exportSizes = deviceType === 'ipad'
-                ? { width: 2048, height: 2732, scale: 8 } // iPad App Store screenshots
-                : { width: 1242, height: 2688, scale: 4 }; // iPhone App Store screenshots
-
               // Используем html2canvas для рендеринга
               const canvas = await html2canvas(exportElement as HTMLElement, {
-                scale: exportSizes.scale,
+                scale: deviceConfig.html2canvasScale,
                 useCORS: true,
                 allowTaint: true,
                 backgroundColor: banner.backgroundColor || '#ffffff',
-                width: exportSizes.width / exportSizes.scale, // Делим на scale чтобы получить правильные размеры превью
-                height: exportSizes.height / exportSizes.scale,
+                width: DEVICE_CONFIG[deviceType].previewWidth,
+                height: DEVICE_CONFIG[deviceType].previewHeight,
                 logging: false,
                 removeContainer: false,
                 onclone: (clonedDoc, element) => {
@@ -1854,8 +1869,8 @@ export default function BannerGenerator() {
               
               // Создаем новый canvas с точными размерами
               const finalCanvas = document.createElement('canvas');
-              finalCanvas.width = 1284;
-              finalCanvas.height = 2778;
+              finalCanvas.width = DEVICE_CONFIG[deviceType].exportWidth;
+              finalCanvas.height = DEVICE_CONFIG[deviceType].exportHeight;
               const finalCtx = finalCanvas.getContext('2d');
               if (finalCtx) {
                 // Рисуем исходный canvas на финальный с точными размерами
@@ -2709,9 +2724,9 @@ export default function BannerGenerator() {
               ) : (
               <div
                 className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50"
-                style={{
-                  width: "100%",
-                  height: "400px",
+                    style={{
+                      width: "100%",
+                      height: `${deviceConfig.placeholderHeight}px`,
                   borderWidth: `${item.screenshot?.borderWidth || 8}px`,
                   borderStyle: "solid",
                   borderColor: item.screenshot?.borderColor || "#000000",
@@ -3086,32 +3101,7 @@ export default function BannerGenerator() {
           <header className="fixed top-0 left-0 right-0 bg-white border-b py-4 px-6 z-50 shadow-sm">
             <div className="container mx-auto">
               <div className="flex justify-between items-center">
-                {/* Device Type Switcher */}
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-600">Device:</span>
-                  <div className="flex rounded-lg border border-gray-200 p-1">
-                    <button
-                      onClick={() => handleDeviceTypeChange('iphone')}
-                      className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                        deviceType === 'iphone'
-                          ? 'bg-blue-500 text-white'
-                          : 'text-gray-600 hover:bg-gray-100'
-                      }`}
-                    >
-                      📱 iPhone
-                    </button>
-                    <button
-                      onClick={() => handleDeviceTypeChange('ipad')}
-                      className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                        deviceType === 'ipad'
-                          ? 'bg-blue-500 text-white'
-                          : 'text-gray-600 hover:bg-gray-100'
-                      }`}
-                    >
-                      📱 iPad
-                    </button>
-                  </div>
-                </div>
+                <h1 className="text-2xl font-bold">ASB Generator v2</h1>
                 
                 <div className="flex items-center gap-4">
                   <Dialog>
@@ -3166,7 +3156,32 @@ export default function BannerGenerator() {
                     Export JSON
                   </Button>
                   
-                  <LanguageSelector languages={LANGUAGES} activeLanguage={activeLanguage} onChange={handleLanguageChange} />
+                  <div className="flex items-center gap-3">
+                    <div className="flex rounded-lg border border-gray-200 p-1">
+                      <button
+                        onClick={() => handleDeviceTypeChange('iphone')}
+                        className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                          deviceType === 'iphone'
+                            ? 'bg-blue-500 text-white'
+                            : 'text-gray-600 hover:bg-gray-100'
+                        }`}
+                      >
+                        📱 iPhone
+                      </button>
+                      <button
+                        onClick={() => handleDeviceTypeChange('ipad')}
+                        className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                          deviceType === 'ipad'
+                            ? 'bg-blue-500 text-white'
+                            : 'text-gray-600 hover:bg-gray-100'
+                        }`}
+                      >
+                        📱 iPad
+                      </button>
+                    </div>
+
+                    <LanguageSelector languages={LANGUAGES} activeLanguage={activeLanguage} onChange={handleLanguageChange} />
+                  </div>
                   
                   <Dialog>
                     <DialogTrigger asChild>
@@ -3272,8 +3287,8 @@ export default function BannerGenerator() {
                         <div
                           className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-primary hover:bg-gray-50"
                           style={{
-                            width: "320px",
-                            height: "690px",
+                            width: `${deviceConfig.previewWidth}px`,
+                            height: `${deviceConfig.previewHeight}px`,
                             flexShrink: 0,
                             margin: "0 8px",
                           }}
