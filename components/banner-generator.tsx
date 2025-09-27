@@ -451,9 +451,13 @@ export default function BannerGenerator() {
   const deviceConfig = DEVICE_CONFIG[deviceType]
 
   // Синхронизируем ref с состоянием
+  const deviceTypeRef = useRef<DeviceType>(deviceType)
   useEffect(() => {
     activeLanguageRef.current = activeLanguage
   }, [activeLanguage])
+  useEffect(() => {
+    deviceTypeRef.current = deviceType
+  }, [deviceType])
   const [bannerSettings, setBannerSettings] = useState(() => {
     if (typeof window !== 'undefined' && window.localStorage) {
       try {
@@ -1024,7 +1028,7 @@ export default function BannerGenerator() {
   const handleScreenshotUpload = async (file: File, forLanguage?: string, forDevice?: DeviceType) => {
     try {
       const langToUse = forLanguage || activeLanguageRef.current;
-      const deviceToUse = forDevice || deviceType;
+      const deviceToUse = forDevice || deviceTypeRef.current;
       console.log(`📤 handleScreenshotUpload: Starting upload for preview ${previewIndex}, device=${deviceToUse}, language ${langToUse}, file size: ${file.size} bytes`);
 
       // Конвертируем файл в data URL для мгновенного отображения
@@ -1691,8 +1695,8 @@ export default function BannerGenerator() {
           setPreviewIndex(bannerId);
 
           // Upload the screenshot to the target banner
-          console.log(`📤 handleDrop: Calling uploadScreenshotToBanner for banner ${bannerId} with language ${currentLang}`);
-          uploadScreenshotToBanner(file, bannerId, currentLang, deviceType);
+          console.log(`📤 handleDrop: Calling uploadScreenshotToBanner for banner ${bannerId} with language ${currentLang}, device ${deviceTypeRef.current}`);
+          uploadScreenshotToBanner(file, bannerId, currentLang, deviceTypeRef.current);
           return;
         }
       }
