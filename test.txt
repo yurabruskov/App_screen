@@ -1,184 +1,171 @@
 Loaded initial text alignment from localStorage: center
-page-369eaf0882e78999.js:1 Loaded initial font size from localStorage
-page-369eaf0882e78999.js:1 Loaded initial line height from localStorage
-page-369eaf0882e78999.js:1 Loaded initial letter spacing from localStorage
-page-369eaf0882e78999.js:1 Loaded initial preview items from localStorage (6) [{…}, {…}, {…}, {…}, {…}, {…}]
-page-369eaf0882e78999.js:1 Checking for additional data in localStorage
-page-369eaf0882e78999.js:1 Saving previewItems to localStorage 6
-page-369eaf0882e78999.js:1 Initializing IndexedDB and loading images
-page-369eaf0882e78999.js:1 Loading images from IndexedDB...
-page-369eaf0882e78999.js:1 Loading banner settings from localStorage
-page-369eaf0882e78999.js:1 Loading text alignment from localStorage
-page-369eaf0882e78999.js:1 Loading font size from localStorage
-page-369eaf0882e78999.js:1 Loading line height and letter spacing from localStorage
-page-369eaf0882e78999.js:1 Rendering banner 0, device position: bottom-center
-page-369eaf0882e78999.js:1 getCurrentScreenshot: Looking for screenshot for preview 3, language ru
-page-369eaf0882e78999.js:1 ✓ Found localized screenshot for ru
-page-369eaf0882e78999.js:1 Rendering banner 1, device position: bottom-center
-page-369eaf0882e78999.js:1 getCurrentScreenshot: Looking for screenshot for preview 6, language ru
-page-369eaf0882e78999.js:1 ⚠️ No localized screenshots, using default screenshot
-page-369eaf0882e78999.js:1 Rendering banner 2, device position: bottom-center
-page-369eaf0882e78999.js:1 getCurrentScreenshot: Looking for screenshot for preview 7, language ru
-page-369eaf0882e78999.js:1 ✓ Found localized screenshot for ru
-page-369eaf0882e78999.js:1 Rendering banner 3, device position: bottom-center
-page-369eaf0882e78999.js:1 getCurrentScreenshot: Looking for screenshot for preview 8, language ru
-page-369eaf0882e78999.js:1 ✓ Found localized screenshot for ru
-page-369eaf0882e78999.js:1 Rendering banner 4, device position: center
-page-369eaf0882e78999.js:1 getCurrentScreenshot: Looking for screenshot for preview 9, language ru
-page-369eaf0882e78999.js:1 ✓ Found localized screenshot for ru
-page-369eaf0882e78999.js:1 Rendering banner 5, device position: center
-page-369eaf0882e78999.js:1 getCurrentScreenshot: Looking for screenshot for preview 10, language ru
-page-369eaf0882e78999.js:1 ✓ Found localized screenshot for ru
-page-369eaf0882e78999.js:1 Found image data for preview_3, type: image/png, data length: 348238
-page-369eaf0882e78999.js:1 Successfully reconstructed File for preview_3: preview_preview_3.png 261160 bytes
-page-369eaf0882e78999.js:1 Loaded default image for preview preview_3
-page-369eaf0882e78999.js:1 Found image data for preview_3_en, type: image/png, data length: 1390190
-page-369eaf0882e78999.js:1 Successfully reconstructed File for preview_3_en: preview_preview_3_en.png 1042625 bytes
-page-369eaf0882e78999.js:1 Loaded localized image for preview_3_en
-page-369eaf0882e78999.js:1 Found image data for preview_3_ru, type: image/png, data length: 2029230
-page-369eaf0882e78999.js:1 Successfully reconstructed File for preview_3_ru: preview_preview_3_ru.png 1521906 bytes
-page-369eaf0882e78999.js:1 Loaded localized image for preview_3_ru
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_3_es
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_3_fr
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_3_de
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_3_it
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_3_ja
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_3_ko
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_3_zh
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_3_cs
-page-369eaf0882e78999.js:1 Found image data for preview_6, type: image/png, data length: 809334
-page-369eaf0882e78999.js:1 Successfully reconstructed File for preview_6: preview_preview_6.png 606983 bytes
-page-369eaf0882e78999.js:1 Loaded default image for preview preview_6
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_6_en
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_6_ru
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_6_es
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_6_fr
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_6_de
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_6_it
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_6_ja
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_6_ko
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_6_zh
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_6_cs
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_7
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_7_en
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_7_ru
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_7_es
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_7_fr
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_7_de
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_7_it
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_7_ja
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_7_ko
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_7_zh
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_7_cs
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_8
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_8_en
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_8_ru
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_8_es
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_8_fr
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_8_de
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_8_it
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_8_ja
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_8_ko
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_8_zh
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_8_cs
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_9
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_9_en
-page-369eaf0882e78999.js:1 Found image data for preview_9_ru, type: image/png, data length: 1390190
-page-369eaf0882e78999.js:1 Successfully reconstructed File for preview_9_ru: preview_preview_9_ru.png 1042625 bytes
-page-369eaf0882e78999.js:1 Loaded localized image for preview_9_ru
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_9_es
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_9_fr
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_9_de
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_9_it
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_9_ja
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_9_ko
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_9_zh
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_9_cs
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_10
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_10_en
-page-369eaf0882e78999.js:1 Found image data for preview_10_ru, type: image/png, data length: 2029230
-page-369eaf0882e78999.js:1 Successfully reconstructed File for preview_10_ru: preview_preview_10_ru.png 1521906 bytes
-page-369eaf0882e78999.js:1 Loaded localized image for preview_10_ru
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_10_es
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_10_fr
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_10_de
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_10_it
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_10_ja
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_10_ko
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_10_zh
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_10_cs
-page-369eaf0882e78999.js:1 Rendering banner 0, device position: bottom-center
-page-369eaf0882e78999.js:1 getCurrentScreenshot: Looking for screenshot for preview 3, language ru
-page-369eaf0882e78999.js:1 ✓ Found localized screenshot for ru
-page-369eaf0882e78999.js:1 Rendering banner 1, device position: bottom-center
-page-369eaf0882e78999.js:1 getCurrentScreenshot: Looking for screenshot for preview 6, language ru
-page-369eaf0882e78999.js:1 ⚠️ No localized screenshots, using default screenshot
-page-369eaf0882e78999.js:1 Rendering banner 2, device position: bottom-center
-page-369eaf0882e78999.js:1 getCurrentScreenshot: Looking for screenshot for preview 7, language ru
-page-369eaf0882e78999.js:1 ✓ Found localized screenshot for ru
-page-369eaf0882e78999.js:1 Rendering banner 3, device position: bottom-center
-page-369eaf0882e78999.js:1 getCurrentScreenshot: Looking for screenshot for preview 8, language ru
-page-369eaf0882e78999.js:1 ✓ Found localized screenshot for ru
-page-369eaf0882e78999.js:1 Rendering banner 4, device position: center
-page-369eaf0882e78999.js:1 getCurrentScreenshot: Looking for screenshot for preview 9, language ru
-page-369eaf0882e78999.js:1 ✓ Found localized screenshot for ru
-page-369eaf0882e78999.js:1 Rendering banner 5, device position: center
-page-369eaf0882e78999.js:1 getCurrentScreenshot: Looking for screenshot for preview 10, language ru
-page-369eaf0882e78999.js:1 ✓ Found localized screenshot for ru
-page-369eaf0882e78999.js:1 Saving previewItems to localStorage 6
-page-369eaf0882e78999.js:1 🔄 Loading images for language: ru
-page-369eaf0882e78999.js:1 Checking preview 3 for language ru
-page-369eaf0882e78999.js:1 ✓ Preview 3 already has screenshot for ru
-page-369eaf0882e78999.js:1 Checking preview 6 for language ru
-page-369eaf0882e78999.js:1 Attempting to load image: preview_6_ru
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_6_ru
-page-369eaf0882e78999.js:1 ❌ No image found for preview_6_ru
-page-369eaf0882e78999.js:1 Checking preview 7 for language ru
-page-369eaf0882e78999.js:1 ✓ Preview 7 already has screenshot for ru
-page-369eaf0882e78999.js:1 Checking preview 8 for language ru
-page-369eaf0882e78999.js:1 ✓ Preview 8 already has screenshot for ru
-page-369eaf0882e78999.js:1 Checking preview 9 for language ru
-page-369eaf0882e78999.js:1 ✓ Preview 9 already has screenshot for ru
-page-369eaf0882e78999.js:1 Checking preview 10 for language ru
-page-369eaf0882e78999.js:1 ✓ Preview 10 already has screenshot for ru
-page-369eaf0882e78999.js:1 ℹ️ No new images loaded for ru
-page-369eaf0882e78999.js:1 Rendering banner 0, device position: bottom-center
-page-369eaf0882e78999.js:1 getCurrentScreenshot: Looking for screenshot for preview 3, language en
-page-369eaf0882e78999.js:1 ✓ Found localized screenshot for en
-page-369eaf0882e78999.js:1 Rendering banner 1, device position: bottom-center
-page-369eaf0882e78999.js:1 getCurrentScreenshot: Looking for screenshot for preview 6, language en
-page-369eaf0882e78999.js:1 ⚠️ No localized screenshots, using default screenshot
-page-369eaf0882e78999.js:1 Rendering banner 2, device position: bottom-center
-page-369eaf0882e78999.js:1 getCurrentScreenshot: Looking for screenshot for preview 7, language en
-page-369eaf0882e78999.js:1 ✓ Found localized screenshot for en
-page-369eaf0882e78999.js:1 Rendering banner 3, device position: bottom-center
-page-369eaf0882e78999.js:1 getCurrentScreenshot: Looking for screenshot for preview 8, language en
-page-369eaf0882e78999.js:1 ⚠️ No localized screenshots, using default screenshot
-page-369eaf0882e78999.js:1 Rendering banner 4, device position: center
-page-369eaf0882e78999.js:1 getCurrentScreenshot: Looking for screenshot for preview 9, language en
-page-369eaf0882e78999.js:1 ⚠️ No localized screenshots, using default screenshot
-page-369eaf0882e78999.js:1 Rendering banner 5, device position: center
-page-369eaf0882e78999.js:1 getCurrentScreenshot: Looking for screenshot for preview 10, language en
-page-369eaf0882e78999.js:1 ⚠️ No localized screenshots, using default screenshot
-page-369eaf0882e78999.js:1 🔄 Loading images for language: en
-page-369eaf0882e78999.js:1 Checking preview 3 for language en
-page-369eaf0882e78999.js:1 ✓ Preview 3 already has screenshot for en
-page-369eaf0882e78999.js:1 Checking preview 6 for language en
-page-369eaf0882e78999.js:1 Attempting to load image: preview_6_en
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_6_en
-page-369eaf0882e78999.js:1 ❌ No image found for preview_6_en
-page-369eaf0882e78999.js:1 Checking preview 7 for language en
-page-369eaf0882e78999.js:1 ✓ Preview 7 already has screenshot for en
-page-369eaf0882e78999.js:1 Checking preview 8 for language en
-page-369eaf0882e78999.js:1 Attempting to load image: preview_8_en
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_8_en
-page-369eaf0882e78999.js:1 ❌ No image found for preview_8_en
-page-369eaf0882e78999.js:1 Checking preview 9 for language en
-page-369eaf0882e78999.js:1 Attempting to load image: preview_9_en
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_9_en
-page-369eaf0882e78999.js:1 ❌ No image found for preview_9_en
-page-369eaf0882e78999.js:1 Checking preview 10 for language en
-page-369eaf0882e78999.js:1 Attempting to load image: preview_10_en
-page-369eaf0882e78999.js:1 No image found in IndexedDB for id: preview_10_en
-page-369eaf0882e78999.js:1 ❌ No image found for preview_10_en
-page-369eaf0882e78999.js:1 ℹ️ No new images loaded for en
+page-d13d4f41d2308305.js:1 Loaded initial font size from localStorage
+page-d13d4f41d2308305.js:1 Loaded initial line height from localStorage
+page-d13d4f41d2308305.js:1 Loaded initial letter spacing from localStorage
+page-d13d4f41d2308305.js:1 Loaded initial preview items from localStorage (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+page-d13d4f41d2308305.js:1 Checking for additional data in localStorage
+page-d13d4f41d2308305.js:1 Saving previewItems to localStorage 7
+page-d13d4f41d2308305.js:1 Initializing IndexedDB and loading images
+page-d13d4f41d2308305.js:1 Loading images from IndexedDB...
+page-d13d4f41d2308305.js:1 Loading banner settings from localStorage
+page-d13d4f41d2308305.js:1 Loading text alignment from localStorage
+page-d13d4f41d2308305.js:1 Loading font size from localStorage
+page-d13d4f41d2308305.js:1 Loading line height and letter spacing from localStorage
+page-d13d4f41d2308305.js:1 Rendering banner 0, device position: bottom-center
+page-d13d4f41d2308305.js:1 getCurrentScreenshot: Looking for screenshot for preview 3, language ru
+page-d13d4f41d2308305.js:1 ✓ Found localized screenshot for ru
+page-d13d4f41d2308305.js:1 Rendering banner 1, device position: bottom-center
+page-d13d4f41d2308305.js:1 getCurrentScreenshot: Looking for screenshot for preview 6, language ru
+page-d13d4f41d2308305.js:1 ✓ Found localized screenshot for ru
+page-d13d4f41d2308305.js:1 Rendering banner 2, device position: bottom-center
+page-d13d4f41d2308305.js:1 getCurrentScreenshot: Looking for screenshot for preview 7, language ru
+page-d13d4f41d2308305.js:1 ✓ Found localized screenshot for ru
+page-d13d4f41d2308305.js:1 Rendering banner 3, device position: bottom-center
+page-d13d4f41d2308305.js:1 getCurrentScreenshot: Looking for screenshot for preview 8, language ru
+page-d13d4f41d2308305.js:1 ✓ Found localized screenshot for ru
+page-d13d4f41d2308305.js:1 Rendering banner 4, device position: center
+page-d13d4f41d2308305.js:1 getCurrentScreenshot: Looking for screenshot for preview 9, language ru
+page-d13d4f41d2308305.js:1 ✓ Found localized screenshot for ru
+page-d13d4f41d2308305.js:1 Rendering banner 5, device position: center
+page-d13d4f41d2308305.js:1 getCurrentScreenshot: Looking for screenshot for preview 10, language ru
+page-d13d4f41d2308305.js:1 ✓ Found localized screenshot for ru
+page-d13d4f41d2308305.js:1 Rendering banner 6, device position: center
+page-d13d4f41d2308305.js:1 getCurrentScreenshot: Looking for screenshot for preview 11, language ru
+page-d13d4f41d2308305.js:1 ⚠️ No localized screenshots, using default screenshot
+page-d13d4f41d2308305.js:1 Found image data for preview_3, type: image/png, data length: 348238
+page-d13d4f41d2308305.js:1 Successfully reconstructed File for preview_3: preview_preview_3.png 261160 bytes
+page-d13d4f41d2308305.js:1 Loaded default image for preview preview_3
+page-d13d4f41d2308305.js:1 Found image data for preview_3_en, type: image/png, data length: 2853366
+page-d13d4f41d2308305.js:1 Successfully reconstructed File for preview_3_en: preview_preview_3_en.png 2140006 bytes
+page-d13d4f41d2308305.js:1 Loaded localized image for preview_3_en
+page-d13d4f41d2308305.js:1 Found image data for preview_3_ru, type: image/png, data length: 2029230
+page-d13d4f41d2308305.js:1 Successfully reconstructed File for preview_3_ru: preview_preview_3_ru.png 1521906 bytes
+page-d13d4f41d2308305.js:1 Loaded localized image for preview_3_ru
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_3_es
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_3_fr
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_3_de
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_3_it
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_3_ja
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_3_ko
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_3_zh
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_3_cs
+page-d13d4f41d2308305.js:1 Found image data for preview_6, type: image/png, data length: 809334
+page-d13d4f41d2308305.js:1 Successfully reconstructed File for preview_6: preview_preview_6.png 606983 bytes
+page-d13d4f41d2308305.js:1 Loaded default image for preview preview_6
+page-d13d4f41d2308305.js:1 Found image data for preview_6_en, type: image/png, data length: 348238
+page-d13d4f41d2308305.js:1 Successfully reconstructed File for preview_6_en: preview_preview_6_en.png 261160 bytes
+page-d13d4f41d2308305.js:1 Loaded localized image for preview_6_en
+page-d13d4f41d2308305.js:1 Found image data for preview_6_ru, type: image/png, data length: 348238
+page-d13d4f41d2308305.js:1 Successfully reconstructed File for preview_6_ru: preview_preview_6_ru.png 261160 bytes
+page-d13d4f41d2308305.js:1 Loaded localized image for preview_6_ru
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_6_es
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_6_fr
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_6_de
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_6_it
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_6_ja
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_6_ko
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_6_zh
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_6_cs
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_7
+page-d13d4f41d2308305.js:1 Found image data for preview_7_en, type: image/png, data length: 2853366
+page-d13d4f41d2308305.js:1 Successfully reconstructed File for preview_7_en: preview_preview_7_en.png 2140006 bytes
+page-d13d4f41d2308305.js:1 Loaded localized image for preview_7_en
+page-d13d4f41d2308305.js:1 Found image data for preview_7_ru, type: image/png, data length: 348238
+page-d13d4f41d2308305.js:1 Successfully reconstructed File for preview_7_ru: preview_preview_7_ru.png 261160 bytes
+page-d13d4f41d2308305.js:1 Loaded localized image for preview_7_ru
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_7_es
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_7_fr
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_7_de
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_7_it
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_7_ja
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_7_ko
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_7_zh
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_7_cs
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_8
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_8_en
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_8_ru
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_8_es
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_8_fr
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_8_de
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_8_it
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_8_ja
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_8_ko
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_8_zh
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_8_cs
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_9
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_9_en
+page-d13d4f41d2308305.js:1 Found image data for preview_9_ru, type: image/png, data length: 1390190
+page-d13d4f41d2308305.js:1 Successfully reconstructed File for preview_9_ru: preview_preview_9_ru.png 1042625 bytes
+page-d13d4f41d2308305.js:1 Loaded localized image for preview_9_ru
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_9_es
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_9_fr
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_9_de
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_9_it
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_9_ja
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_9_ko
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_9_zh
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_9_cs
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_10
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_10_en
+page-d13d4f41d2308305.js:1 Found image data for preview_10_ru, type: image/png, data length: 2029230
+page-d13d4f41d2308305.js:1 Successfully reconstructed File for preview_10_ru: preview_preview_10_ru.png 1521906 bytes
+page-d13d4f41d2308305.js:1 Loaded localized image for preview_10_ru
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_10_es
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_10_fr
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_10_de
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_10_it
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_10_ja
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_10_ko
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_10_zh
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_10_cs
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_11
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_11_en
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_11_ru
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_11_es
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_11_fr
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_11_de
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_11_it
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_11_ja
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_11_ko
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_11_zh
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_11_cs
+page-d13d4f41d2308305.js:1 Rendering banner 0, device position: bottom-center
+page-d13d4f41d2308305.js:1 getCurrentScreenshot: Looking for screenshot for preview 3, language ru
+page-d13d4f41d2308305.js:1 ✓ Found localized screenshot for ru
+page-d13d4f41d2308305.js:1 Rendering banner 1, device position: bottom-center
+page-d13d4f41d2308305.js:1 getCurrentScreenshot: Looking for screenshot for preview 6, language ru
+page-d13d4f41d2308305.js:1 ✓ Found localized screenshot for ru
+page-d13d4f41d2308305.js:1 Rendering banner 2, device position: bottom-center
+page-d13d4f41d2308305.js:1 getCurrentScreenshot: Looking for screenshot for preview 7, language ru
+page-d13d4f41d2308305.js:1 ✓ Found localized screenshot for ru
+page-d13d4f41d2308305.js:1 Rendering banner 3, device position: bottom-center
+page-d13d4f41d2308305.js:1 getCurrentScreenshot: Looking for screenshot for preview 8, language ru
+page-d13d4f41d2308305.js:1 ✓ Found localized screenshot for ru
+page-d13d4f41d2308305.js:1 Rendering banner 4, device position: center
+page-d13d4f41d2308305.js:1 getCurrentScreenshot: Looking for screenshot for preview 9, language ru
+page-d13d4f41d2308305.js:1 ✓ Found localized screenshot for ru
+page-d13d4f41d2308305.js:1 Rendering banner 5, device position: center
+page-d13d4f41d2308305.js:1 getCurrentScreenshot: Looking for screenshot for preview 10, language ru
+page-d13d4f41d2308305.js:1 ✓ Found localized screenshot for ru
+page-d13d4f41d2308305.js:1 Rendering banner 6, device position: center
+page-d13d4f41d2308305.js:1 getCurrentScreenshot: Looking for screenshot for preview 11, language ru
+page-d13d4f41d2308305.js:1 ⚠️ No localized screenshots, using default screenshot
+page-d13d4f41d2308305.js:1 Saving previewItems to localStorage 7
+page-d13d4f41d2308305.js:1 🔄 Loading images for language: ru
+page-d13d4f41d2308305.js:1 Checking preview 3 for language ru
+page-d13d4f41d2308305.js:1 ✓ Preview 3 already has screenshot for ru
+page-d13d4f41d2308305.js:1 Checking preview 6 for language ru
+page-d13d4f41d2308305.js:1 ✓ Preview 6 already has screenshot for ru
+page-d13d4f41d2308305.js:1 Checking preview 7 for language ru
+page-d13d4f41d2308305.js:1 ✓ Preview 7 already has screenshot for ru
+page-d13d4f41d2308305.js:1 Checking preview 8 for language ru
+page-d13d4f41d2308305.js:1 ✓ Preview 8 already has screenshot for ru
+page-d13d4f41d2308305.js:1 Checking preview 9 for language ru
+page-d13d4f41d2308305.js:1 ✓ Preview 9 already has screenshot for ru
+page-d13d4f41d2308305.js:1 Checking preview 10 for language ru
+page-d13d4f41d2308305.js:1 ✓ Preview 10 already has screenshot for ru
+page-d13d4f41d2308305.js:1 Checking preview 11 for language ru
+page-d13d4f41d2308305.js:1 Attempting to load image: preview_11_ru
+page-d13d4f41d2308305.js:1 No image found in IndexedDB for id: preview_11_ru
+page-d13d4f41d2308305.js:1 ❌ No image found for preview_11_ru
+page-d13d4f41d2308305.js:1 ℹ️ No new images loaded for ru

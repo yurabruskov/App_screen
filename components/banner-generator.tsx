@@ -47,6 +47,16 @@ interface LocalizedContent {
   };
 }
 
+// Функция для конвертации File в data URL
+const fileToDataURL = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
 interface PreviewItem {
   id: number;
   name: string;
@@ -72,6 +82,7 @@ interface PreviewItem {
   };
   screenshot: {
     file: File | null;
+    dataUrl?: string;
     borderColor: string;
     borderWidth: number;
     borderRadius: number;
@@ -79,6 +90,7 @@ interface PreviewItem {
   localizedScreenshots?: {
     [languageCode: string]: {
       file: File | null;
+      dataUrl?: string;
       borderColor: string;
       borderWidth: number;
       borderRadius: number;
@@ -91,13 +103,13 @@ const getCurrentScreenshot = (previewItem: PreviewItem, currentLanguage: string)
   console.log(`getCurrentScreenshot: Looking for screenshot for preview ${previewItem.id}, language ${currentLanguage}`);
 
   // Сначала проверяем есть ли скриншот для текущего языка
-  if (previewItem.localizedScreenshots?.[currentLanguage]?.file) {
+  if (previewItem.localizedScreenshots?.[currentLanguage]?.file || previewItem.localizedScreenshots?.[currentLanguage]?.dataUrl) {
     console.log(`✓ Found localized screenshot for ${currentLanguage}`);
     return previewItem.localizedScreenshots[currentLanguage];
   }
 
   // Fallback на английский
-  if (previewItem.localizedScreenshots?.en?.file) {
+  if (previewItem.localizedScreenshots?.en?.file || previewItem.localizedScreenshots?.en?.dataUrl) {
     console.log(`⚠️ No screenshot for ${currentLanguage}, using English fallback`);
     return previewItem.localizedScreenshots.en;
   }
@@ -639,11 +651,13 @@ export default function BannerGenerator() {
             const imageFile = await imageDBRef.current.getImage(oldImageId);
             if (imageFile) {
               console.log(`Loaded default image for preview ${oldImageId}`);
+              const dataUrl = await fileToDataURL(imageFile);
               updatedItems[i] = {
                 ...updatedItems[i],
                 screenshot: {
                   ...updatedItems[i].screenshot,
-                  file: imageFile
+                  file: imageFile,
+                  dataUrl
                 }
               };
               hasChanges = true;
@@ -663,8 +677,10 @@ export default function BannerGenerator() {
               const langImageFile = await imageDBRef.current.getImage(langImageId);
               if (langImageFile) {
                 console.log(`Loaded localized image for ${langImageId}`);
+                const dataUrl = await fileToDataURL(langImageFile);
                 updatedItems[i].localizedScreenshots![lang.code] = {
                   file: langImageFile,
+                  dataUrl,
                   borderColor: item.screenshot.borderColor,
                   borderWidth: item.screenshot.borderWidth,
                   borderRadius: item.screenshot.borderRadius,
@@ -729,8 +745,10 @@ export default function BannerGenerator() {
           const langImageFile = await imageDBRef.current.getImage(langImageId);
           if (langImageFile) {
             console.log(`✅ Loaded localized image for ${langImageId}, size: ${langImageFile.size} bytes`);
+            const dataUrl = await fileToDataURL(langImageFile);
             updatedItems[i].localizedScreenshots![activeLanguage] = {
               file: langImageFile,
+              dataUrl,
               borderColor: item.screenshot.borderColor,
               borderWidth: item.screenshot.borderWidth,
               borderRadius: item.screenshot.borderRadius,
@@ -884,6 +902,11 @@ export default function BannerGenerator() {
   const handleScreenshotUpload = async (file: File, forLanguage: string = activeLanguage) => {
     try {
       console.log(`📤 handleScreenshotUpload: Starting upload for preview ${previewIndex}, language ${forLanguage}, file size: ${file.size} bytes`);
+
+      // Конвертируем файл в data URL для мгновенного отображения
+      const dataUrl = await fileToDataURL(file);
+      console.log(`📤 Converted file to data URL, length: ${dataUrl.length}`);
+
       const newItems = [...previewItems];
 
       if (newItems[previewIndex]) {
@@ -899,11 +922,12 @@ export default function BannerGenerator() {
         // Всегда сохраняем в localizedScreenshots для текущего языка
         item.localizedScreenshots[forLanguage] = {
           file,
+          dataUrl,
           borderColor: item.screenshot.borderColor,
           borderWidth: item.screenshot.borderWidth,
           borderRadius: item.screenshot.borderRadius,
         };
-        console.log(`📤 Set localized screenshot for ${forLanguage} in state`);
+        console.log(`📤 Set localized screenshot for ${forLanguage} in state with dataUrl`);
 
         // СНАЧАЛА обновляем состояние
         setPreviewItems(newItems);
@@ -1557,6 +1581,10 @@ export default function BannerGenerator() {
       try {
         console.log(`📤 uploadScreenshotToBanner: Starting upload to banner ${bannerIndex}, language ${activeLanguage}, file size: ${file.size} bytes`);
 
+        // Конвертируем файл в data URL для мгновенного отображения
+        const dataUrl = await fileToDataURL(file);
+        console.log(`📤 uploadScreenshotToBanner: Converted file to data URL, length: ${dataUrl.length}`);
+
         const newItems = [...previewItems];
 
         if (newItems[bannerIndex]) {
@@ -1572,11 +1600,12 @@ export default function BannerGenerator() {
           // Сохраняем для текущего языка
           item.localizedScreenshots[activeLanguage] = {
             file,
+            dataUrl,
             borderColor: item.screenshot.borderColor,
             borderWidth: item.screenshot.borderWidth,
             borderRadius: item.screenshot.borderRadius,
           };
-          console.log(`📤 uploadScreenshotToBanner: Set localized screenshot for ${activeLanguage} in state`);
+          console.log(`📤 uploadScreenshotToBanner: Set localized screenshot for ${activeLanguage} in state with dataUrl`);
 
           // СНАЧАЛА обновляем состояние
           setPreviewItems(newItems);
@@ -2624,7 +2653,7 @@ export default function BannerGenerator() {
                 >
                   <img
                     key={`screenshot-${item.id}-${activeLanguage}-${updateCounter}`}
-                    src={currentScreenshot.file && currentScreenshot.file instanceof File ? URL.createObjectURL(currentScreenshot.file) : "/placeholder.svg"}
+                    src={currentScreenshot.dataUrl || (currentScreenshot.file && currentScreenshot.file instanceof File ? URL.createObjectURL(currentScreenshot.file) : "/placeholder.svg")}
                     alt={`Screenshot ${item.id}`}
                     style={{
                       width: "100%",
