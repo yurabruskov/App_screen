@@ -1,0 +1,37 @@
+Error with Permissions-Policy header: Unrecognized feature: 'browsing-topics'.
+page-38639eda12a73377.js:1 Loaded initial text alignment from localStorage: center
+page-38639eda12a73377.js:1 Loaded initial font size from localStorage
+page-38639eda12a73377.js:1 Loaded initial line height from localStorage
+page-38639eda12a73377.js:1 Loaded initial letter spacing from localStorage
+page-38639eda12a73377.js:1 Loaded initial preview items from localStorage (5) [{…}, {…}, {…}, {…}, {…}]
+page-38639eda12a73377.js:1 Checking for additional data in localStorage
+page-38639eda12a73377.js:1 Saving previewItems to localStorage 5
+page-38639eda12a73377.js:1 Initializing IndexedDB and loading images
+page-38639eda12a73377.js:1 Loading images from IndexedDB...
+page-38639eda12a73377.js:1 Loading banner settings from localStorage
+page-38639eda12a73377.js:1 Loading text alignment from localStorage
+page-38639eda12a73377.js:1 Loading font size from localStorage
+page-38639eda12a73377.js:1 Loading line height and letter spacing from localStorage
+page-38639eda12a73377.js:1 Rendering banner 0, device position: bottom-center
+page-38639eda12a73377.js:1 Rendering banner 1, device position: bottom-center
+page-38639eda12a73377.js:1 Rendering banner 2, device position: bottom-center
+page-38639eda12a73377.js:1 Rendering banner 3, device position: bottom-center
+page-38639eda12a73377.js:1 Rendering banner 4, device position: center
+page-38639eda12a73377.js:1 Loaded default image for preview preview_3
+page-38639eda12a73377.js:1 Loaded localized image for preview_3_en
+page-38639eda12a73377.js:1 Loaded localized image for preview_3_ru
+page-38639eda12a73377.js:1 Loaded default image for preview preview_6
+page-38639eda12a73377.js:1 Loading images for language: ru
+page-38639eda12a73377.js:1 Loaded localized image for preview_9_ru
+page-38639eda12a73377.js:1 Rendering banner 0, device position: bottom-center
+page-38639eda12a73377.js:1 Rendering banner 1, device position: bottom-center
+page-38639eda12a73377.js:1 Rendering banner 2, device position: bottom-center
+page-38639eda12a73377.js:1 Rendering banner 3, device position: bottom-center
+page-38639eda12a73377.js:1 Rendering banner 4, device position: center
+page-38639eda12a73377.js:1 Saving previewItems to localStorage 5
+page-38639eda12a73377.js:1 Rendering banner 0, device position: bottom-center
+page-38639eda12a73377.js:1 Rendering banner 1, device position: bottom-center
+page-38639eda12a73377.js:1 Rendering banner 2, device position: bottom-center
+page-38639eda12a73377.js:1 Rendering banner 3, device position: bottom-center
+page-38639eda12a73377.js:1 Rendering banner 4, device position: center
+page-38639eda12a73377.js:1 Loading images for language: en

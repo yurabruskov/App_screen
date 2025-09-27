@@ -88,17 +88,22 @@ interface PreviewItem {
 
 // Функция для получения скриншота с fallback на английский язык
 const getCurrentScreenshot = (previewItem: PreviewItem, currentLanguage: string) => {
+  console.log(`getCurrentScreenshot: Looking for screenshot for preview ${previewItem.id}, language ${currentLanguage}`);
+
   // Сначала проверяем есть ли скриншот для текущего языка
   if (previewItem.localizedScreenshots?.[currentLanguage]?.file) {
+    console.log(`✓ Found localized screenshot for ${currentLanguage}`);
     return previewItem.localizedScreenshots[currentLanguage];
   }
 
   // Fallback на английский
   if (previewItem.localizedScreenshots?.en?.file) {
+    console.log(`⚠️ No screenshot for ${currentLanguage}, using English fallback`);
     return previewItem.localizedScreenshots.en;
   }
 
   // Fallback на общий скриншот (как было раньше)
+  console.log(`⚠️ No localized screenshots, using default screenshot`);
   return previewItem.screenshot;
 };
 
@@ -200,31 +205,56 @@ class ImageDB {
         const transaction = this.db!.transaction([this.storeName], 'readonly');
         const store = transaction.objectStore(this.storeName);
         const request = store.get(id);
-        
+
         request.onsuccess = () => {
           const result = request.result;
           if (!result) {
+            console.log(`No image found in IndexedDB for id: ${id}`);
             resolve(null);
             return;
           }
-          
-          // Преобразование data URL обратно в File
-          const binary = atob((result.data as string).split(',')[1]);
-          const array = [];
-          for (let i = 0; i < binary.length; i++) {
-            array.push(binary.charCodeAt(i));
+
+          try {
+            // result.data должен содержать data URL (base64 строку)
+            const dataUrl = result.data as string;
+            console.log(`Found image data for ${id}, type: ${result.type}, data length: ${dataUrl.length}`);
+
+            // Преобразование data URL обратно в File
+            const arr = dataUrl.split(',');
+            if (arr.length !== 2 || !arr[0].startsWith('data:')) {
+              console.error(`Invalid data URL format for ${id}:`, dataUrl.substring(0, 100));
+              resolve(null);
+              return;
+            }
+
+            const mime = arr[0].match(/:(.*?);/)?.[1] || result.type;
+            const bstr = atob(arr[1]);
+            let n = bstr.length;
+            const u8arr = new Uint8Array(n);
+            while (n--) {
+              u8arr[n] = bstr.charCodeAt(n);
+            }
+
+            const blob = new Blob([u8arr], { type: mime });
+            const file = new File([blob], `preview_${id}.${mime.split('/')[1]}`, {
+              type: mime,
+              lastModified: result.lastModified
+            });
+
+            console.log(`Successfully reconstructed File for ${id}:`, file.name, file.size, 'bytes');
+            resolve(file);
+          } catch (error) {
+            console.error(`Error reconstructing File for ${id}:`, error);
+            resolve(null);
           }
-          const blob = new Blob([new Uint8Array(array)], { type: result.type });
-          const file = new File([blob], `preview_${id}.${result.type.split('/')[1]}`, { 
-            type: result.type, 
-            lastModified: result.lastModified 
-          });
-          
-          resolve(file);
         };
-        
-        request.onerror = (event) => reject(event);
+
+        request.onerror = (event) => {
+          console.error(`IndexedDB get error for ${id}:`, event);
+          reject(event);
+        };
       } catch (err) {
+        console.error(`Outer catch error in getImage for ${id}:`, err);
         reject(err);
       }
     });
@@ -665,50 +695,63 @@ export default function BannerGenerator() {
   // Загружаем изображения при смене языка с debounce
   useEffect(() => {
     const timeoutId = setTimeout(async () => {
-      if (!imageDBRef.current || previewItems.length === 0) return;
-
-      try {
-        console.log(`Loading images for language: ${activeLanguage}`);
-        const updatedItems = [...previewItems];
-        let hasChanges = false;
-
-        for (let i = 0; i < previewItems.length; i++) {
-          const item = previewItems[i];
-
-          // Инициализируем localizedScreenshots если его нет
-          if (!updatedItems[i].localizedScreenshots) {
-            updatedItems[i].localizedScreenshots = {};
-          }
-
-          // Загружаем изображение для текущего языка если его еще нет
-          if (!updatedItems[i].localizedScreenshots![activeLanguage]?.file) {
-            const langImageId = `preview_${item.id}_${activeLanguage}`;
-            try {
-              const langImageFile = await imageDBRef.current.getImage(langImageId);
-              if (langImageFile) {
-                console.log(`Loaded localized image for ${langImageId}`);
-                updatedItems[i].localizedScreenshots![activeLanguage] = {
-                  file: langImageFile,
-                  borderColor: item.screenshot.borderColor,
-                  borderWidth: item.screenshot.borderWidth,
-                  borderRadius: item.screenshot.borderRadius,
-                };
-                hasChanges = true;
-              }
-            } catch (error) {
-              console.error(`Error loading localized image for ${langImageId}:`, error);
-            }
-          }
-        }
-
-        if (hasChanges) {
-          console.log(`Updating state with ${hasChanges ? 'new' : 'no'} images for ${activeLanguage}`);
-          setPreviewItems(updatedItems);
-        }
-      } catch (error) {
-        console.error("Error loading language images:", error);
+      if (!imageDBRef.current || previewItems.length === 0) {
+        console.log(`Skipping image loading: imageDB=${!!imageDBRef.current}, previewItems=${previewItems.length}`);
+        return;
       }
-    }, 100); // 100ms debounce
+
+      console.log(`🔄 Loading images for language: ${activeLanguage}`);
+      const updatedItems = [...previewItems];
+      let hasChanges = false;
+
+      for (let i = 0; i < previewItems.length; i++) {
+        const item = previewItems[i];
+        console.log(`Checking preview ${item.id} for language ${activeLanguage}`);
+
+        // Инициализируем localizedScreenshots если его нет
+        if (!updatedItems[i].localizedScreenshots) {
+          updatedItems[i].localizedScreenshots = {};
+          console.log(`Initialized localizedScreenshots for preview ${item.id}`);
+        }
+
+        // Проверяем есть ли уже изображение для этого языка
+        const existingScreenshot = updatedItems[i].localizedScreenshots![activeLanguage];
+        if (existingScreenshot?.file) {
+          console.log(`✓ Preview ${item.id} already has screenshot for ${activeLanguage}`);
+          continue;
+        }
+
+        // Загружаем изображение для текущего языка
+        const langImageId = `preview_${item.id}_${activeLanguage}`;
+        console.log(`Attempting to load image: ${langImageId}`);
+
+        try {
+          const langImageFile = await imageDBRef.current.getImage(langImageId);
+          if (langImageFile) {
+            console.log(`✅ Loaded localized image for ${langImageId}, size: ${langImageFile.size} bytes`);
+            updatedItems[i].localizedScreenshots![activeLanguage] = {
+              file: langImageFile,
+              borderColor: item.screenshot.borderColor,
+              borderWidth: item.screenshot.borderWidth,
+              borderRadius: item.screenshot.borderRadius,
+            };
+            hasChanges = true;
+          } else {
+            console.log(`❌ No image found for ${langImageId}`);
+          }
+        } catch (error) {
+          console.error(`💥 Error loading localized image for ${langImageId}:`, error);
+        }
+      }
+
+      if (hasChanges) {
+        console.log(`🔄 Updating state with new images for ${activeLanguage}`);
+        setPreviewItems(updatedItems);
+        forceUpdate(); // Принудительное обновление UI
+      } else {
+        console.log(`ℹ️ No new images loaded for ${activeLanguage}`);
+      }
+    }, 200); // Увеличил debounce до 200ms
 
     return () => clearTimeout(timeoutId);
   }, [activeLanguage, previewItems.length]); // Добавили previewItems.length как зависимость
@@ -840,14 +883,17 @@ export default function BannerGenerator() {
 
   const handleScreenshotUpload = async (file: File, forLanguage: string = activeLanguage) => {
     try {
+      console.log(`📤 handleScreenshotUpload: Starting upload for preview ${previewIndex}, language ${forLanguage}, file size: ${file.size} bytes`);
       const newItems = [...previewItems];
 
       if (newItems[previewIndex]) {
         const item = newItems[previewIndex];
+        console.log(`📤 Processing preview ${item.id}`);
 
         // Инициализируем localizedScreenshots если его нет
         if (!item.localizedScreenshots) {
           item.localizedScreenshots = {};
+          console.log(`📤 Initialized localizedScreenshots for preview ${item.id}`);
         }
 
         // Всегда сохраняем в localizedScreenshots для текущего языка
@@ -857,24 +903,30 @@ export default function BannerGenerator() {
           borderWidth: item.screenshot.borderWidth,
           borderRadius: item.screenshot.borderRadius,
         };
+        console.log(`📤 Set localized screenshot for ${forLanguage} in state`);
 
         // СНАЧАЛА обновляем состояние
         setPreviewItems(newItems);
+        console.log(`📤 Updated React state`);
 
         // Принудительно обновляем UI
         forceUpdate();
+        console.log(`📤 Forced UI update`);
 
         // ПОТОМ сохраняем в IndexedDB асинхронно
         if (imageDBRef.current) {
           const imageId = `preview_${item.id}_${forLanguage}`;
+          console.log(`💾 Saving to IndexedDB: ${imageId}`);
           await imageDBRef.current.saveImage(imageId, file);
-          console.log(`Successfully saved image for ${forLanguage}: ${imageId}`);
+          console.log(`✅ Successfully saved image for ${forLanguage}: ${imageId}`);
         }
 
-        console.log("Upload complete, position should still be:", item.devicePosition);
+        console.log("🎉 Upload complete, position should still be:", item.devicePosition);
+      } else {
+        console.error(`❌ Preview ${previewIndex} not found in previewItems`);
       }
     } catch (error) {
-      console.error('Error in handleScreenshotUpload:', error);
+      console.error('💥 Error in handleScreenshotUpload:', error);
     }
   };
 
