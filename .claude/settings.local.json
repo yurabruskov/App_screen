@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git fetch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git merge:*)",
+      "Bash(git stash:*)",
+      "Bash(rm:*)",
+      "Bash(npm run deploy:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run export:*)",
+      "Bash(DEPLOY_TARGET=gh-pages npm run build)",
+      "Bash(touch:*)",
+      "Bash(mkdir:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

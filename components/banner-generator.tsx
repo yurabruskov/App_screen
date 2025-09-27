@@ -98,13 +98,8 @@ const getCurrentScreenshot = (previewItem: PreviewItem, currentLanguage: string)
     return previewItem.localizedScreenshots.en;
   }
 
-  // Fallback на общий скриншот только если там есть файл
-  if (previewItem.screenshot?.file) {
-    return previewItem.screenshot;
-  }
-
-  // Если ничего нет, возвращаем null
-  return null;
+  // Fallback на общий скриншот (как было раньше)
+  return previewItem.screenshot;
 };
 
 // Класс для работы с IndexedDB
@@ -788,17 +783,10 @@ export default function BannerGenerator() {
     return localizedContent[langCode]?.[previewKey] || "";
   };
 
-  // Полностью заменяем эту функцию
   const handleScreenshotUpload = (file: File, forLanguage: string = activeLanguage) => {
-    // Для отладки
-    console.log("Starting upload for preview: ", previewIndex, "for language:", forLanguage);
-    console.log("With position: ", previewItems[previewIndex]?.devicePosition);
-
-    // Вместо создания копии, модифицируем существующий элемент
     const newItems = [...previewItems];
 
     if (newItems[previewIndex]) {
-      // Сохраняем ссылку на элемент
       const item = newItems[previewIndex];
 
       // Инициализируем localizedScreenshots если его нет
@@ -806,16 +794,16 @@ export default function BannerGenerator() {
         item.localizedScreenshots = {};
       }
 
-      // Если загружаем для текущего языка, сохраняем в localizedScreenshots
-      if (forLanguage !== 'default') {
-        item.localizedScreenshots[forLanguage] = {
-          file,
-          borderColor: item.screenshot.borderColor,
-          borderWidth: item.screenshot.borderWidth,
-          borderRadius: item.screenshot.borderRadius,
-        };
-      } else {
-        // Для default сохраняем в основной screenshot (fallback)
+      // Всегда сохраняем в localizedScreenshots для текущего языка
+      item.localizedScreenshots[forLanguage] = {
+        file,
+        borderColor: item.screenshot.borderColor,
+        borderWidth: item.screenshot.borderWidth,
+        borderRadius: item.screenshot.borderRadius,
+      };
+
+      // Также обновляем основной screenshot если это первая загрузка
+      if (!item.screenshot.file) {
         item.screenshot = {
           ...item.screenshot,
           file
