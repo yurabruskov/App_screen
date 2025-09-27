@@ -144,31 +144,44 @@ interface PreviewItem {
     borderRadius: number;
   };
   localizedScreenshots?: {
-    [languageCode: string]: {
-      file: File | null;
-      dataUrl?: string;
-      borderColor: string;
-      borderWidth: number;
-      borderRadius: number;
+    [deviceType: string]: {
+      [languageCode: string]: {
+        file: File | null;
+        dataUrl?: string;
+        borderColor: string;
+        borderWidth: number;
+        borderRadius: number;
+      };
     };
   };
 }
 
-// Функция для получения скриншота с fallback на английский язык
-const getCurrentScreenshot = (previewItem: PreviewItem, currentLanguage: string) => {
-  console.log(`getCurrentScreenshot: Looking for screenshot for preview ${previewItem.id}, language ${currentLanguage}`);
-  console.log(`getCurrentScreenshot: Available languages:`, Object.keys(previewItem.localizedScreenshots || {}));
+// Функция для получения скриншота с fallback на английский язык и устройство
+const getCurrentScreenshot = (previewItem: PreviewItem, currentLanguage: string, currentDeviceType: DeviceType) => {
+  console.log(`getCurrentScreenshot: Looking for screenshot for preview ${previewItem.id}, device ${currentDeviceType}, language ${currentLanguage}`);
 
-  // Сначала проверяем есть ли скриншот для текущего языка
-  if (previewItem.localizedScreenshots?.[currentLanguage]?.file || previewItem.localizedScreenshots?.[currentLanguage]?.dataUrl) {
-    console.log(`✓ Found localized screenshot for ${currentLanguage} (file: ${!!previewItem.localizedScreenshots[currentLanguage].file}, dataUrl: ${!!previewItem.localizedScreenshots[currentLanguage].dataUrl})`);
-    return previewItem.localizedScreenshots[currentLanguage];
+  // Сначала проверяем есть ли скриншот для текущего устройства и языка
+  if (previewItem.localizedScreenshots?.[currentDeviceType]?.[currentLanguage]?.file || previewItem.localizedScreenshots?.[currentDeviceType]?.[currentLanguage]?.dataUrl) {
+    console.log(`✓ Found localized screenshot for ${currentDeviceType}/${currentLanguage}`);
+    return previewItem.localizedScreenshots[currentDeviceType][currentLanguage];
   }
 
-  // Fallback на английский
-  if (previewItem.localizedScreenshots?.en?.file || previewItem.localizedScreenshots?.en?.dataUrl) {
-    console.log(`⚠️ No screenshot for ${currentLanguage}, using English fallback (file: ${!!previewItem.localizedScreenshots.en.file}, dataUrl: ${!!previewItem.localizedScreenshots.en.dataUrl})`);
-    return previewItem.localizedScreenshots.en;
+  // Fallback на английский для того же устройства
+  if (previewItem.localizedScreenshots?.[currentDeviceType]?.en?.file || previewItem.localizedScreenshots?.[currentDeviceType]?.en?.dataUrl) {
+    console.log(`⚠️ No screenshot for ${currentDeviceType}/${currentLanguage}, using English fallback for same device`);
+    return previewItem.localizedScreenshots[currentDeviceType].en;
+  }
+
+  // Fallback на iPhone версию того же языка
+  if (currentDeviceType !== 'iphone' && (previewItem.localizedScreenshots?.iphone?.[currentLanguage]?.file || previewItem.localizedScreenshots?.iphone?.[currentLanguage]?.dataUrl)) {
+    console.log(`⚠️ No screenshot for ${currentDeviceType}/${currentLanguage}, using iPhone fallback`);
+    return previewItem.localizedScreenshots.iphone[currentLanguage];
+  }
+
+  // Fallback на iPhone английский
+  if (currentDeviceType !== 'iphone' && (previewItem.localizedScreenshots?.iphone?.en?.file || previewItem.localizedScreenshots?.iphone?.en?.dataUrl)) {
+    console.log(`⚠️ No screenshot, using iPhone English fallback`);
+    return previewItem.localizedScreenshots.iphone.en;
   }
 
   // Fallback на общий скриншот (как было раньше)
@@ -731,19 +744,25 @@ export default function BannerGenerator() {
             console.error(`Error loading default image for ${oldImageId}:`, error);
           }
 
-          // Загружаем локализованные скриншоты
+          // Загружаем локализованные скриншоты для всех устройств и языков
           if (!updatedItems[i].localizedScreenshots) {
             updatedItems[i].localizedScreenshots = {};
           }
 
+          // Загружаем старые ключи для обратной совместимости (без устройства)
           for (const lang of LANGUAGES) {
-            const langImageId = `preview_${item.id}_${lang.code}`;
+            const oldLangImageId = `preview_${item.id}_${lang.code}`;
             try {
-              const langImageFile = await imageDBRef.current.getImage(langImageId);
+              const langImageFile = await imageDBRef.current.getImage(oldLangImageId);
               if (langImageFile) {
-                console.log(`Loaded localized image for ${langImageId}`);
+                console.log(`Loaded legacy localized image for ${oldLangImageId}`);
                 const dataUrl = await fileToDataURL(langImageFile);
-                updatedItems[i].localizedScreenshots![lang.code] = {
+
+                // Сохраняем в iphone для обратной совместимости
+                if (!updatedItems[i].localizedScreenshots.iphone) {
+                  updatedItems[i].localizedScreenshots.iphone = {};
+                }
+                updatedItems[i].localizedScreenshots.iphone[lang.code] = {
                   file: langImageFile,
                   dataUrl,
                   borderColor: item.screenshot.borderColor,
@@ -753,7 +772,36 @@ export default function BannerGenerator() {
                 hasChanges = true;
               }
             } catch (error) {
-              console.error(`Error loading localized image for ${langImageId}:`, error);
+              // Игнорируем ошибки для старых ключей
+            }
+          }
+
+          // Загружаем новые ключи с устройствами
+          const devices: DeviceType[] = ['iphone', 'ipad'];
+          for (const device of devices) {
+            if (!updatedItems[i].localizedScreenshots[device]) {
+              updatedItems[i].localizedScreenshots[device] = {};
+            }
+
+            for (const lang of LANGUAGES) {
+              const deviceLangImageId = `preview_${item.id}_${device}_${lang.code}`;
+              try {
+                const deviceLangImageFile = await imageDBRef.current.getImage(deviceLangImageId);
+                if (deviceLangImageFile) {
+                  console.log(`Loaded device-specific image for ${deviceLangImageId}`);
+                  const dataUrl = await fileToDataURL(deviceLangImageFile);
+                  updatedItems[i].localizedScreenshots[device][lang.code] = {
+                    file: deviceLangImageFile,
+                    dataUrl,
+                    borderColor: item.screenshot.borderColor,
+                    borderWidth: item.screenshot.borderWidth,
+                    borderRadius: item.screenshot.borderRadius,
+                  };
+                  hasChanges = true;
+                }
+              } catch (error) {
+                console.error(`Error loading device-specific image for ${deviceLangImageId}:`, error);
+              }
             }
           }
         }
@@ -973,10 +1021,11 @@ export default function BannerGenerator() {
     return localizedContent[langCode]?.[previewKey] || "";
   };
 
-  const handleScreenshotUpload = async (file: File, forLanguage?: string) => {
+  const handleScreenshotUpload = async (file: File, forLanguage?: string, forDevice?: DeviceType) => {
     try {
       const langToUse = forLanguage || activeLanguageRef.current;
-      console.log(`📤 handleScreenshotUpload: Starting upload for preview ${previewIndex}, language ${langToUse}, file size: ${file.size} bytes`);
+      const deviceToUse = forDevice || deviceType;
+      console.log(`📤 handleScreenshotUpload: Starting upload for preview ${previewIndex}, device=${deviceToUse}, language ${langToUse}, file size: ${file.size} bytes`);
 
       // Конвертируем файл в data URL для мгновенного отображения
       const dataUrl = await fileToDataURL(file);
@@ -994,15 +1043,21 @@ export default function BannerGenerator() {
           console.log(`📤 Initialized localizedScreenshots for preview ${item.id}`);
         }
 
-        // Всегда сохраняем в localizedScreenshots для текущего языка
-        item.localizedScreenshots[langToUse] = {
+        // Инициализируем устройство если его нет
+        if (!item.localizedScreenshots[deviceToUse]) {
+          item.localizedScreenshots[deviceToUse] = {};
+          console.log(`📤 Initialized localizedScreenshots[${deviceToUse}] for preview ${item.id}`);
+        }
+
+        // Всегда сохраняем в localizedScreenshots для текущего устройства и языка
+        item.localizedScreenshots[deviceToUse][langToUse] = {
           file,
           dataUrl,
           borderColor: item.screenshot.borderColor,
           borderWidth: item.screenshot.borderWidth,
           borderRadius: item.screenshot.borderRadius,
         };
-        console.log(`📤 Set localized screenshot for ${langToUse} in state with dataUrl`);
+        console.log(`📤 Set localized screenshot for ${deviceToUse}/${langToUse} in state with dataUrl`);
 
         // СНАЧАЛА обновляем состояние
         setPreviewItems(newItems);
@@ -1014,10 +1069,10 @@ export default function BannerGenerator() {
 
         // ПОТОМ сохраняем в IndexedDB асинхронно
         if (imageDBRef.current) {
-          const imageId = `preview_${item.id}_${langToUse}`;
+          const imageId = `preview_${item.id}_${deviceToUse}_${langToUse}`;
           console.log(`💾 Saving to IndexedDB: ${imageId}`);
           await imageDBRef.current.saveImage(imageId, file);
-          console.log(`✅ Successfully saved image for ${langToUse}: ${imageId}`);
+          console.log(`✅ Successfully saved image for ${deviceToUse}/${langToUse}: ${imageId}`);
         }
 
         console.log("🎉 Upload complete, position should still be:", item.devicePosition);
@@ -1637,7 +1692,7 @@ export default function BannerGenerator() {
 
           // Upload the screenshot to the target banner
           console.log(`📤 handleDrop: Calling uploadScreenshotToBanner for banner ${bannerId} with language ${currentLang}`);
-          uploadScreenshotToBanner(file, bannerId, currentLang);
+          uploadScreenshotToBanner(file, bannerId, currentLang, currentDevice);
           return;
         }
       }
@@ -1676,11 +1731,11 @@ export default function BannerGenerator() {
     };
     
     // Helper function to upload a screenshot to a specific banner
-    const uploadScreenshotToBanner = async (file: File, bannerIndex: number, language?: string) => {
+    const uploadScreenshotToBanner = async (file: File, bannerIndex: number, language?: string, device?: DeviceType) => {
       try {
         const langToUse = language || activeLanguageRef.current;
-        console.log(`📤 uploadScreenshotToBanner: Starting upload to banner ${bannerIndex}, language=${langToUse}, file size: ${file.size} bytes`);
-        console.log(`📤 uploadScreenshotToBanner: Using language:`, langToUse);
+        const deviceToUse = device || deviceType;
+        console.log(`📤 uploadScreenshotToBanner: Starting upload to banner ${bannerIndex}, device=${deviceToUse}, language=${langToUse}, file size: ${file.size} bytes`);
 
         // Конвертируем файл в data URL для мгновенного отображения
         const dataUrl = await fileToDataURL(file);
@@ -1691,7 +1746,7 @@ export default function BannerGenerator() {
         if (newItems[bannerIndex]) {
           const item = newItems[bannerIndex];
           console.log(`📤 uploadScreenshotToBanner: Processing banner ${item.id}`);
-          console.log(`📤 uploadScreenshotToBanner: Current localizedScreenshots:`, Object.keys(item.localizedScreenshots || {}));
+          console.log(`📤 uploadScreenshotToBanner: Current localizedScreenshots:`, item.localizedScreenshots);
 
           // Инициализируем localizedScreenshots если его нет
           if (!item.localizedScreenshots) {
@@ -1699,9 +1754,15 @@ export default function BannerGenerator() {
             console.log(`📤 uploadScreenshotToBanner: Initialized localizedScreenshots for banner ${item.id}`);
           }
 
-          // Сохраняем для текущего языка
-          console.log(`📤 uploadScreenshotToBanner: Before setting - localizedScreenshots keys:`, Object.keys(item.localizedScreenshots));
-          item.localizedScreenshots[langToUse] = {
+          // Инициализируем устройство если его нет
+          if (!item.localizedScreenshots[deviceToUse]) {
+            item.localizedScreenshots[deviceToUse] = {};
+            console.log(`📤 uploadScreenshotToBanner: Initialized localizedScreenshots[${deviceToUse}] for banner ${item.id}`);
+          }
+
+          // Сохраняем для текущего устройства и языка
+          console.log(`📤 uploadScreenshotToBanner: Before setting - localizedScreenshots[${deviceToUse}] keys:`, Object.keys(item.localizedScreenshots[deviceToUse]));
+          item.localizedScreenshots[deviceToUse][langToUse] = {
             file,
             dataUrl,
             borderColor: item.screenshot.borderColor,
@@ -1884,14 +1945,18 @@ export default function BannerGenerator() {
                 originalTextTransform = textElement.style.transform;
               }
               
-              // Используем html2canvas для рендеринга
+              // Используем html2canvas для рендеринга с экспортными размерами
+              const exportWidth = DEVICE_CONFIG[deviceType].exportWidth;
+              const exportHeight = DEVICE_CONFIG[deviceType].exportHeight;
+              console.log(`Экспорт с размерами: ${exportWidth}x${exportHeight} для устройства ${deviceType}`);
+
               const canvas = await html2canvas(exportElement as HTMLElement, {
                 scale: deviceConfig.html2canvasScale,
                 useCORS: true,
                 allowTaint: true,
                 backgroundColor: banner.backgroundColor || '#ffffff',
-                width: DEVICE_CONFIG[deviceType].previewWidth,
-                height: DEVICE_CONFIG[deviceType].previewHeight,
+                width: exportWidth,
+                height: exportHeight,
                 logging: false,
                 removeContainer: false,
                 onclone: (clonedDoc, element) => {
@@ -2743,7 +2808,7 @@ export default function BannerGenerator() {
             }}
           >
             {(() => {
-              const currentScreenshot = getCurrentScreenshot(item, activeLanguage);
+              const currentScreenshot = getCurrentScreenshot(item, activeLanguage, deviceType);
               return currentScreenshot && currentScreenshot.file && currentScreenshot.file instanceof File ? (
                 <div
                   style={{
