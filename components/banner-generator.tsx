@@ -851,13 +851,7 @@ export default function BannerGenerator() {
         borderRadius: item.screenshot.borderRadius,
       };
 
-      // Также обновляем основной screenshot если это первая загрузка
-      if (!item.screenshot.file) {
-        item.screenshot = {
-          ...item.screenshot,
-          file
-        };
-      }
+      // НЕ обновляем основной screenshot, чтобы каждый язык был уникальным
 
       // Устанавливаем новое состояние
       setPreviewItems(newItems);
@@ -1500,13 +1494,7 @@ export default function BannerGenerator() {
           borderRadius: item.screenshot.borderRadius,
         };
 
-        // Также обновляем основной screenshot если это первая загрузка
-        if (!item.screenshot.file) {
-          item.screenshot = {
-            ...item.screenshot,
-            file
-          };
-        }
+        // НЕ обновляем основной screenshot, чтобы каждый язык был уникальным
 
         setPreviewItems(newItems);
 
