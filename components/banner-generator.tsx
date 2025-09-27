@@ -2518,7 +2518,7 @@ export default function BannerGenerator() {
           >
             {(() => {
               const currentScreenshot = getCurrentScreenshot(item, activeLanguage);
-              return currentScreenshot && currentScreenshot.file ? (
+              return currentScreenshot && currentScreenshot.file && currentScreenshot.file instanceof File ? (
                 <div
                   style={{
                     borderWidth: `${currentScreenshot.borderWidth}px`,
@@ -2529,7 +2529,7 @@ export default function BannerGenerator() {
                   }}
                 >
                   <img
-                    src={currentScreenshot.file ? URL.createObjectURL(currentScreenshot.file) : "/placeholder.svg"}
+                    src={currentScreenshot.file && currentScreenshot.file instanceof File ? URL.createObjectURL(currentScreenshot.file) : "/placeholder.svg"}
                     alt={`Screenshot ${item.id}`}
                     style={{
                       width: "100%",
