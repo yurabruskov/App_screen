@@ -379,10 +379,25 @@ export default function BannerGenerator() {
   const [activeLanguage, setActiveLanguage] = useState("ru")
   const activeLanguageRef = useRef(activeLanguage)
 
+  // Тип устройства для экспорта (iPhone/iPad)
+  const [deviceType, setDeviceType] = useState(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return localStorage.getItem('deviceType') || 'iphone'
+    }
+    return 'iphone'
+  })
+
   // Синхронизируем ref с состоянием
   useEffect(() => {
     activeLanguageRef.current = activeLanguage
   }, [activeLanguage])
+
+  // Сохраняем deviceType в localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem('deviceType', deviceType)
+    }
+  }, [deviceType])
   const [bannerSettings, setBannerSettings] = useState(() => {
     if (typeof window !== 'undefined' && window.localStorage) {
       try {
@@ -870,6 +885,12 @@ export default function BannerGenerator() {
     console.log(`🌐 handleLanguageChange: Language changed to ${language}`)
   }
 
+  // Handle device type change
+  const handleDeviceTypeChange = (type: 'iphone' | 'ipad') => {
+    console.log(`📱 handleDeviceTypeChange: Changing device type to ${type}`)
+    setDeviceType(type)
+  }
+
   const updateLocalizedContent = (language: string, field: keyof LocalizedContent, value: string) => {
     const newLocalizedContent = { ...localizedContent }
     if (!newLocalizedContent[language]) {
@@ -1120,8 +1141,8 @@ export default function BannerGenerator() {
     const deviceOffset = banner.verticalOffset?.device || 0;
     const deviceRotation = banner.rotation?.device || 0;
     
-    // Базовая ширина устройства
-    const baseWidth = 220;
+    // Базовая ширина устройства (адаптируем под тип устройства)
+    const baseWidth = deviceType === 'ipad' ? 280 : 220; // iPad устройства чуть больше
     const width = `${(baseWidth * deviceScale) / 100}px`;
     
     // Объект стилей для различных позиций с более контрастными значениями
@@ -1799,14 +1820,19 @@ export default function BannerGenerator() {
                 originalTextTransform = textElement.style.transform;
               }
               
+              // Определяем размеры экспорта в зависимости от типа устройства
+              const exportSizes = deviceType === 'ipad'
+                ? { width: 2048, height: 2732, scale: 8 } // iPad App Store screenshots
+                : { width: 1242, height: 2688, scale: 4 }; // iPhone App Store screenshots
+
               // Используем html2canvas для рендеринга
               const canvas = await html2canvas(exportElement as HTMLElement, {
-                scale: 4,
+                scale: exportSizes.scale,
                 useCORS: true,
                 allowTaint: true,
                 backgroundColor: banner.backgroundColor || '#ffffff',
-                width: 321,
-                height: 694.5,
+                width: exportSizes.width / exportSizes.scale, // Делим на scale чтобы получить правильные размеры превью
+                height: exportSizes.height / exportSizes.scale,
                 logging: false,
                 removeContainer: false,
                 onclone: (clonedDoc, element) => {
@@ -3060,7 +3086,32 @@ export default function BannerGenerator() {
           <header className="fixed top-0 left-0 right-0 bg-white border-b py-4 px-6 z-50 shadow-sm">
             <div className="container mx-auto">
               <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold">ASB Generator v2</h1>
+                {/* Device Type Switcher */}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-600">Device:</span>
+                  <div className="flex rounded-lg border border-gray-200 p-1">
+                    <button
+                      onClick={() => handleDeviceTypeChange('iphone')}
+                      className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                        deviceType === 'iphone'
+                          ? 'bg-blue-500 text-white'
+                          : 'text-gray-600 hover:bg-gray-100'
+                      }`}
+                    >
+                      📱 iPhone
+                    </button>
+                    <button
+                      onClick={() => handleDeviceTypeChange('ipad')}
+                      className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                        deviceType === 'ipad'
+                          ? 'bg-blue-500 text-white'
+                          : 'text-gray-600 hover:bg-gray-100'
+                      }`}
+                    >
+                      📱 iPad
+                    </button>
+                  </div>
+                </div>
                 
                 <div className="flex items-center gap-4">
                   <Dialog>
