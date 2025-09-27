@@ -98,8 +98,13 @@ const getCurrentScreenshot = (previewItem: PreviewItem, currentLanguage: string)
     return previewItem.localizedScreenshots.en;
   }
 
-  // Fallback на общий скриншот
-  return previewItem.screenshot;
+  // Fallback на общий скриншот только если там есть файл
+  if (previewItem.screenshot?.file) {
+    return previewItem.screenshot;
+  }
+
+  // Если ничего нет, возвращаем null
+  return null;
 };
 
 // Класс для работы с IndexedDB
@@ -2472,7 +2477,7 @@ export default function BannerGenerator() {
           >
             {(() => {
               const currentScreenshot = getCurrentScreenshot(item, activeLanguage);
-              return currentScreenshot?.file ? (
+              return currentScreenshot && currentScreenshot.file ? (
                 <div
                   style={{
                     borderWidth: `${currentScreenshot.borderWidth}px`,
@@ -2483,7 +2488,7 @@ export default function BannerGenerator() {
                   }}
                 >
                   <img
-                    src={URL.createObjectURL(currentScreenshot.file) || "/placeholder.svg"}
+                    src={currentScreenshot.file ? URL.createObjectURL(currentScreenshot.file) : "/placeholder.svg"}
                     alt={`Screenshot ${item.id}`}
                     style={{
                       width: "100%",
