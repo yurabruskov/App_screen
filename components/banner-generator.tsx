@@ -599,12 +599,12 @@ export default function BannerGenerator() {
         for (let i = 0; i < previewItems.length; i++) {
           const item = previewItems[i];
 
-          // Загружаем основной скриншот (fallback)
-          const imageId = `preview_${item.id}_default`;
+          // Загружаем основной скриншот (fallback) - пробуем старый ключ без языка
+          const oldImageId = `preview_${item.id}`;
           try {
-            const imageFile = await imageDBRef.current.getImage(imageId);
+            const imageFile = await imageDBRef.current.getImage(oldImageId);
             if (imageFile) {
-              console.log(`Loaded default image for preview ${imageId}`);
+              console.log(`Loaded default image for preview ${oldImageId}`);
               updatedItems[i] = {
                 ...updatedItems[i],
                 screenshot: {
@@ -615,7 +615,7 @@ export default function BannerGenerator() {
               hasChanges = true;
             }
           } catch (error) {
-            console.error(`Error loading default image for ${imageId}:`, error);
+            console.error(`Error loading default image for ${oldImageId}:`, error);
           }
 
           // Загружаем локализованные скриншоты
@@ -657,6 +657,55 @@ export default function BannerGenerator() {
       loadImagesFromDB();
     }
   }, [previewItems.length]); // Запускаем только при изменении количества превью
+
+  // Загружаем изображения при смене языка
+  useEffect(() => {
+    const loadLanguageImages = async () => {
+      if (!imageDBRef.current || previewItems.length === 0) return;
+
+      try {
+        const updatedItems = [...previewItems];
+        let hasChanges = false;
+
+        for (let i = 0; i < previewItems.length; i++) {
+          const item = previewItems[i];
+
+          // Инициализируем localizedScreenshots если его нет
+          if (!updatedItems[i].localizedScreenshots) {
+            updatedItems[i].localizedScreenshots = {};
+          }
+
+          // Загружаем изображение для текущего языка если его еще нет
+          if (!updatedItems[i].localizedScreenshots![activeLanguage]?.file) {
+            const langImageId = `preview_${item.id}_${activeLanguage}`;
+            try {
+              const langImageFile = await imageDBRef.current.getImage(langImageId);
+              if (langImageFile) {
+                console.log(`Loaded localized image for ${langImageId}`);
+                updatedItems[i].localizedScreenshots![activeLanguage] = {
+                  file: langImageFile,
+                  borderColor: item.screenshot.borderColor,
+                  borderWidth: item.screenshot.borderWidth,
+                  borderRadius: item.screenshot.borderRadius,
+                };
+                hasChanges = true;
+              }
+            } catch (error) {
+              console.error(`Error loading localized image for ${langImageId}:`, error);
+            }
+          }
+        }
+
+        if (hasChanges) {
+          setPreviewItems(updatedItems);
+        }
+      } catch (error) {
+        console.error("Error loading language images:", error);
+      }
+    };
+
+    loadLanguageImages();
+  }, [activeLanguage]); // Запускаем при смене языка
 
   // Обновляем все хуки сохранения, чтобы они были консистентными
   useEffect(() => {
@@ -1432,22 +1481,38 @@ export default function BannerGenerator() {
     // Helper function to upload a screenshot to a specific banner
     const uploadScreenshotToBanner = (file: File, bannerIndex: number) => {
       console.log(`Uploading screenshot to banner ${bannerIndex}`);
-      
+
       const newItems = [...previewItems];
-      
+
       if (newItems[bannerIndex]) {
         const item = newItems[bannerIndex];
-        
-        item.screenshot = {
-          ...item.screenshot,
-          file
+
+        // Инициализируем localizedScreenshots если его нет
+        if (!item.localizedScreenshots) {
+          item.localizedScreenshots = {};
+        }
+
+        // Сохраняем для текущего языка
+        item.localizedScreenshots[activeLanguage] = {
+          file,
+          borderColor: item.screenshot.borderColor,
+          borderWidth: item.screenshot.borderWidth,
+          borderRadius: item.screenshot.borderRadius,
         };
-        
+
+        // Также обновляем основной screenshot если это первая загрузка
+        if (!item.screenshot.file) {
+          item.screenshot = {
+            ...item.screenshot,
+            file
+          };
+        }
+
         setPreviewItems(newItems);
-        
-        // Save to IndexedDB
+
+        // Save to IndexedDB with language-specific key
         if (imageDBRef.current) {
-          const imageId = `preview_${item.id}`;
+          const imageId = `preview_${item.id}_${activeLanguage}`;
           imageDBRef.current.saveImage(imageId, file)
             .catch(error => console.error('Error saving image to IndexedDB:', error));
         }
