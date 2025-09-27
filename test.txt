@@ -1,177 +1,82 @@
-Error with Permissions-Policy header: Unrecognized feature: 'browsing-topics'.
-page-e6ee99557c316d77.js:1 Loaded initial text alignment from localStorage: center
-page-e6ee99557c316d77.js:1 Loaded initial font size from localStorage
-page-e6ee99557c316d77.js:1 Loaded initial line height from localStorage
-page-e6ee99557c316d77.js:1 Loaded initial letter spacing from localStorage
-page-e6ee99557c316d77.js:1 Loaded initial preview items from localStorage (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-page-e6ee99557c316d77.js:1 Checking for additional data in localStorage
-page-e6ee99557c316d77.js:1 Saving previewItems to localStorage 7
-page-e6ee99557c316d77.js:1 Initializing IndexedDB and loading images
-page-e6ee99557c316d77.js:1 Loading images from IndexedDB...
-page-e6ee99557c316d77.js:1 Loading banner settings from localStorage
-page-e6ee99557c316d77.js:1 Loading text alignment from localStorage
-page-e6ee99557c316d77.js:1 Loading font size from localStorage
-page-e6ee99557c316d77.js:1 Loading line height and letter spacing from localStorage
-page-e6ee99557c316d77.js:1 Rendering banner 0, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 3, language ru
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for ru
-page-e6ee99557c316d77.js:1 Rendering banner 1, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 6, language ru
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for ru
-page-e6ee99557c316d77.js:1 Rendering banner 2, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 7, language ru
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for ru
-page-e6ee99557c316d77.js:1 Rendering banner 3, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 8, language ru
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for ru
-page-e6ee99557c316d77.js:1 Rendering banner 4, device position: center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 9, language ru
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for ru
-page-e6ee99557c316d77.js:1 Rendering banner 5, device position: center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 10, language ru
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for ru
-page-e6ee99557c316d77.js:1 Rendering banner 6, device position: center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 11, language ru
-page-e6ee99557c316d77.js:1 ⚠️ No localized screenshots, using default screenshot
-page-e6ee99557c316d77.js:1 Found image data for preview_3, type: image/png, data length: 348238
-page-e6ee99557c316d77.js:1 Successfully reconstructed File for preview_3: preview_preview_3.png 261160 bytes
-page-e6ee99557c316d77.js:1 Loaded default image for preview preview_3
-page-e6ee99557c316d77.js:1 Found image data for preview_3_en, type: image/png, data length: 2853366
-page-e6ee99557c316d77.js:1 Successfully reconstructed File for preview_3_en: preview_preview_3_en.png 2140006 bytes
-page-e6ee99557c316d77.js:1 Loaded localized image for preview_3_en
-page-e6ee99557c316d77.js:1 🔄 Loading images for language: ru
-page-e6ee99557c316d77.js:1 Checking preview 3 for language ru
-page-e6ee99557c316d77.js:1 ✓ Preview 3 already has screenshot for ru
-page-e6ee99557c316d77.js:1 Checking preview 6 for language ru
-page-e6ee99557c316d77.js:1 ✓ Preview 6 already has screenshot for ru
-page-e6ee99557c316d77.js:1 Checking preview 7 for language ru
-page-e6ee99557c316d77.js:1 ✓ Preview 7 already has screenshot for ru
-page-e6ee99557c316d77.js:1 Checking preview 8 for language ru
-page-e6ee99557c316d77.js:1 ✓ Preview 8 already has screenshot for ru
-page-e6ee99557c316d77.js:1 Checking preview 9 for language ru
-page-e6ee99557c316d77.js:1 ✓ Preview 9 already has screenshot for ru
-page-e6ee99557c316d77.js:1 Checking preview 10 for language ru
-page-e6ee99557c316d77.js:1 ✓ Preview 10 already has screenshot for ru
-page-e6ee99557c316d77.js:1 Checking preview 11 for language ru
-page-e6ee99557c316d77.js:1 Attempting to load image: preview_11_ru
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_11_ru
-page-e6ee99557c316d77.js:1 ❌ No image found for preview_11_ru
-page-e6ee99557c316d77.js:1 ℹ️ No new images loaded for ru
-page-e6ee99557c316d77.js:1 Found image data for preview_3_ru, type: image/png, data length: 2177714
-page-e6ee99557c316d77.js:1 Successfully reconstructed File for preview_3_ru: preview_preview_3_ru.png 1633269 bytes
-page-e6ee99557c316d77.js:1 Loaded localized image for preview_3_ru
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_3_es
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_3_fr
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_3_de
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_3_it
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_3_ja
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_3_ko
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_3_zh
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_3_cs
-page-e6ee99557c316d77.js:1 Found image data for preview_6, type: image/png, data length: 809334
-page-e6ee99557c316d77.js:1 Successfully reconstructed File for preview_6: preview_preview_6.png 606983 bytes
-page-e6ee99557c316d77.js:1 Loaded default image for preview preview_6
-page-e6ee99557c316d77.js:1 Found image data for preview_6_en, type: image/gif, data length: 473714
-page-e6ee99557c316d77.js:1 Successfully reconstructed File for preview_6_en: preview_preview_6_en.gif 355269 bytes
-page-e6ee99557c316d77.js:1 Loaded localized image for preview_6_en
-page-e6ee99557c316d77.js:1 Found image data for preview_6_ru, type: image/gif, data length: 473714
-page-e6ee99557c316d77.js:1 Successfully reconstructed File for preview_6_ru: preview_preview_6_ru.gif 355269 bytes
-page-e6ee99557c316d77.js:1 Loaded localized image for preview_6_ru
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_6_es
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_6_fr
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_6_de
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_6_it
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_6_ja
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_6_ko
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_6_zh
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_6_cs
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_7
-page-e6ee99557c316d77.js:1 Found image data for preview_7_en, type: image/png, data length: 2853366
-page-e6ee99557c316d77.js:1 Successfully reconstructed File for preview_7_en: preview_preview_7_en.png 2140006 bytes
-page-e6ee99557c316d77.js:1 Loaded localized image for preview_7_en
-page-e6ee99557c316d77.js:1 Found image data for preview_7_ru, type: image/png, data length: 478022
-page-e6ee99557c316d77.js:1 Successfully reconstructed File for preview_7_ru: preview_preview_7_ru.png 358499 bytes
-page-e6ee99557c316d77.js:1 Loaded localized image for preview_7_ru
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_7_es
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_7_fr
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_7_de
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_7_it
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_7_ja
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_7_ko
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_7_zh
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_7_cs
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_8
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_8_en
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_8_ru
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_8_es
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_8_fr
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_8_de
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_8_it
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_8_ja
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_8_ko
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_8_zh
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_8_cs
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_9
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_9_en
-page-e6ee99557c316d77.js:1 Found image data for preview_9_ru, type: image/png, data length: 1390190
-page-e6ee99557c316d77.js:1 Successfully reconstructed File for preview_9_ru: preview_preview_9_ru.png 1042625 bytes
-page-e6ee99557c316d77.js:1 Loaded localized image for preview_9_ru
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_9_es
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_9_fr
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_9_de
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_9_it
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_9_ja
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_9_ko
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_9_zh
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_9_cs
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_10
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_10_en
-page-e6ee99557c316d77.js:1 Found image data for preview_10_ru, type: image/png, data length: 2029230
-page-e6ee99557c316d77.js:1 Successfully reconstructed File for preview_10_ru: preview_preview_10_ru.png 1521906 bytes
-page-e6ee99557c316d77.js:1 Loaded localized image for preview_10_ru
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_10_es
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_10_fr
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_10_de
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_10_it
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_10_ja
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_10_ko
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_10_zh
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_10_cs
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_11
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_11_en
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_11_ru
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_11_es
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_11_fr
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_11_de
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_11_it
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_11_ja
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_11_ko
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_11_zh
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_11_cs
-page-e6ee99557c316d77.js:1 Rendering banner 0, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 3, language ru
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for ru
-page-e6ee99557c316d77.js:1 Rendering banner 1, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 6, language ru
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for ru
-page-e6ee99557c316d77.js:1 Rendering banner 2, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 7, language ru
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for ru
-page-e6ee99557c316d77.js:1 Rendering banner 3, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 8, language ru
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for ru
-page-e6ee99557c316d77.js:1 Rendering banner 4, device position: center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 9, language ru
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for ru
-page-e6ee99557c316d77.js:1 Rendering banner 5, device position: center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 10, language ru
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for ru
-page-e6ee99557c316d77.js:1 Rendering banner 6, device position: center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 11, language ru
-page-e6ee99557c316d77.js:1 ⚠️ No localized screenshots, using default screenshot
-page-e6ee99557c316d77.js:1 Saving previewItems to localStorage 7
+🎯 handleDrop: Drop event detected
+page-787c7e5a67839875.js:1 📄 handleDrop: Processing file: Simulator Screenshot - iPhone 16 PRO 26+ - 2025-09-27 at 12.00.14.png, size: 1521906 bytes, current language: ru
+page-787c7e5a67839875.js:1 🔍 findDropTarget: Found 7 drop targets, mouse at (554, 665)
+page-787c7e5a67839875.js:1 🔍 findDropTarget: Checking banner-0: rect(141.90234375, 321.7109375, 441.09765625, 972.1953125)
+page-787c7e5a67839875.js:1 🔍 findDropTarget: Checking banner-1: rect(491.90234375, 567, 791.09765625, 866.1953125)
+page-787c7e5a67839875.js:1 ✅ findDropTarget: Found matching target: banner-1
+page-787c7e5a67839875.js:1 🎯 handleDrop: Target element found: banner-1
+page-787c7e5a67839875.js:1 🎯 handleDrop: Target banner ID: 1
+page-787c7e5a67839875.js:1 🔄 handleDrop: Setting preview index to 1
+page-787c7e5a67839875.js:1 📤 handleDrop: Calling uploadScreenshotToBanner for banner 1
+page-787c7e5a67839875.js:1 📤 uploadScreenshotToBanner: Starting upload to banner 1, language ru, file size: 1521906 bytes
+page-787c7e5a67839875.js:1 Rendering banner 0, device position: bottom-center
+page-787c7e5a67839875.js:1 getCurrentScreenshot: Looking for screenshot for preview 3, language en
+page-787c7e5a67839875.js:1 getCurrentScreenshot: Available languages: (2) ['ru', 'en']
+page-787c7e5a67839875.js:1 ✓ Found localized screenshot for en (file: true, dataUrl: true)
+page-787c7e5a67839875.js:1 Rendering banner 1, device position: bottom-center
+page-787c7e5a67839875.js:1 getCurrentScreenshot: Looking for screenshot for preview 6, language en
+page-787c7e5a67839875.js:1 getCurrentScreenshot: Available languages: (2) ['ru', 'en']
+page-787c7e5a67839875.js:1 ✓ Found localized screenshot for en (file: true, dataUrl: true)
+page-787c7e5a67839875.js:1 Rendering banner 2, device position: bottom-center
+page-787c7e5a67839875.js:1 getCurrentScreenshot: Looking for screenshot for preview 7, language en
+page-787c7e5a67839875.js:1 getCurrentScreenshot: Available languages: (2) ['en', 'ru']
+page-787c7e5a67839875.js:1 ✓ Found localized screenshot for en (file: true, dataUrl: true)
+page-787c7e5a67839875.js:1 Rendering banner 3, device position: bottom-center
+page-787c7e5a67839875.js:1 getCurrentScreenshot: Looking for screenshot for preview 8, language en
+page-787c7e5a67839875.js:1 getCurrentScreenshot: Available languages: ['ru']
+page-787c7e5a67839875.js:1 ⚠️ No localized screenshots, using default screenshot
+page-787c7e5a67839875.js:1 Rendering banner 4, device position: center
+page-787c7e5a67839875.js:1 getCurrentScreenshot: Looking for screenshot for preview 9, language en
+page-787c7e5a67839875.js:1 getCurrentScreenshot: Available languages: ['ru']
+page-787c7e5a67839875.js:1 ⚠️ No localized screenshots, using default screenshot
+page-787c7e5a67839875.js:1 Rendering banner 5, device position: center
+page-787c7e5a67839875.js:1 getCurrentScreenshot: Looking for screenshot for preview 10, language en
+page-787c7e5a67839875.js:1 getCurrentScreenshot: Available languages: ['ru']
+page-787c7e5a67839875.js:1 ⚠️ No localized screenshots, using default screenshot
+page-787c7e5a67839875.js:1 Rendering banner 6, device position: center
+page-787c7e5a67839875.js:1 getCurrentScreenshot: Looking for screenshot for preview 11, language en
+page-787c7e5a67839875.js:1 getCurrentScreenshot: Available languages: []
+page-787c7e5a67839875.js:1 ⚠️ No localized screenshots, using default screenshot
+page-787c7e5a67839875.js:1 📤 uploadScreenshotToBanner: Converted file to data URL, length: 2029230
+page-787c7e5a67839875.js:1 📤 uploadScreenshotToBanner: Processing banner 6
+page-787c7e5a67839875.js:1 📤 uploadScreenshotToBanner: Current localizedScreenshots: (2) ['ru', 'en']
+page-787c7e5a67839875.js:1 📤 uploadScreenshotToBanner: Before setting - localizedScreenshots keys: (2) ['ru', 'en']
+page-787c7e5a67839875.js:1 📤 uploadScreenshotToBanner: After setting - localizedScreenshots keys: (2) ['ru', 'en']
+page-787c7e5a67839875.js:1 📤 uploadScreenshotToBanner: Set localized screenshot for ru in state with dataUrl
+page-787c7e5a67839875.js:1 📤 uploadScreenshotToBanner: Updated React state
+page-787c7e5a67839875.js:1 📤 uploadScreenshotToBanner: Forced UI update
+page-787c7e5a67839875.js:1 💾 uploadScreenshotToBanner: Saving to IndexedDB: preview_6_ru
+page-787c7e5a67839875.js:1 Rendering banner 0, device position: bottom-center
+page-787c7e5a67839875.js:1 getCurrentScreenshot: Looking for screenshot for preview 3, language en
+page-787c7e5a67839875.js:1 getCurrentScreenshot: Available languages: (2) ['ru', 'en']
+page-787c7e5a67839875.js:1 ✓ Found localized screenshot for en (file: true, dataUrl: true)
+page-787c7e5a67839875.js:1 Rendering banner 1, device position: bottom-center
+page-787c7e5a67839875.js:1 getCurrentScreenshot: Looking for screenshot for preview 6, language en
+page-787c7e5a67839875.js:1 getCurrentScreenshot: Available languages: (2) ['ru', 'en']
+page-787c7e5a67839875.js:1 ✓ Found localized screenshot for en (file: true, dataUrl: true)
+page-787c7e5a67839875.js:1 Rendering banner 2, device position: bottom-center
+page-787c7e5a67839875.js:1 getCurrentScreenshot: Looking for screenshot for preview 7, language en
+page-787c7e5a67839875.js:1 getCurrentScreenshot: Available languages: (2) ['en', 'ru']
+page-787c7e5a67839875.js:1 ✓ Found localized screenshot for en (file: true, dataUrl: true)
+page-787c7e5a67839875.js:1 Rendering banner 3, device position: bottom-center
+page-787c7e5a67839875.js:1 getCurrentScreenshot: Looking for screenshot for preview 8, language en
+page-787c7e5a67839875.js:1 getCurrentScreenshot: Available languages: ['ru']
+page-787c7e5a67839875.js:1 ⚠️ No localized screenshots, using default screenshot
+page-787c7e5a67839875.js:1 Rendering banner 4, device position: center
+page-787c7e5a67839875.js:1 getCurrentScreenshot: Looking for screenshot for preview 9, language en
+page-787c7e5a67839875.js:1 getCurrentScreenshot: Available languages: ['ru']
+page-787c7e5a67839875.js:1 ⚠️ No localized screenshots, using default screenshot
+page-787c7e5a67839875.js:1 Rendering banner 5, device position: center
+page-787c7e5a67839875.js:1 getCurrentScreenshot: Looking for screenshot for preview 10, language en
+page-787c7e5a67839875.js:1 getCurrentScreenshot: Available languages: ['ru']
+page-787c7e5a67839875.js:1 ⚠️ No localized screenshots, using default screenshot
+page-787c7e5a67839875.js:1 Rendering banner 6, device position: center
+page-787c7e5a67839875.js:1 getCurrentScreenshot: Looking for screenshot for preview 11, language en
+page-787c7e5a67839875.js:1 getCurrentScreenshot: Available languages: []
+page-787c7e5a67839875.js:1 ⚠️ No localized screenshots, using default screenshot
+page-787c7e5a67839875.js:1 Saving previewItems to localStorage 7
 517-ff9e848a724fdcf5.js:1 Error saving preview items: QuotaExceededError: Failed to execute 'setItem' on 'Storage': Setting the value of 'previewItems' exceeded the quota.
-    at page-e6ee99557c316d77.js:1:21400
+    at page-787c7e5a67839875.js:1:21723
     at oT (4bd1b696-f51f8a00b5f996fa.js:1:81756)
     at o9 (4bd1b696-f51f8a00b5f996fa.js:1:97448)
     at o5 (4bd1b696-f51f8a00b5f996fa.js:1:97332)
@@ -223,247 +128,7 @@ page-e6ee99557c316d77.js:1 Saving previewItems to localStorage 7
     at o5 (4bd1b696-f51f8a00b5f996fa.js:1:97332)
 window.console.error @ 517-ff9e848a724fdcf5.js:1
 overrideMethod @ hook.js:608
-(anonymous) @ page-e6ee99557c316d77.js:1
-oT @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
-o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-uh @ 4bd1b696-f51f8a00b5f996fa.js:1
-uO @ 4bd1b696-f51f8a00b5f996fa.js:1
-uT @ 4bd1b696-f51f8a00b5f996fa.js:1
-(anonymous) @ 4bd1b696-f51f8a00b5f996fa.js:1
-up @ 4bd1b696-f51f8a00b5f996fa.js:1
-i9 @ 4bd1b696-f51f8a00b5f996fa.js:1
-i8 @ 4bd1b696-f51f8a00b5f996fa.js:1
-uD @ 4bd1b696-f51f8a00b5f996fa.js:1
-T @ 517-ff9e848a724fdcf5.js:1
-page-e6ee99557c316d77.js:1 Rendering banner 0, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 3, language en
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for en
-page-e6ee99557c316d77.js:1 Rendering banner 1, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 6, language en
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for en
-page-e6ee99557c316d77.js:1 Rendering banner 2, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 7, language en
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for en
-page-e6ee99557c316d77.js:1 Rendering banner 3, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 8, language en
-page-e6ee99557c316d77.js:1 ⚠️ No localized screenshots, using default screenshot
-page-e6ee99557c316d77.js:1 Rendering banner 4, device position: center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 9, language en
-page-e6ee99557c316d77.js:1 ⚠️ No localized screenshots, using default screenshot
-page-e6ee99557c316d77.js:1 Rendering banner 5, device position: center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 10, language en
-page-e6ee99557c316d77.js:1 ⚠️ No localized screenshots, using default screenshot
-page-e6ee99557c316d77.js:1 Rendering banner 6, device position: center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 11, language en
-page-e6ee99557c316d77.js:1 ⚠️ No localized screenshots, using default screenshot
-page-e6ee99557c316d77.js:1 🔄 Loading images for language: en
-page-e6ee99557c316d77.js:1 Checking preview 3 for language en
-page-e6ee99557c316d77.js:1 ✓ Preview 3 already has screenshot for en
-page-e6ee99557c316d77.js:1 Checking preview 6 for language en
-page-e6ee99557c316d77.js:1 ✓ Preview 6 already has screenshot for en
-page-e6ee99557c316d77.js:1 Checking preview 7 for language en
-page-e6ee99557c316d77.js:1 ✓ Preview 7 already has screenshot for en
-page-e6ee99557c316d77.js:1 Checking preview 8 for language en
-page-e6ee99557c316d77.js:1 Attempting to load image: preview_8_en
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_8_en
-page-e6ee99557c316d77.js:1 ❌ No image found for preview_8_en
-page-e6ee99557c316d77.js:1 Checking preview 9 for language en
-page-e6ee99557c316d77.js:1 Attempting to load image: preview_9_en
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_9_en
-page-e6ee99557c316d77.js:1 ❌ No image found for preview_9_en
-page-e6ee99557c316d77.js:1 Checking preview 10 for language en
-page-e6ee99557c316d77.js:1 Attempting to load image: preview_10_en
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_10_en
-page-e6ee99557c316d77.js:1 ❌ No image found for preview_10_en
-page-e6ee99557c316d77.js:1 Checking preview 11 for language en
-page-e6ee99557c316d77.js:1 Attempting to load image: preview_11_en
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_11_en
-page-e6ee99557c316d77.js:1 ❌ No image found for preview_11_en
-page-e6ee99557c316d77.js:1 ℹ️ No new images loaded for en
-page-e6ee99557c316d77.js:1 🎯 handleDrop: Drop event detected
-page-e6ee99557c316d77.js:1 📄 handleDrop: Processing file: Simulator Screenshot - iPhone 16 PRO 26+ - 2025-09-27 at 09.30.41.png, size: 1501132 bytes, current language: ru
-page-e6ee99557c316d77.js:1 🔍 findDropTarget: Found 7 drop targets, mouse at (459, 558)
-page-e6ee99557c316d77.js:1 🔍 findDropTarget: Checking banner-0: rect(-22.09765625, 199.2109375, 277.09765625, 849.6953125)
-page-e6ee99557c316d77.js:1 🔍 findDropTarget: Checking banner-1: rect(327.90234375, 444.5, 627.09765625, 743.6953125)
-page-e6ee99557c316d77.js:1 ✅ findDropTarget: Found matching target: banner-1
-page-e6ee99557c316d77.js:1 🎯 handleDrop: Target element found: banner-1
-page-e6ee99557c316d77.js:1 🎯 handleDrop: Target banner ID: 1
-page-e6ee99557c316d77.js:1 🔄 handleDrop: Setting preview index to 1
-page-e6ee99557c316d77.js:1 📤 handleDrop: Calling uploadScreenshotToBanner for banner 1
-page-e6ee99557c316d77.js:1 📤 uploadScreenshotToBanner: Starting upload to banner 1, language ru, file size: 1501132 bytes
-page-e6ee99557c316d77.js:1 Rendering banner 0, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 3, language en
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for en
-page-e6ee99557c316d77.js:1 Rendering banner 1, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 6, language en
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for en
-page-e6ee99557c316d77.js:1 Rendering banner 2, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 7, language en
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for en
-page-e6ee99557c316d77.js:1 Rendering banner 3, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 8, language en
-page-e6ee99557c316d77.js:1 ⚠️ No localized screenshots, using default screenshot
-page-e6ee99557c316d77.js:1 Rendering banner 4, device position: center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 9, language en
-page-e6ee99557c316d77.js:1 ⚠️ No localized screenshots, using default screenshot
-page-e6ee99557c316d77.js:1 Rendering banner 5, device position: center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 10, language en
-page-e6ee99557c316d77.js:1 ⚠️ No localized screenshots, using default screenshot
-page-e6ee99557c316d77.js:1 Rendering banner 6, device position: center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 11, language en
-page-e6ee99557c316d77.js:1 ⚠️ No localized screenshots, using default screenshot
-page-e6ee99557c316d77.js:1 📤 uploadScreenshotToBanner: Converted file to data URL, length: 2001534
-page-e6ee99557c316d77.js:1 📤 uploadScreenshotToBanner: Processing banner 6
-page-e6ee99557c316d77.js:1 📤 uploadScreenshotToBanner: Set localized screenshot for ru in state with dataUrl
-page-e6ee99557c316d77.js:1 📤 uploadScreenshotToBanner: Updated React state
-page-e6ee99557c316d77.js:1 📤 uploadScreenshotToBanner: Forced UI update
-page-e6ee99557c316d77.js:1 💾 uploadScreenshotToBanner: Saving to IndexedDB: preview_6_ru
-page-e6ee99557c316d77.js:1 Rendering banner 0, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 3, language en
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for en
-page-e6ee99557c316d77.js:1 Rendering banner 1, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 6, language en
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for en
-page-e6ee99557c316d77.js:1 Rendering banner 2, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 7, language en
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for en
-page-e6ee99557c316d77.js:1 Rendering banner 3, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 8, language en
-page-e6ee99557c316d77.js:1 ⚠️ No localized screenshots, using default screenshot
-page-e6ee99557c316d77.js:1 Rendering banner 4, device position: center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 9, language en
-page-e6ee99557c316d77.js:1 ⚠️ No localized screenshots, using default screenshot
-page-e6ee99557c316d77.js:1 Rendering banner 5, device position: center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 10, language en
-page-e6ee99557c316d77.js:1 ⚠️ No localized screenshots, using default screenshot
-page-e6ee99557c316d77.js:1 Rendering banner 6, device position: center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 11, language en
-page-e6ee99557c316d77.js:1 ⚠️ No localized screenshots, using default screenshot
-page-e6ee99557c316d77.js:1 Saving previewItems to localStorage 7
-517-ff9e848a724fdcf5.js:1 Error saving preview items: QuotaExceededError: Failed to execute 'setItem' on 'Storage': Setting the value of 'previewItems' exceeded the quota.
-    at page-e6ee99557c316d77.js:1:21400
-    at oT (4bd1b696-f51f8a00b5f996fa.js:1:81756)
-    at o9 (4bd1b696-f51f8a00b5f996fa.js:1:97448)
-    at o5 (4bd1b696-f51f8a00b5f996fa.js:1:97332)
-    at o9 (4bd1b696-f51f8a00b5f996fa.js:1:98543)
-    at o5 (4bd1b696-f51f8a00b5f996fa.js:1:97332)
-    at o9 (4bd1b696-f51f8a00b5f996fa.js:1:98543)
-    at o5 (4bd1b696-f51f8a00b5f996fa.js:1:97332)
-    at o9 (4bd1b696-f51f8a00b5f996fa.js:1:98543)
-    at o5 (4bd1b696-f51f8a00b5f996fa.js:1:97332)
-    at o9 (4bd1b696-f51f8a00b5f996fa.js:1:97428)
-    at o5 (4bd1b696-f51f8a00b5f996fa.js:1:97332)
-    at o9 (4bd1b696-f51f8a00b5f996fa.js:1:98543)
-    at o5 (4bd1b696-f51f8a00b5f996fa.js:1:97332)
-    at o9 (4bd1b696-f51f8a00b5f996fa.js:1:97428)
-    at o5 (4bd1b696-f51f8a00b5f996fa.js:1:97332)
-    at o9 (4bd1b696-f51f8a00b5f996fa.js:1:98543)
-    at o5 (4bd1b696-f51f8a00b5f996fa.js:1:97332)
-    at o9 (4bd1b696-f51f8a00b5f996fa.js:1:97428)
-    at o5 (4bd1b696-f51f8a00b5f996fa.js:1:97332)
-    at o9 (4bd1b696-f51f8a00b5f996fa.js:1:97428)
-    at o5 (4bd1b696-f51f8a00b5f996fa.js:1:97332)
-    at o9 (4bd1b696-f51f8a00b5f996fa.js:1:97428)
-    at o5 (4bd1b696-f51f8a00b5f996fa.js:1:97332)
-    at o9 (4bd1b696-f51f8a00b5f996fa.js:1:98543)
-    at o5 (4bd1b696-f51f8a00b5f996fa.js:1:97332)
-    at o9 (4bd1b696-f51f8a00b5f996fa.js:1:97428)
-    at o5 (4bd1b696-f51f8a00b5f996fa.js:1:97332)
-    at o9 (4bd1b696-f51f8a00b5f996fa.js:1:97428)
-    at o5 (4bd1b696-f51f8a00b5f996fa.js:1:97332)
-    at o9 (4bd1b696-f51f8a00b5f996fa.js:1:98543)
-    at o5 (4bd1b696-f51f8a00b5f996fa.js:1:97332)
-    at o9 (4bd1b696-f51f8a00b5f996fa.js:1:97428)
-    at o5 (4bd1b696-f51f8a00b5f996fa.js:1:97332)
-    at o9 (4bd1b696-f51f8a00b5f996fa.js:1:98543)
-    at o5 (4bd1b696-f51f8a00b5f996fa.js:1:97332)
-    at o9 (4bd1b696-f51f8a00b5f996fa.js:1:98543)
-    at o5 (4bd1b696-f51f8a00b5f996fa.js:1:97332)
-    at o9 (4bd1b696-f51f8a00b5f996fa.js:1:98543)
-    at o5 (4bd1b696-f51f8a00b5f996fa.js:1:97332)
-    at o9 (4bd1b696-f51f8a00b5f996fa.js:1:98543)
-    at o5 (4bd1b696-f51f8a00b5f996fa.js:1:97332)
-    at o9 (4bd1b696-f51f8a00b5f996fa.js:1:97428)
-    at o5 (4bd1b696-f51f8a00b5f996fa.js:1:97332)
-    at o9 (4bd1b696-f51f8a00b5f996fa.js:1:98543)
-    at o5 (4bd1b696-f51f8a00b5f996fa.js:1:97332)
-    at o9 (4bd1b696-f51f8a00b5f996fa.js:1:98543)
-    at o5 (4bd1b696-f51f8a00b5f996fa.js:1:97332)
-    at o9 (4bd1b696-f51f8a00b5f996fa.js:1:98543)
-    at o5 (4bd1b696-f51f8a00b5f996fa.js:1:97332)
-window.console.error @ 517-ff9e848a724fdcf5.js:1
-overrideMethod @ hook.js:608
-(anonymous) @ page-e6ee99557c316d77.js:1
+(anonymous) @ page-787c7e5a67839875.js:1
 oT @ 4bd1b696-f51f8a00b5f996fa.js:1
 o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
 o5 @ 4bd1b696-f51f8a00b5f996fa.js:1
@@ -539,127 +204,4 @@ o9 @ 4bd1b696-f51f8a00b5f996fa.js:1
 uh @ 4bd1b696-f51f8a00b5f996fa.js:1
 u @ 4bd1b696-f51f8a00b5f996fa.js:1
 T @ 517-ff9e848a724fdcf5.js:1
-page-e6ee99557c316d77.js:1 ✅ uploadScreenshotToBanner: Successfully saved image for banner 1: preview_6_ru
-page-e6ee99557c316d77.js:1 Rendering banner 0, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 3, language ru
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for ru
-page-e6ee99557c316d77.js:1 Rendering banner 1, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 6, language ru
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for ru
-page-e6ee99557c316d77.js:1 Rendering banner 2, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 7, language ru
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for ru
-page-e6ee99557c316d77.js:1 Rendering banner 3, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 8, language ru
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for ru
-page-e6ee99557c316d77.js:1 Rendering banner 4, device position: center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 9, language ru
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for ru
-page-e6ee99557c316d77.js:1 Rendering banner 5, device position: center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 10, language ru
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for ru
-page-e6ee99557c316d77.js:1 Rendering banner 6, device position: center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 11, language ru
-page-e6ee99557c316d77.js:1 ⚠️ No localized screenshots, using default screenshot
-page-e6ee99557c316d77.js:1 🔄 Loading images for language: ru
-page-e6ee99557c316d77.js:1 Checking preview 3 for language ru
-page-e6ee99557c316d77.js:1 ✓ Preview 3 already has screenshot for ru
-page-e6ee99557c316d77.js:1 Checking preview 6 for language ru
-page-e6ee99557c316d77.js:1 ✓ Preview 6 already has screenshot for ru
-page-e6ee99557c316d77.js:1 Checking preview 7 for language ru
-page-e6ee99557c316d77.js:1 ✓ Preview 7 already has screenshot for ru
-page-e6ee99557c316d77.js:1 Checking preview 8 for language ru
-page-e6ee99557c316d77.js:1 ✓ Preview 8 already has screenshot for ru
-page-e6ee99557c316d77.js:1 Checking preview 9 for language ru
-page-e6ee99557c316d77.js:1 ✓ Preview 9 already has screenshot for ru
-page-e6ee99557c316d77.js:1 Checking preview 10 for language ru
-page-e6ee99557c316d77.js:1 ✓ Preview 10 already has screenshot for ru
-page-e6ee99557c316d77.js:1 Checking preview 11 for language ru
-page-e6ee99557c316d77.js:1 Attempting to load image: preview_11_ru
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_11_ru
-page-e6ee99557c316d77.js:1 ❌ No image found for preview_11_ru
-page-e6ee99557c316d77.js:1 ℹ️ No new images loaded for ru
-page-e6ee99557c316d77.js:1 Rendering banner 0, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 3, language en
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for en
-page-e6ee99557c316d77.js:1 Rendering banner 1, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 6, language en
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for en
-page-e6ee99557c316d77.js:1 Rendering banner 2, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 7, language en
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for en
-page-e6ee99557c316d77.js:1 Rendering banner 3, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 8, language en
-page-e6ee99557c316d77.js:1 ⚠️ No localized screenshots, using default screenshot
-page-e6ee99557c316d77.js:1 Rendering banner 4, device position: center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 9, language en
-page-e6ee99557c316d77.js:1 ⚠️ No localized screenshots, using default screenshot
-page-e6ee99557c316d77.js:1 Rendering banner 5, device position: center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 10, language en
-page-e6ee99557c316d77.js:1 ⚠️ No localized screenshots, using default screenshot
-page-e6ee99557c316d77.js:1 Rendering banner 6, device position: center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 11, language en
-page-e6ee99557c316d77.js:1 ⚠️ No localized screenshots, using default screenshot
-page-e6ee99557c316d77.js:1 🔄 Loading images for language: en
-page-e6ee99557c316d77.js:1 Checking preview 3 for language en
-page-e6ee99557c316d77.js:1 ✓ Preview 3 already has screenshot for en
-page-e6ee99557c316d77.js:1 Checking preview 6 for language en
-page-e6ee99557c316d77.js:1 ✓ Preview 6 already has screenshot for en
-page-e6ee99557c316d77.js:1 Checking preview 7 for language en
-page-e6ee99557c316d77.js:1 ✓ Preview 7 already has screenshot for en
-page-e6ee99557c316d77.js:1 Checking preview 8 for language en
-page-e6ee99557c316d77.js:1 Attempting to load image: preview_8_en
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_8_en
-page-e6ee99557c316d77.js:1 ❌ No image found for preview_8_en
-page-e6ee99557c316d77.js:1 Checking preview 9 for language en
-page-e6ee99557c316d77.js:1 Attempting to load image: preview_9_en
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_9_en
-page-e6ee99557c316d77.js:1 ❌ No image found for preview_9_en
-page-e6ee99557c316d77.js:1 Checking preview 10 for language en
-page-e6ee99557c316d77.js:1 Attempting to load image: preview_10_en
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_10_en
-page-e6ee99557c316d77.js:1 ❌ No image found for preview_10_en
-page-e6ee99557c316d77.js:1 Checking preview 11 for language en
-page-e6ee99557c316d77.js:1 Attempting to load image: preview_11_en
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_11_en
-page-e6ee99557c316d77.js:1 ❌ No image found for preview_11_en
-page-e6ee99557c316d77.js:1 ℹ️ No new images loaded for en
-page-e6ee99557c316d77.js:1 Rendering banner 0, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 3, language ru
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for ru
-page-e6ee99557c316d77.js:1 Rendering banner 1, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 6, language ru
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for ru
-page-e6ee99557c316d77.js:1 Rendering banner 2, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 7, language ru
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for ru
-page-e6ee99557c316d77.js:1 Rendering banner 3, device position: bottom-center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 8, language ru
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for ru
-page-e6ee99557c316d77.js:1 Rendering banner 4, device position: center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 9, language ru
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for ru
-page-e6ee99557c316d77.js:1 Rendering banner 5, device position: center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 10, language ru
-page-e6ee99557c316d77.js:1 ✓ Found localized screenshot for ru
-page-e6ee99557c316d77.js:1 Rendering banner 6, device position: center
-page-e6ee99557c316d77.js:1 getCurrentScreenshot: Looking for screenshot for preview 11, language ru
-page-e6ee99557c316d77.js:1 ⚠️ No localized screenshots, using default screenshot
-page-e6ee99557c316d77.js:1 🔄 Loading images for language: ru
-page-e6ee99557c316d77.js:1 Checking preview 3 for language ru
-page-e6ee99557c316d77.js:1 ✓ Preview 3 already has screenshot for ru
-page-e6ee99557c316d77.js:1 Checking preview 6 for language ru
-page-e6ee99557c316d77.js:1 ✓ Preview 6 already has screenshot for ru
-page-e6ee99557c316d77.js:1 Checking preview 7 for language ru
-page-e6ee99557c316d77.js:1 ✓ Preview 7 already has screenshot for ru
-page-e6ee99557c316d77.js:1 Checking preview 8 for language ru
-page-e6ee99557c316d77.js:1 ✓ Preview 8 already has screenshot for ru
-page-e6ee99557c316d77.js:1 Checking preview 9 for language ru
-page-e6ee99557c316d77.js:1 ✓ Preview 9 already has screenshot for ru
-page-e6ee99557c316d77.js:1 Checking preview 10 for language ru
-page-e6ee99557c316d77.js:1 ✓ Preview 10 already has screenshot for ru
-page-e6ee99557c316d77.js:1 Checking preview 11 for language ru
-page-e6ee99557c316d77.js:1 Attempting to load image: preview_11_ru
-page-e6ee99557c316d77.js:1 No image found in IndexedDB for id: preview_11_ru
-page-e6ee99557c316d77.js:1 ❌ No image found for preview_11_ru
-page-e6ee99557c316d77.js:1 ℹ️ No new images loaded for ru
+page-787c7e5a67839875.js:1 ✅ uploadScreenshotToBanner: Successfully saved image for banner 1: preview_6_ru

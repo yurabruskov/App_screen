@@ -377,6 +377,12 @@ const NumberInputWithSlider = ({ value, onChange, min, max, step = 1, unit, clas
 
 export default function BannerGenerator() {
   const [activeLanguage, setActiveLanguage] = useState("ru")
+  const activeLanguageRef = useRef(activeLanguage)
+
+  // Синхронизируем ref с состоянием
+  useEffect(() => {
+    activeLanguageRef.current = activeLanguage
+  }, [activeLanguage])
   const [bannerSettings, setBannerSettings] = useState(() => {
     if (typeof window !== 'undefined' && window.localStorage) {
       try {
@@ -846,8 +852,9 @@ export default function BannerGenerator() {
 
   // Handle language change
   const handleLanguageChange = (language: string) => {
+    console.log(`🌐 handleLanguageChange: Changing language from ${activeLanguage} to ${language}`)
     setActiveLanguage(language)
-    
+
     // Create language content if it doesn't exist
     if (!localizedContent[language]) {
       const newLocalizedContent = { ...localizedContent }
@@ -860,6 +867,7 @@ export default function BannerGenerator() {
       }
       setLocalizedContent(newLocalizedContent)
     }
+    console.log(`🌐 handleLanguageChange: Language changed to ${language}`)
   }
 
   const updateLocalizedContent = (language: string, field: keyof LocalizedContent, value: string) => {
@@ -902,9 +910,10 @@ export default function BannerGenerator() {
     return localizedContent[langCode]?.[previewKey] || "";
   };
 
-  const handleScreenshotUpload = async (file: File, forLanguage: string = activeLanguage) => {
+  const handleScreenshotUpload = async (file: File, forLanguage?: string) => {
     try {
-      console.log(`📤 handleScreenshotUpload: Starting upload for preview ${previewIndex}, language ${forLanguage}, file size: ${file.size} bytes`);
+      const langToUse = forLanguage || activeLanguageRef.current;
+      console.log(`📤 handleScreenshotUpload: Starting upload for preview ${previewIndex}, language ${langToUse}, file size: ${file.size} bytes`);
 
       // Конвертируем файл в data URL для мгновенного отображения
       const dataUrl = await fileToDataURL(file);
@@ -923,14 +932,14 @@ export default function BannerGenerator() {
         }
 
         // Всегда сохраняем в localizedScreenshots для текущего языка
-        item.localizedScreenshots[forLanguage] = {
+        item.localizedScreenshots[langToUse] = {
           file,
           dataUrl,
           borderColor: item.screenshot.borderColor,
           borderWidth: item.screenshot.borderWidth,
           borderRadius: item.screenshot.borderRadius,
         };
-        console.log(`📤 Set localized screenshot for ${forLanguage} in state with dataUrl`);
+        console.log(`📤 Set localized screenshot for ${langToUse} in state with dataUrl`);
 
         // СНАЧАЛА обновляем состояние
         setPreviewItems(newItems);
@@ -942,10 +951,10 @@ export default function BannerGenerator() {
 
         // ПОТОМ сохраняем в IndexedDB асинхронно
         if (imageDBRef.current) {
-          const imageId = `preview_${item.id}_${forLanguage}`;
+          const imageId = `preview_${item.id}_${langToUse}`;
           console.log(`💾 Saving to IndexedDB: ${imageId}`);
           await imageDBRef.current.saveImage(imageId, file);
-          console.log(`✅ Successfully saved image for ${forLanguage}: ${imageId}`);
+          console.log(`✅ Successfully saved image for ${langToUse}: ${imageId}`);
         }
 
         console.log("🎉 Upload complete, position should still be:", item.devicePosition);
@@ -1525,7 +1534,9 @@ export default function BannerGenerator() {
       }
 
       const file = e.dataTransfer.files[0];
-      console.log(`📄 handleDrop: Processing file: ${file.name}, size: ${file.size} bytes, current language: ${activeLanguage}`);
+      const currentLang = activeLanguageRef.current;
+      console.log(`📄 handleDrop: Processing file: ${file.name}, size: ${file.size} bytes, activeLanguage=${currentLang}`);
+      console.log(`📄 handleDrop: activeLanguageRef at drop time:`, currentLang);
 
       // Find which banner device element was dropped on
       const targetElement = findDropTarget(e);
@@ -1540,8 +1551,8 @@ export default function BannerGenerator() {
           setPreviewIndex(bannerId);
 
           // Upload the screenshot to the target banner
-          console.log(`📤 handleDrop: Calling uploadScreenshotToBanner for banner ${bannerId}`);
-          uploadScreenshotToBanner(file, bannerId);
+          console.log(`📤 handleDrop: Calling uploadScreenshotToBanner for banner ${bannerId} with language ${currentLang}`);
+          uploadScreenshotToBanner(file, bannerId, currentLang);
           return;
         }
       }
@@ -1580,9 +1591,11 @@ export default function BannerGenerator() {
     };
     
     // Helper function to upload a screenshot to a specific banner
-    const uploadScreenshotToBanner = async (file: File, bannerIndex: number) => {
+    const uploadScreenshotToBanner = async (file: File, bannerIndex: number, language?: string) => {
       try {
-        console.log(`📤 uploadScreenshotToBanner: Starting upload to banner ${bannerIndex}, language ${activeLanguage}, file size: ${file.size} bytes`);
+        const langToUse = language || activeLanguageRef.current;
+        console.log(`📤 uploadScreenshotToBanner: Starting upload to banner ${bannerIndex}, language=${langToUse}, file size: ${file.size} bytes`);
+        console.log(`📤 uploadScreenshotToBanner: Using language:`, langToUse);
 
         // Конвертируем файл в data URL для мгновенного отображения
         const dataUrl = await fileToDataURL(file);
@@ -1603,7 +1616,7 @@ export default function BannerGenerator() {
 
           // Сохраняем для текущего языка
           console.log(`📤 uploadScreenshotToBanner: Before setting - localizedScreenshots keys:`, Object.keys(item.localizedScreenshots));
-          item.localizedScreenshots[activeLanguage] = {
+          item.localizedScreenshots[langToUse] = {
             file,
             dataUrl,
             borderColor: item.screenshot.borderColor,
@@ -1611,7 +1624,7 @@ export default function BannerGenerator() {
             borderRadius: item.screenshot.borderRadius,
           };
           console.log(`📤 uploadScreenshotToBanner: After setting - localizedScreenshots keys:`, Object.keys(item.localizedScreenshots));
-          console.log(`📤 uploadScreenshotToBanner: Set localized screenshot for ${activeLanguage} in state with dataUrl`);
+          console.log(`📤 uploadScreenshotToBanner: Set localized screenshot for ${langToUse} in state with dataUrl`);
 
           // СНАЧАЛА обновляем состояние
           setPreviewItems(newItems);
@@ -1623,7 +1636,7 @@ export default function BannerGenerator() {
 
           // ПОТОМ сохраняем в IndexedDB асинхронно
           if (imageDBRef.current) {
-            const imageId = `preview_${item.id}_${activeLanguage}`;
+            const imageId = `preview_${item.id}_${langToUse}`;
             console.log(`💾 uploadScreenshotToBanner: Saving to IndexedDB: ${imageId}`);
             await imageDBRef.current.saveImage(imageId, file);
             console.log(`✅ uploadScreenshotToBanner: Successfully saved image for banner ${bannerIndex}: ${imageId}`);
