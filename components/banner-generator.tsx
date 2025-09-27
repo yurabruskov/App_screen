@@ -447,6 +447,10 @@ export default function BannerGenerator() {
   // Создаем экземпляр ImageDB
   const imageDBRef = useRef<ImageDB | null>(null);
 
+  // Счетчик для принудительного обновления UI после изменения скриншотов
+  const [updateCounter, setUpdateCounter] = useState(0);
+  const forceUpdate = () => setUpdateCounter(prev => prev + 1);
+
   // Инициализация IndexedDB при монтировании компонента
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -658,12 +662,13 @@ export default function BannerGenerator() {
     }
   }, [previewItems.length]); // Запускаем только при изменении количества превью
 
-  // Загружаем изображения при смене языка
+  // Загружаем изображения при смене языка с debounce
   useEffect(() => {
-    const loadLanguageImages = async () => {
+    const timeoutId = setTimeout(async () => {
       if (!imageDBRef.current || previewItems.length === 0) return;
 
       try {
+        console.log(`Loading images for language: ${activeLanguage}`);
         const updatedItems = [...previewItems];
         let hasChanges = false;
 
@@ -697,15 +702,16 @@ export default function BannerGenerator() {
         }
 
         if (hasChanges) {
+          console.log(`Updating state with ${hasChanges ? 'new' : 'no'} images for ${activeLanguage}`);
           setPreviewItems(updatedItems);
         }
       } catch (error) {
         console.error("Error loading language images:", error);
       }
-    };
+    }, 100); // 100ms debounce
 
-    loadLanguageImages();
-  }, [activeLanguage]); // Запускаем при смене языка
+    return () => clearTimeout(timeoutId);
+  }, [activeLanguage, previewItems.length]); // Добавили previewItems.length как зависимость
 
   // Обновляем все хуки сохранения, чтобы они были консистентными
   useEffect(() => {
@@ -832,38 +838,43 @@ export default function BannerGenerator() {
     return localizedContent[langCode]?.[previewKey] || "";
   };
 
-  const handleScreenshotUpload = (file: File, forLanguage: string = activeLanguage) => {
-    const newItems = [...previewItems];
+  const handleScreenshotUpload = async (file: File, forLanguage: string = activeLanguage) => {
+    try {
+      const newItems = [...previewItems];
 
-    if (newItems[previewIndex]) {
-      const item = newItems[previewIndex];
+      if (newItems[previewIndex]) {
+        const item = newItems[previewIndex];
 
-      // Инициализируем localizedScreenshots если его нет
-      if (!item.localizedScreenshots) {
-        item.localizedScreenshots = {};
+        // Инициализируем localizedScreenshots если его нет
+        if (!item.localizedScreenshots) {
+          item.localizedScreenshots = {};
+        }
+
+        // Всегда сохраняем в localizedScreenshots для текущего языка
+        item.localizedScreenshots[forLanguage] = {
+          file,
+          borderColor: item.screenshot.borderColor,
+          borderWidth: item.screenshot.borderWidth,
+          borderRadius: item.screenshot.borderRadius,
+        };
+
+        // СНАЧАЛА обновляем состояние
+        setPreviewItems(newItems);
+
+        // Принудительно обновляем UI
+        forceUpdate();
+
+        // ПОТОМ сохраняем в IndexedDB асинхронно
+        if (imageDBRef.current) {
+          const imageId = `preview_${item.id}_${forLanguage}`;
+          await imageDBRef.current.saveImage(imageId, file);
+          console.log(`Successfully saved image for ${forLanguage}: ${imageId}`);
+        }
+
+        console.log("Upload complete, position should still be:", item.devicePosition);
       }
-
-      // Всегда сохраняем в localizedScreenshots для текущего языка
-      item.localizedScreenshots[forLanguage] = {
-        file,
-        borderColor: item.screenshot.borderColor,
-        borderWidth: item.screenshot.borderWidth,
-        borderRadius: item.screenshot.borderRadius,
-      };
-
-      // НЕ обновляем основной screenshot, чтобы каждый язык был уникальным
-
-      // Устанавливаем новое состояние
-      setPreviewItems(newItems);
-
-      // Сохраняем в IndexedDB
-      if (imageDBRef.current) {
-        const imageId = `preview_${item.id}_${forLanguage}`;
-        imageDBRef.current.saveImage(imageId, file)
-          .catch(error => console.error('Error saving image to IndexedDB:', error));
-      }
-
-      console.log("Upload complete, position should still be:", item.devicePosition);
+    } catch (error) {
+      console.error('Error in handleScreenshotUpload:', error);
     }
   };
 
@@ -1473,37 +1484,43 @@ export default function BannerGenerator() {
     };
     
     // Helper function to upload a screenshot to a specific banner
-    const uploadScreenshotToBanner = (file: File, bannerIndex: number) => {
-      console.log(`Uploading screenshot to banner ${bannerIndex}`);
+    const uploadScreenshotToBanner = async (file: File, bannerIndex: number) => {
+      try {
+        console.log(`Uploading screenshot to banner ${bannerIndex}`);
 
-      const newItems = [...previewItems];
+        const newItems = [...previewItems];
 
-      if (newItems[bannerIndex]) {
-        const item = newItems[bannerIndex];
+        if (newItems[bannerIndex]) {
+          const item = newItems[bannerIndex];
 
-        // Инициализируем localizedScreenshots если его нет
-        if (!item.localizedScreenshots) {
-          item.localizedScreenshots = {};
+          // Инициализируем localizedScreenshots если его нет
+          if (!item.localizedScreenshots) {
+            item.localizedScreenshots = {};
+          }
+
+          // Сохраняем для текущего языка
+          item.localizedScreenshots[activeLanguage] = {
+            file,
+            borderColor: item.screenshot.borderColor,
+            borderWidth: item.screenshot.borderWidth,
+            borderRadius: item.screenshot.borderRadius,
+          };
+
+          // СНАЧАЛА обновляем состояние
+          setPreviewItems(newItems);
+
+          // Принудительно обновляем UI
+          forceUpdate();
+
+          // ПОТОМ сохраняем в IndexedDB асинхронно
+          if (imageDBRef.current) {
+            const imageId = `preview_${item.id}_${activeLanguage}`;
+            await imageDBRef.current.saveImage(imageId, file);
+            console.log(`Successfully saved image for banner ${bannerIndex}: ${imageId}`);
+          }
         }
-
-        // Сохраняем для текущего языка
-        item.localizedScreenshots[activeLanguage] = {
-          file,
-          borderColor: item.screenshot.borderColor,
-          borderWidth: item.screenshot.borderWidth,
-          borderRadius: item.screenshot.borderRadius,
-        };
-
-        // НЕ обновляем основной screenshot, чтобы каждый язык был уникальным
-
-        setPreviewItems(newItems);
-
-        // Save to IndexedDB with language-specific key
-        if (imageDBRef.current) {
-          const imageId = `preview_${item.id}_${activeLanguage}`;
-          imageDBRef.current.saveImage(imageId, file)
-            .catch(error => console.error('Error saving image to IndexedDB:', error));
-        }
+      } catch (error) {
+        console.error('Error in uploadScreenshotToBanner:', error);
       }
     };
 
@@ -2529,6 +2546,7 @@ export default function BannerGenerator() {
                   }}
                 >
                   <img
+                    key={`screenshot-${item.id}-${activeLanguage}-${updateCounter}`}
                     src={currentScreenshot.file && currentScreenshot.file instanceof File ? URL.createObjectURL(currentScreenshot.file) : "/placeholder.svg"}
                     alt={`Screenshot ${item.id}`}
                     style={{
