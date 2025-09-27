@@ -2927,31 +2927,6 @@ export default function BannerGenerator() {
                   </Button>
                   
                   <LanguageSelector languages={LANGUAGES} activeLanguage={activeLanguage} onChange={handleLanguageChange} />
-
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor={`lang-screenshot-upload-${activeLanguage}`} className="text-sm">
-                      Screenshot for {LANGUAGES.find(l => l.code === activeLanguage)?.name || activeLanguage}:
-                    </Label>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => document.getElementById(`lang-screenshot-upload-${activeLanguage}`)?.click()}
-                    >
-                      <Upload className="mr-2 h-4 w-4" />
-                      Upload for {activeLanguage}
-                    </Button>
-                    <input
-                      type="file"
-                      id={`lang-screenshot-upload-${activeLanguage}`}
-                      className="hidden"
-                      accept="image/*"
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        if (e.target.files && e.target.files[0]) {
-                          handleScreenshotUpload(e.target.files[0], activeLanguage);
-                        }
-                      }}
-                    />
-                  </div>
                   
                   <Dialog>
                     <DialogTrigger asChild>
