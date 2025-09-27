@@ -1692,7 +1692,7 @@ export default function BannerGenerator() {
 
           // Upload the screenshot to the target banner
           console.log(`📤 handleDrop: Calling uploadScreenshotToBanner for banner ${bannerId} with language ${currentLang}`);
-          uploadScreenshotToBanner(file, bannerId, currentLang, currentDevice);
+          uploadScreenshotToBanner(file, bannerId, currentLang, deviceType);
           return;
         }
       }
