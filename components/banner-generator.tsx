@@ -2594,8 +2594,8 @@ export default function BannerGenerator() {
         onClick={() => setPreviewIndex(index)}
         style={{
           backgroundColor: item.backgroundColor || "#007AFF",
-          width: "320px",
-          height: "690px",
+          width: `${deviceConfig.previewWidth}px`,
+          height: `${deviceConfig.previewHeight}px`,
           position: "relative",
           margin: "0 15px", // Добавляем отступ 15px справа и слева (итого 30px между соседними баннерами)
         }}
