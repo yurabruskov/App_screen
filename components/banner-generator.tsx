@@ -1485,32 +1485,42 @@ export default function BannerGenerator() {
     const handleDrop = (e: DragEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      
+
+      console.log(`🎯 handleDrop: Drop event detected`);
+
       // Remove highlights
       highlightDropTargets(false);
-      
+
       // Check if we have files
       if (!e.dataTransfer?.files || !e.dataTransfer.files[0]) {
+        console.log(`❌ handleDrop: No files in drop event`);
         return;
       }
-      
+
       const file = e.dataTransfer.files[0];
-      
+      console.log(`📄 handleDrop: Processing file: ${file.name}, size: ${file.size} bytes, current language: ${activeLanguage}`);
+
       // Find which banner device element was dropped on
       const targetElement = findDropTarget(e);
+      console.log(`🎯 handleDrop: Target element found:`, targetElement ? `banner-${targetElement.dataset.bannerId}` : 'none');
+
       if (targetElement) {
         const bannerId = parseInt(targetElement.dataset.bannerId || "-1");
+        console.log(`🎯 handleDrop: Target banner ID: ${bannerId}`);
         if (bannerId >= 0) {
           // Set the active preview to the target banner
+          console.log(`🔄 handleDrop: Setting preview index to ${bannerId}`);
           setPreviewIndex(bannerId);
-          
+
           // Upload the screenshot to the target banner
+          console.log(`📤 handleDrop: Calling uploadScreenshotToBanner for banner ${bannerId}`);
           uploadScreenshotToBanner(file, bannerId);
           return;
         }
       }
-      
+
       // Default to current active banner if no specific target found
+      console.log(`📤 handleDrop: No specific target, calling handleScreenshotUpload for current preview ${previewIndex}`);
       handleScreenshotUpload(file);
     };
     
@@ -1518,10 +1528,14 @@ export default function BannerGenerator() {
     const findDropTarget = (e: DragEvent) => {
       // Get all potential drop targets
       const dropTargets = document.querySelectorAll('.banner-device-target');
-      
+      console.log(`🔍 findDropTarget: Found ${dropTargets.length} drop targets, mouse at (${e.clientX}, ${e.clientY})`);
+
       // Check each drop target to see if the drop point is within its bounds
       for (const target of dropTargets) {
         const rect = target.getBoundingClientRect();
+        const bannerId = target.dataset.bannerId;
+        console.log(`🔍 findDropTarget: Checking banner-${bannerId}: rect(${rect.left}, ${rect.top}, ${rect.right}, ${rect.bottom})`);
+
         // Check if drop coordinates are within this element's bounds
         if (
           e.clientX >= rect.left &&
@@ -1529,25 +1543,30 @@ export default function BannerGenerator() {
           e.clientY >= rect.top &&
           e.clientY <= rect.bottom
         ) {
+          console.log(`✅ findDropTarget: Found matching target: banner-${bannerId}`);
           return target;
         }
       }
+
+      console.log(`❌ findDropTarget: No matching target found`);
       return null;
     };
     
     // Helper function to upload a screenshot to a specific banner
     const uploadScreenshotToBanner = async (file: File, bannerIndex: number) => {
       try {
-        console.log(`Uploading screenshot to banner ${bannerIndex}`);
+        console.log(`📤 uploadScreenshotToBanner: Starting upload to banner ${bannerIndex}, language ${activeLanguage}, file size: ${file.size} bytes`);
 
         const newItems = [...previewItems];
 
         if (newItems[bannerIndex]) {
           const item = newItems[bannerIndex];
+          console.log(`📤 uploadScreenshotToBanner: Processing banner ${item.id}`);
 
           // Инициализируем localizedScreenshots если его нет
           if (!item.localizedScreenshots) {
             item.localizedScreenshots = {};
+            console.log(`📤 uploadScreenshotToBanner: Initialized localizedScreenshots for banner ${item.id}`);
           }
 
           // Сохраняем для текущего языка
@@ -1557,22 +1576,28 @@ export default function BannerGenerator() {
             borderWidth: item.screenshot.borderWidth,
             borderRadius: item.screenshot.borderRadius,
           };
+          console.log(`📤 uploadScreenshotToBanner: Set localized screenshot for ${activeLanguage} in state`);
 
           // СНАЧАЛА обновляем состояние
           setPreviewItems(newItems);
+          console.log(`📤 uploadScreenshotToBanner: Updated React state`);
 
           // Принудительно обновляем UI
           forceUpdate();
+          console.log(`📤 uploadScreenshotToBanner: Forced UI update`);
 
           // ПОТОМ сохраняем в IndexedDB асинхронно
           if (imageDBRef.current) {
             const imageId = `preview_${item.id}_${activeLanguage}`;
+            console.log(`💾 uploadScreenshotToBanner: Saving to IndexedDB: ${imageId}`);
             await imageDBRef.current.saveImage(imageId, file);
-            console.log(`Successfully saved image for banner ${bannerIndex}: ${imageId}`);
+            console.log(`✅ uploadScreenshotToBanner: Successfully saved image for banner ${bannerIndex}: ${imageId}`);
           }
+        } else {
+          console.error(`❌ uploadScreenshotToBanner: Banner ${bannerIndex} not found in previewItems`);
         }
       } catch (error) {
-        console.error('Error in uploadScreenshotToBanner:', error);
+        console.error('💥 Error in uploadScreenshotToBanner:', error);
       }
     };
 
