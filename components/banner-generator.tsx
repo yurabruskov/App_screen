@@ -1272,12 +1272,33 @@ export default function BannerGenerator() {
   const updateScreenshotSetting = (field, value) => {
     const updatedItems = [...previewItems]
     if (updatedItems[previewIndex]) {
+      const currentItem = updatedItems[previewIndex]
+
+      // Обновляем дефолтный screenshot
+      const updatedScreenshot = {
+        ...currentItem.screenshot,
+        [field]: value,
+      }
+
+      // Обновляем localizedScreenshots если они есть для текущего устройства и языка
+      let updatedLocalizedScreenshots = currentItem.localizedScreenshots
+      if (currentItem.localizedScreenshots?.[deviceType]?.[activeLanguage]) {
+        updatedLocalizedScreenshots = {
+          ...currentItem.localizedScreenshots,
+          [deviceType]: {
+            ...currentItem.localizedScreenshots[deviceType],
+            [activeLanguage]: {
+              ...currentItem.localizedScreenshots[deviceType][activeLanguage],
+              [field]: value,
+            }
+          }
+        }
+      }
+
       updatedItems[previewIndex] = {
-        ...updatedItems[previewIndex],
-        screenshot: {
-          ...updatedItems[previewIndex].screenshot,
-          [field]: value,
-        },
+        ...currentItem,
+        screenshot: updatedScreenshot,
+        localizedScreenshots: updatedLocalizedScreenshots,
       }
       setPreviewItems(updatedItems)
     }
