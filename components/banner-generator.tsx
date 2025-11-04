@@ -703,70 +703,34 @@ export default function BannerGenerator() {
     saveTimeoutRef.current = setTimeout(() => {
       try {
         console.log("Saving previewItems to localStorage", previewItems.length);
-        // Создаем копию превью без файлов и dataUrl для сохранения
-        // dataUrl могут быть очень большими и вызывать QuotaExceededError
-        // Изображения уже хранятся в IndexedDB, поэтому dataUrl не нужны
-        const previewsForStorage = previewItems.map(item => {
-          // Очищаем screenshot от dataUrl и file
-          const cleanScreenshot = {
-            ...item.screenshot,
-            file: null,
-            dataUrl: undefined // Убираем dataUrl - они в IndexedDB
-          };
+        // Сохраняем ТОЛЬКО минимальные данные, БЕЗ изображений
+        // Изображения хранятся в IndexedDB, а в localStorage только метаданные
+        const minimalData = previewItems.map(item => ({
+          id: item.id,
+          name: item.name,
+          backgroundColor: item.backgroundColor,
+          devicePosition: item.devicePosition,
+          deviceScale: item.deviceScale,
+          rotation: item.rotation,
+          verticalOffset: item.verticalOffset,
+          horizontalOffset: item.horizontalOffset,
+          screenshot: {
+            borderColor: item.screenshot.borderColor,
+            borderWidth: item.screenshot.borderWidth,
+            borderRadius: item.screenshot.borderRadius
+            // ВАЖНО: file и dataUrl НЕ сохраняем - они в IndexedDB
+          }
+          // ВАЖНО: localizedScreenshots НЕ сохраняем - они в IndexedDB
+        }));
 
-          // Очищаем localizedScreenshots тоже
-          const cleanLocalizedScreenshots = item.localizedScreenshots ? 
-            Object.keys(item.localizedScreenshots).reduce((acc, deviceType) => {
-              acc[deviceType] = Object.keys(item.localizedScreenshots![deviceType]).reduce((langAcc, langCode) => {
-                langAcc[langCode] = {
-                  ...item.localizedScreenshots![deviceType][langCode],
-                  file: null,
-                  dataUrl: undefined // Убираем dataUrl
-                };
-                return langAcc;
-              }, {} as any);
-              return acc;
-            }, {} as any) : undefined;
+        const dataToSave = JSON.stringify(minimalData);
+        const sizeInKB = new Blob([dataToSave]).size / 1024;
+        console.log(`💾 Saving ${sizeInKB.toFixed(2)}KB to localStorage (images excluded)`);
 
-          return {
-            ...item,
-            screenshot: cleanScreenshot,
-            localizedScreenshots: cleanLocalizedScreenshots
-          };
-        });
-        
-        const dataToSave = JSON.stringify(previewsForStorage);
-        // Проверяем размер данных перед сохранением
-        const sizeInMB = new Blob([dataToSave]).size / 1024 / 1024;
-        if (sizeInMB > 4) { // localStorage обычно ограничен ~5-10MB
-          console.warn(`⚠️ Data size is ${sizeInMB.toFixed(2)}MB, might cause issues`);
-        }
-        
         localStorage.setItem('previewItems', dataToSave);
       } catch (error) {
         if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-          console.error('❌ localStorage quota exceeded! Clearing old data and retrying...');
-          // Пытаемся очистить старые данные и сохранить только самое необходимое
-          try {
-            localStorage.removeItem('previewItems');
-            // Пробуем сохранить только минимальные данные
-            const minimalData = previewItems.map(item => ({
-              id: item.id,
-              name: item.name,
-              backgroundColor: item.backgroundColor,
-              devicePosition: item.devicePosition,
-              deviceScale: item.deviceScale,
-              screenshot: {
-                borderColor: item.screenshot.borderColor,
-                borderWidth: item.screenshot.borderWidth,
-                borderRadius: item.screenshot.borderRadius
-              }
-            }));
-            localStorage.setItem('previewItems', JSON.stringify(minimalData));
-            console.log('✅ Saved minimal preview data');
-          } catch (retryError) {
-            console.error('❌ Failed to save even minimal data:', retryError);
-          }
+          console.error('❌ localStorage quota exceeded even with minimal data!', error);
         } else {
           console.error('Error saving preview items:', error);
         }
