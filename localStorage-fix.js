@@ -1,10 +1,13 @@
-// LocalStorage size optimization patch
+// LocalStorage size optimization patch v2.1
 // This script prevents saving large images to localStorage
 
 (function() {
   'use strict';
 
-  console.log('🚀 localStorage optimization patch loading...');
+  const PATCH_VERSION = 'v2.1';
+  console.log('='.repeat(60));
+  console.log('🚀 localStorage OPTIMIZATION PATCH ' + PATCH_VERSION + ' LOADING...');
+  console.log('='.repeat(60));
 
   // Store original setItem
   const originalSetItem = Storage.prototype.setItem;
@@ -13,7 +16,7 @@
   Storage.prototype.setItem = function(key, value) {
     // Check if this is the previewItems key that's causing issues
     if (key === 'previewItems') {
-      console.log('🔧 Intercepting previewItems save...');
+      console.log('🔧 [PATCH ' + PATCH_VERSION + '] Intercepting previewItems save...');
 
       try {
         const data = JSON.parse(value);
@@ -45,8 +48,10 @@
           const minimalValue = JSON.stringify(minimalData);
           const minimalSize = new Blob([minimalValue]).size / 1024 / 1024;
 
-          console.log(`✅ Optimized: ${originalSize.toFixed(2)}MB → ${minimalSize.toFixed(2)}MB`);
-          console.log(`💾 Saved ${(originalSize - minimalSize).toFixed(2)}MB (Images stay in IndexedDB)`);
+          console.log(`✅ [PATCH ${PATCH_VERSION}] OPTIMIZATION SUCCESS!`);
+          console.log(`   📉 Size reduced: ${originalSize.toFixed(2)}MB → ${minimalSize.toFixed(2)}MB`);
+          console.log(`   💾 Saved: ${(originalSize - minimalSize).toFixed(2)}MB`);
+          console.log(`   💡 Images remain in IndexedDB (not in localStorage)`);
 
           // Save the minimal version using original method
           try {
@@ -78,5 +83,7 @@
     }
   };
 
-  console.log('✅ localStorage optimization patch loaded and active');
+  console.log('='.repeat(60));
+  console.log('✅ localStorage OPTIMIZATION PATCH ' + PATCH_VERSION + ' ACTIVE!');
+  console.log('='.repeat(60));
 })();
