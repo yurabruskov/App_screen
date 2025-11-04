@@ -687,24 +687,98 @@ export default function BannerGenerator() {
   }, []);
 
   // Обновим функцию сохранения previewItems
+  // Используем useRef для debounce таймера
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     if (typeof window === 'undefined' || !window.localStorage) return;
     if (!previewItems) return;
     
-    try {
-      console.log("Saving previewItems to localStorage", previewItems.length);
-      // Создаем копию превью без файлов для сохранения
-      const previewsForStorage = previewItems.map(item => ({
-        ...item,
-        screenshot: {
-          ...item.screenshot,
-          file: null // Не сохраняем файлы, так как они не могут быть сериализованы
-        }
-      }));
-      localStorage.setItem('previewItems', JSON.stringify(previewsForStorage));
-    } catch (error) {
-      console.error('Error saving preview items:', error);
+    // Очищаем предыдущий таймер
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
     }
+
+    // Debounce сохранения на 500ms
+    saveTimeoutRef.current = setTimeout(() => {
+      try {
+        console.log("Saving previewItems to localStorage", previewItems.length);
+        // Создаем копию превью без файлов и dataUrl для сохранения
+        // dataUrl могут быть очень большими и вызывать QuotaExceededError
+        // Изображения уже хранятся в IndexedDB, поэтому dataUrl не нужны
+        const previewsForStorage = previewItems.map(item => {
+          // Очищаем screenshot от dataUrl и file
+          const cleanScreenshot = {
+            ...item.screenshot,
+            file: null,
+            dataUrl: undefined // Убираем dataUrl - они в IndexedDB
+          };
+
+          // Очищаем localizedScreenshots тоже
+          const cleanLocalizedScreenshots = item.localizedScreenshots ? 
+            Object.keys(item.localizedScreenshots).reduce((acc, deviceType) => {
+              acc[deviceType] = Object.keys(item.localizedScreenshots![deviceType]).reduce((langAcc, langCode) => {
+                langAcc[langCode] = {
+                  ...item.localizedScreenshots![deviceType][langCode],
+                  file: null,
+                  dataUrl: undefined // Убираем dataUrl
+                };
+                return langAcc;
+              }, {} as any);
+              return acc;
+            }, {} as any) : undefined;
+
+          return {
+            ...item,
+            screenshot: cleanScreenshot,
+            localizedScreenshots: cleanLocalizedScreenshots
+          };
+        });
+        
+        const dataToSave = JSON.stringify(previewsForStorage);
+        // Проверяем размер данных перед сохранением
+        const sizeInMB = new Blob([dataToSave]).size / 1024 / 1024;
+        if (sizeInMB > 4) { // localStorage обычно ограничен ~5-10MB
+          console.warn(`⚠️ Data size is ${sizeInMB.toFixed(2)}MB, might cause issues`);
+        }
+        
+        localStorage.setItem('previewItems', dataToSave);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+          console.error('❌ localStorage quota exceeded! Clearing old data and retrying...');
+          // Пытаемся очистить старые данные и сохранить только самое необходимое
+          try {
+            localStorage.removeItem('previewItems');
+            // Пробуем сохранить только минимальные данные
+            const minimalData = previewItems.map(item => ({
+              id: item.id,
+              name: item.name,
+              backgroundColor: item.backgroundColor,
+              devicePosition: item.devicePosition,
+              deviceScale: item.deviceScale,
+              screenshot: {
+                borderColor: item.screenshot.borderColor,
+                borderWidth: item.screenshot.borderWidth,
+                borderRadius: item.screenshot.borderRadius
+              }
+            }));
+            localStorage.setItem('previewItems', JSON.stringify(minimalData));
+            console.log('✅ Saved minimal preview data');
+          } catch (retryError) {
+            console.error('❌ Failed to save even minimal data:', retryError);
+          }
+        } else {
+          console.error('Error saving preview items:', error);
+        }
+      }
+    }, 500); // 500ms debounce
+
+    // Cleanup функция
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
   }, [previewItems]);
 
   // После того как previewItems загружены, инициализируем базу данных и загружаем изображения
