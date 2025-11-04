@@ -1,0 +1,85 @@
+// LocalStorage size optimization patch
+// This script prevents saving large images to localStorage
+
+(function() {
+  'use strict';
+
+  // Store original setItem
+  const originalSetItem = Storage.prototype.setItem;
+
+  // Override setItem
+  Storage.prototype.setItem = function(key, value) {
+    try {
+      // Check if this is the previewItems key that's causing issues
+      if (key === 'previewItems') {
+        console.log('🔧 Intercepting previewItems save...');
+
+        try {
+          const data = JSON.parse(value);
+
+          // Calculate original size
+          const originalSize = new Blob([value]).size / 1024 / 1024;
+          console.log(`📊 Original data size: ${originalSize.toFixed(2)}MB`);
+
+          if (originalSize > 5) {
+            console.warn(`⚠️ Data size (${originalSize.toFixed(2)}MB) exceeds safe limit`);
+
+            // Save only essential data without any image-related fields
+            const minimalData = data.map(item => ({
+              id: item.id,
+              name: item.name,
+              backgroundColor: item.backgroundColor,
+              devicePosition: item.devicePosition,
+              deviceScale: item.deviceScale,
+              rotation: item.rotation,
+              verticalOffset: item.verticalOffset,
+              horizontalOffset: item.horizontalOffset,
+              screenshot: {
+                borderColor: item.screenshot?.borderColor || '#000000',
+                borderWidth: item.screenshot?.borderWidth || 8,
+                borderRadius: item.screenshot?.borderRadius || 30
+              }
+              // Explicitly exclude: screenshot.file, screenshot.dataUrl, localizedScreenshots
+            }));
+
+            const minimalValue = JSON.stringify(minimalData);
+            const minimalSize = new Blob([minimalValue]).size / 1024 / 1024;
+
+            console.log(`✅ Reduced data size to: ${minimalSize.toFixed(2)}MB`);
+            console.log(`💾 Saved ${(originalSize - minimalSize).toFixed(2)}MB`);
+
+            // Save the minimal version
+            return originalSetItem.call(this, key, minimalValue);
+          }
+        } catch (parseError) {
+          console.error('❌ Error parsing previewItems:', parseError);
+          // If we can't parse, don't save it
+          console.log('🚫 Skipping save to prevent localStorage issues');
+          return;
+        }
+      }
+
+      // For all other keys, use original behavior
+      return originalSetItem.call(this, key, value);
+
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+        console.error('❌ localStorage quota exceeded even after optimization!');
+        console.error('🧹 Clearing previewItems to free up space...');
+
+        try {
+          // Try to clear the problematic key
+          localStorage.removeItem('previewItems');
+          console.log('✅ Cleared previewItems from localStorage');
+        } catch (clearError) {
+          console.error('❌ Failed to clear localStorage:', clearError);
+        }
+      } else {
+        console.error('❌ localStorage error:', error);
+      }
+      throw error;
+    }
+  };
+
+  console.log('✅ localStorage optimization patch loaded');
+})();
