@@ -25,6 +25,23 @@
         const originalSize = new Blob([value]).size / 1024 / 1024;
         console.log(`📊 Original data size: ${originalSize.toFixed(2)}MB`);
 
+        // DEBUG: Let's see what's taking up space
+        if (Array.isArray(data) && data.length > 0) {
+          const firstItem = data[0];
+          console.log('🔍 DEBUG: Analyzing first item structure...');
+          console.log('   - Keys:', Object.keys(firstItem));
+
+          // Check each field size
+          for (const key of Object.keys(firstItem)) {
+            try {
+              const fieldSize = new Blob([JSON.stringify(firstItem[key])]).size / 1024;
+              if (fieldSize > 100) { // Over 100KB
+                console.log(`   ⚠️ Large field "${key}": ${fieldSize.toFixed(2)}KB`);
+              }
+            } catch (e) {}
+          }
+        }
+
         // ALWAYS optimize if data is an array
         if (Array.isArray(data)) {
           // Save only essential data without any image-related fields
