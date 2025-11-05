@@ -810,15 +810,15 @@ export default function BannerGenerator() {
     console.log(`Switching to project ${activeProjectId}`);
     if (typeof window !== 'undefined' && window.localStorage) {
       try {
-        const projectKey = `project_${activeProjectId}_previewItems`;
-        const savedItems = localStorage.getItem(projectKey);
+        // Загружаем previewItems
+        const previewKey = `project_${activeProjectId}_previewItems`;
+        const savedItems = localStorage.getItem(previewKey);
         if (savedItems) {
           const parsedItems = JSON.parse(savedItems);
           console.log(`Loaded ${parsedItems.length} preview items for project ${activeProjectId}`);
           setPreviewItems(parsedItems);
         } else {
-          console.log(`No saved data for project ${activeProjectId}, using default`);
-          // Если данных нет, создаем пустой проект
+          console.log(`No saved preview data for project ${activeProjectId}, using default`);
           setPreviewItems([{
             id: 1,
             name: "Preview 1",
@@ -830,6 +830,36 @@ export default function BannerGenerator() {
             horizontalOffset: { combined: 0, title: 0, description: 0 },
             screenshot: { file: null, borderColor: "#000000", borderWidth: 8, borderRadius: 30 }
           }]);
+        }
+
+        // Загружаем bannerSettings
+        const settingsKey = `project_${activeProjectId}_bannerSettings`;
+        const savedSettings = localStorage.getItem(settingsKey);
+        if (savedSettings) {
+          setBannerSettings(JSON.parse(savedSettings));
+          console.log(`Loaded banner settings for project ${activeProjectId}`);
+        } else {
+          setBannerSettings(DEFAULT_SETTINGS);
+          console.log(`No saved settings for project ${activeProjectId}, using defaults`);
+        }
+
+        // Загружаем localizedContent
+        const contentKey = `project_${activeProjectId}_localizedContent`;
+        const savedContent = localStorage.getItem(contentKey);
+        if (savedContent) {
+          setLocalizedContent(JSON.parse(savedContent));
+          console.log(`Loaded localized content for project ${activeProjectId}`);
+        } else {
+          setLocalizedContent({
+            ru: {
+              title: "Новое приложение",
+              description: "Описание приложения",
+              promotionalText: "Рекламный текст",
+              whatsNew: "Что нового в этой версии",
+              keywords: "приложение, ключевые, слова"
+            }
+          });
+          console.log(`No saved content for project ${activeProjectId}, using defaults`);
         }
       } catch (e) {
         console.error('Error loading project data:', e);
@@ -1027,24 +1057,26 @@ export default function BannerGenerator() {
   useEffect(() => {
     if (typeof window === 'undefined' || !window.localStorage) return;
     if (!localizedContent) return;
-    
+
     try {
-      localStorage.setItem('localizedContent', JSON.stringify(localizedContent));
+      const contentKey = `project_${activeProjectId}_localizedContent`;
+      localStorage.setItem(contentKey, JSON.stringify(localizedContent));
     } catch (error) {
       console.error('Error saving localized content:', error);
     }
-  }, [localizedContent]);
+  }, [localizedContent, activeProjectId]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.localStorage) return;
     if (!bannerSettings) return;
-    
+
     try {
-      localStorage.setItem('bannerSettings', JSON.stringify(bannerSettings));
+      const settingsKey = `project_${activeProjectId}_bannerSettings`;
+      localStorage.setItem(settingsKey, JSON.stringify(bannerSettings));
     } catch (error) {
       console.error('Error saving banner settings:', error);
     }
-  }, [bannerSettings]);
+  }, [bannerSettings, activeProjectId]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.localStorage) return;
@@ -3392,8 +3424,11 @@ export default function BannerGenerator() {
       if (activeProjectId === projectId) {
         setActiveProjectId(newProjects[0].id);
       }
-      // Удаляем данные проекта
+      // Удаляем все данные проекта из localStorage
       localStorage.removeItem(`project_${projectId}_previewItems`);
+      localStorage.removeItem(`project_${projectId}_bannerSettings`);
+      localStorage.removeItem(`project_${projectId}_localizedContent`);
+      console.log(`Deleted all data for project ${projectId}`);
     }
   };
 
