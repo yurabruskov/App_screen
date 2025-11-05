@@ -1102,18 +1102,23 @@ export default function BannerGenerator() {
       }
 
       if (hasChanges) {
-        console.log(`🔄 [v2.2] Updating state with new images for ${activeLanguage}`);
+        console.log(`🔄 [v2.3] Updating state with new images for ${activeLanguage}`);
         // ВАЖНО: Используем функциональное обновление чтобы работать с актуальными данными
         // а не со старыми из замыкания (которые могут быть из другого проекта!)
         setPreviewItems(prevItems => {
-          const result = [...prevItems];
-          // Копируем только localizedScreenshots из updatedItems, сохраняя все остальные поля
-          for (let i = 0; i < Math.min(result.length, updatedItems.length); i++) {
-            if (updatedItems[i].localizedScreenshots) {
-              result[i].localizedScreenshots = updatedItems[i].localizedScreenshots;
+          return prevItems.map((prevItem, i) => {
+            // Если для этого элемента есть обновленные изображения
+            if (updatedItems[i]?.localizedScreenshots) {
+              // Создаем НОВЫЙ объект, копируя ВСЕ из prevItem (актуальные данные)
+              // и перезаписывая ТОЛЬКО localizedScreenshots из updatedItems
+              return {
+                ...prevItem,
+                localizedScreenshots: updatedItems[i].localizedScreenshots
+              };
             }
-          }
-          return result;
+            // Если изображений нет - возвращаем prevItem без изменений
+            return prevItem;
+          });
         });
         forceUpdate(); // Принудительное обновление UI
       } else {
