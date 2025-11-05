@@ -156,6 +156,13 @@ interface PreviewItem {
   };
 }
 
+// Интерфейс для проекта
+interface Project {
+  id: number;
+  name: string;
+  createdAt: number;
+}
+
 // Функция для получения скриншота с fallback на английский язык и устройство
 const getCurrentScreenshot = (previewItem: PreviewItem, currentLanguage: string, currentDeviceType: DeviceType) => {
   console.log(`getCurrentScreenshot: Looking for screenshot for preview ${previewItem.id}, device ${currentDeviceType}, language ${currentLanguage}`);
@@ -445,6 +452,52 @@ const NumberInputWithSlider = ({ value, onChange, min, max, step = 1, unit, clas
 };
 
 export default function BannerGenerator() {
+  // === УПРАВЛЕНИЕ ПРОЕКТАМИ ===
+  const [projects, setProjects] = useState<Project[]>(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const savedProjects = localStorage.getItem('projects');
+        if (savedProjects) {
+          return JSON.parse(savedProjects);
+        }
+      } catch (e) {
+        console.error('Error loading projects:', e);
+      }
+    }
+    // По умолчанию создаем первый проект
+    return [{ id: 1, name: 'Project 1', createdAt: Date.now() }];
+  });
+
+  const [activeProjectId, setActiveProjectId] = useState<number>(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const savedActiveId = localStorage.getItem('activeProjectId');
+        if (savedActiveId) {
+          return parseInt(savedActiveId);
+        }
+      } catch (e) {
+        console.error('Error loading active project:', e);
+      }
+    }
+    return 1;
+  });
+
+  // Сохраняем проекты в localStorage при изменении
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('projects', JSON.stringify(projects));
+      localStorage.setItem('activeProjectId', String(activeProjectId));
+    }
+  }, [projects, activeProjectId]);
+
+  const activeProject = projects.find(p => p.id === activeProjectId) || projects[0];
+
+  // Вспомогательная функция для формирования ключей IndexedDB с учетом проекта
+  const getImageKey = (previewId: number, device: string, lang: string) => {
+    return `project_${activeProjectId}_preview_${previewId}_${device}_${lang}`;
+  };
+
+  // === ОСНОВНЫЕ СОСТОЯНИЯ ===
   const [activeLanguage, setActiveLanguage] = useState("ru")
   const activeLanguageRef = useRef(activeLanguage)
   const [deviceType, setDeviceType] = useState<DeviceType>('iphone')
@@ -599,10 +652,16 @@ export default function BannerGenerator() {
     // Попробуем загрузить из localStorage при инициализации
     if (typeof window !== 'undefined' && window.localStorage) {
       try {
-        const savedItems = localStorage.getItem('previewItems');
+        // Получаем ID активного проекта
+        const savedActiveId = localStorage.getItem('activeProjectId');
+        const projectId = savedActiveId ? parseInt(savedActiveId) : 1;
+
+        // Загружаем данные для этого проекта
+        const projectKey = `project_${projectId}_previewItems`;
+        const savedItems = localStorage.getItem(projectKey);
         if (savedItems) {
           const parsedItems = JSON.parse(savedItems);
-          console.log("Loaded initial preview items from localStorage", parsedItems);
+          console.log(`Loaded preview items for project ${projectId}:`, parsedItems);
           if (Array.isArray(parsedItems) && parsedItems.length > 0) {
             return parsedItems;
           }
@@ -725,9 +784,10 @@ export default function BannerGenerator() {
 
         const dataToSave = JSON.stringify(minimalData);
         const sizeInKB = new Blob([dataToSave]).size / 1024;
-        console.log(`💾 Saving ${sizeInKB.toFixed(2)}KB to localStorage (images excluded)`);
+        console.log(`💾 Saving ${sizeInKB.toFixed(2)}KB to localStorage for project ${activeProjectId} (images excluded)`);
 
-        localStorage.setItem('previewItems', dataToSave);
+        const projectKey = `project_${activeProjectId}_previewItems`;
+        localStorage.setItem(projectKey, dataToSave);
       } catch (error) {
         if (error instanceof DOMException && error.name === 'QuotaExceededError') {
           console.error('❌ localStorage quota exceeded even with minimal data!', error);
@@ -743,7 +803,39 @@ export default function BannerGenerator() {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [previewItems]);
+  }, [previewItems, activeProjectId]);
+
+  // Загружаем данные проекта при смене активного проекта
+  useEffect(() => {
+    console.log(`Switching to project ${activeProjectId}`);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const projectKey = `project_${activeProjectId}_previewItems`;
+        const savedItems = localStorage.getItem(projectKey);
+        if (savedItems) {
+          const parsedItems = JSON.parse(savedItems);
+          console.log(`Loaded ${parsedItems.length} preview items for project ${activeProjectId}`);
+          setPreviewItems(parsedItems);
+        } else {
+          console.log(`No saved data for project ${activeProjectId}, using default`);
+          // Если данных нет, создаем пустой проект
+          setPreviewItems([{
+            id: 1,
+            name: "Preview 1",
+            backgroundColor: "#FFD700",
+            devicePosition: "center",
+            deviceScale: 100,
+            rotation: { device: 0, title: 0, description: 0, textBlock: 0 },
+            verticalOffset: { combined: 0, title: 0, description: 0, device: 0 },
+            horizontalOffset: { combined: 0, title: 0, description: 0 },
+            screenshot: { file: null, borderColor: "#000000", borderWidth: 8, borderRadius: 30 }
+          }]);
+        }
+      } catch (e) {
+        console.error('Error loading project data:', e);
+      }
+    }
+  }, [activeProjectId]);
 
   // После того как previewItems загружены, инициализируем базу данных и загружаем изображения
   useEffect(() => {
@@ -3277,6 +3369,45 @@ export default function BannerGenerator() {
     };
   }, [draggingElementInfo, handleMouseMove, handleMouseUp]);
 
+  // === ФУНКЦИИ УПРАВЛЕНИЯ ПРОЕКТАМИ ===
+  const createNewProject = () => {
+    const newId = Math.max(...projects.map(p => p.id), 0) + 1;
+    const newProject: Project = {
+      id: newId,
+      name: `Project ${newId}`,
+      createdAt: Date.now()
+    };
+    setProjects([...projects, newProject]);
+    setActiveProjectId(newId);
+  };
+
+  const deleteProject = (projectId: number) => {
+    if (projects.length === 1) {
+      alert("Нельзя удалить последний проект!");
+      return;
+    }
+    if (confirm(`Удалить проект "${projects.find(p => p.id === projectId)?.name}"?`)) {
+      const newProjects = projects.filter(p => p.id !== projectId);
+      setProjects(newProjects);
+      if (activeProjectId === projectId) {
+        setActiveProjectId(newProjects[0].id);
+      }
+      // Удаляем данные проекта
+      localStorage.removeItem(`project_${projectId}_previewItems`);
+    }
+  };
+
+  const renameProject = (projectId: number) => {
+    const project = projects.find(p => p.id === projectId);
+    if (!project) return;
+    const newName = prompt("Новое имя проекта:", project.name);
+    if (newName && newName.trim()) {
+      setProjects(projects.map(p =>
+        p.id === projectId ? { ...p, name: newName.trim() } : p
+      ));
+    }
+  };
+
   return (
     <>
       {domLoaded ? (
@@ -3446,8 +3577,59 @@ export default function BannerGenerator() {
             </div>
           </header>
 
-          {/* Add padding to content area to account for fixed header */}
-          <div className="flex-grow container mx-auto px-4 py-6 mt-[116px]">
+          {/* Project Tabs */}
+          <div className="fixed top-[76px] left-0 right-0 bg-gray-50 border-b z-40 shadow-sm">
+            <div className="container mx-auto px-6">
+              <div className="flex items-center gap-2 overflow-x-auto py-2">
+                {projects.map((project) => (
+                  <div
+                    key={project.id}
+                    className={`group flex items-center gap-2 px-4 py-2 rounded-t-lg cursor-pointer transition-colors ${
+                      activeProjectId === project.id
+                        ? 'bg-white border border-b-0 font-semibold'
+                        : 'bg-gray-200 hover:bg-gray-300'
+                    }`}
+                    onClick={() => setActiveProjectId(project.id)}
+                  >
+                    <span className="text-sm whitespace-nowrap">{project.name}</span>
+                    {activeProjectId === project.id && (
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            renameProject(project.id);
+                          }}
+                          className="p-1 hover:bg-gray-200 rounded"
+                          title="Rename"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteProject(project.id);
+                          }}
+                          className="p-1 hover:bg-red-200 rounded"
+                          title="Delete"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                <button
+                  onClick={createNewProject}
+                  className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm flex items-center gap-1 whitespace-nowrap"
+                >
+                  + New Project
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Add padding to content area to account for fixed header + tabs */}
+          <div className="flex-grow container mx-auto px-4 py-6 mt-[156px]">
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
               {/* Left panel - Banners */}
               <div>
