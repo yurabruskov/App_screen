@@ -1038,21 +1038,16 @@ export default function BannerGenerator() {
       }
 
       console.log(`🔄 Loading images for language: ${activeLanguage}`);
-      const updatedItems = [...previewItems];
-      let hasChanges = false;
+
+      // Создаем Map для хранения загруженных изображений, НЕ используя previewItems из замыкания
+      const loadedImages = new Map<number, any>();
 
       for (let i = 0; i < previewItems.length; i++) {
         const item = previewItems[i];
         console.log(`Checking preview ${item.id} for language ${activeLanguage}`);
 
-        // Инициализируем localizedScreenshots если его нет
-        if (!updatedItems[i].localizedScreenshots) {
-          updatedItems[i].localizedScreenshots = {};
-          console.log(`Initialized localizedScreenshots for preview ${item.id}`);
-        }
-
         // Проверяем есть ли уже изображение для этого языка
-        const existingScreenshot = updatedItems[i].localizedScreenshots![activeLanguage];
+        const existingScreenshot = item.localizedScreenshots?.[deviceType]?.[activeLanguage];
         if (existingScreenshot?.file) {
           console.log(`✓ Preview ${item.id} already has screenshot for ${activeLanguage}`);
           continue;
@@ -1078,21 +1073,16 @@ export default function BannerGenerator() {
             console.log(`✅ useEffect: Loaded localized image from ${usedKey}, size: ${imageFile.size} bytes`);
             const dataUrl = await fileToDataURL(imageFile);
 
-            // Инициализируем структуру для устройства если нужно
-            if (!updatedItems[i].localizedScreenshots[deviceType]) {
-              updatedItems[i].localizedScreenshots[deviceType] = {};
-            }
-
-            console.log(`🔄 useEffect: Before setting - available languages for preview ${item.id}:`, Object.keys(updatedItems[i].localizedScreenshots[deviceType] || {}));
-            updatedItems[i].localizedScreenshots[deviceType][activeLanguage] = {
+            // Сохраняем загруженное изображение в Map
+            loadedImages.set(i, {
               file: imageFile,
               dataUrl,
               borderColor: item.screenshot.borderColor,
               borderWidth: item.screenshot.borderWidth,
               borderRadius: item.screenshot.borderRadius,
-            };
-            console.log(`🔄 useEffect: After setting - available languages for preview ${item.id}:`, Object.keys(updatedItems[i].localizedScreenshots[deviceType] || {}));
-            hasChanges = true;
+            });
+
+            console.log(`🔄 useEffect: Loaded image for preview ${item.id}, index ${i}`);
           } else {
             console.log(`❌ useEffect: No image found for preview ${item.id}`);
           }
@@ -1101,22 +1091,30 @@ export default function BannerGenerator() {
         }
       }
 
-      if (hasChanges) {
-        console.log(`🔄 [v2.3] Updating state with new images for ${activeLanguage}`);
-        // ВАЖНО: Используем функциональное обновление чтобы работать с актуальными данными
-        // а не со старыми из замыкания (которые могут быть из другого проекта!)
+      if (loadedImages.size > 0) {
+        console.log(`🔄 [v2.3] Updating state with new images for ${activeLanguage}, loaded ${loadedImages.size} images`);
+        // ВАЖНО: Используем функциональное обновление с prevItems (АКТУАЛЬНЫЕ данные)
+        // loadedImages содержит ТОЛЬКО изображения, без rotation и других настроек
         setPreviewItems(prevItems => {
           return prevItems.map((prevItem, i) => {
-            // Если для этого элемента есть обновленные изображения
-            if (updatedItems[i]?.localizedScreenshots) {
-              // Создаем НОВЫЙ объект, копируя ВСЕ из prevItem (актуальные данные)
-              // и перезаписывая ТОЛЬКО localizedScreenshots из updatedItems
-              return {
-                ...prevItem,
-                localizedScreenshots: updatedItems[i].localizedScreenshots
-              };
+            const loadedImage = loadedImages.get(i);
+            if (loadedImage) {
+              // Создаем НОВЫЙ объект с ВСЕМИ полями из prevItem (включая актуальный rotation!)
+              const newItem = {...prevItem};
+
+              // Инициализируем localizedScreenshots если нужно
+              if (!newItem.localizedScreenshots) {
+                newItem.localizedScreenshots = {};
+              }
+              if (!newItem.localizedScreenshots[deviceType]) {
+                newItem.localizedScreenshots[deviceType] = {};
+              }
+
+              // Добавляем ТОЛЬКО загруженное изображение
+              newItem.localizedScreenshots[deviceType][activeLanguage] = loadedImage;
+
+              return newItem;
             }
-            // Если изображений нет - возвращаем prevItem без изменений
             return prevItem;
           });
         });
