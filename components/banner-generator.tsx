@@ -793,8 +793,8 @@ export default function BannerGenerator() {
 
         const dataToSave = JSON.stringify(minimalData);
         const sizeInKB = new Blob([dataToSave]).size / 1024;
-        console.log(`💾 [v2.1] Saving ${sizeInKB.toFixed(2)}KB to localStorage for project ${activeProjectId} (images excluded)`);
-        console.log(`💾 [v2.1] Preview 1 rotation.device: ${minimalData[0]?.rotation?.device ?? 'undefined'}`);
+        console.log(`💾 [v2.3] Saving ${sizeInKB.toFixed(2)}KB to localStorage for project ${activeProjectId} (images excluded)`);
+        console.log(`💾 [v2.3] Preview 1 rotation.device: ${minimalData[0]?.rotation?.device ?? 'undefined'}`);
 
         const projectKey = `project_${activeProjectId}_previewItems`;
         localStorage.setItem(projectKey, dataToSave);
@@ -817,8 +817,8 @@ export default function BannerGenerator() {
 
   // Загружаем данные проекта при смене активного проекта
   useEffect(() => {
-    console.log(`🔄 [v2.1] Switching to project ${activeProjectId}`);
-    console.log(`🔄 [v2.1] Current rotation.device BEFORE load: ${previewItems[0]?.rotation?.device ?? 'undefined'}`);
+    console.log(`🔄 [v2.3] Switching to project ${activeProjectId}`);
+    console.log(`🔄 [v2.3] Current rotation.device BEFORE load: ${previewItems[0]?.rotation?.device ?? 'undefined'}`);
     // Устанавливаем флаг загрузки чтобы предотвратить сохранение
     isLoadingProjectRef.current = true;
 
@@ -836,8 +836,8 @@ export default function BannerGenerator() {
         const savedItems = localStorage.getItem(previewKey);
         if (savedItems) {
           const parsedItems = JSON.parse(savedItems);
-          console.log(`✅ [v2.1] Loaded ${parsedItems.length} preview items for project ${activeProjectId}`);
-          console.log(`✅ [v2.1] Loaded rotation.device from localStorage: ${parsedItems[0]?.rotation?.device ?? 'undefined'}`);
+          console.log(`✅ [v2.3] Loaded ${parsedItems.length} preview items for project ${activeProjectId}`);
+          console.log(`✅ [v2.3] Loaded rotation.device from localStorage: ${parsedItems[0]?.rotation?.device ?? 'undefined'}`);
           setPreviewItems(parsedItems);
         } else {
           console.log(`No saved preview data for project ${activeProjectId}, using default`);
