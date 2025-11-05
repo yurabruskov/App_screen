@@ -511,6 +511,9 @@ export default function BannerGenerator() {
   useEffect(() => {
     deviceTypeRef.current = deviceType
   }, [deviceType])
+
+  // Ref для предотвращения сохранения во время загрузки проекта
+  const isLoadingProjectRef = useRef(false)
   const [bannerSettings, setBannerSettings] = useState(() => {
     if (typeof window !== 'undefined' && window.localStorage) {
       try {
@@ -760,6 +763,12 @@ export default function BannerGenerator() {
 
     // Debounce сохранения на 500ms
     saveTimeoutRef.current = setTimeout(() => {
+      // Не сохраняем если сейчас загружаем данные проекта
+      if (isLoadingProjectRef.current) {
+        console.log("⏭️ Skipping save - project is loading");
+        return;
+      }
+
       try {
         console.log("Saving previewItems to localStorage", previewItems.length);
         // Сохраняем ТОЛЬКО минимальные данные, БЕЗ изображений
@@ -808,6 +817,9 @@ export default function BannerGenerator() {
   // Загружаем данные проекта при смене активного проекта
   useEffect(() => {
     console.log(`Switching to project ${activeProjectId}`);
+    // Устанавливаем флаг загрузки чтобы предотвратить сохранение
+    isLoadingProjectRef.current = true;
+
     if (typeof window !== 'undefined' && window.localStorage) {
       try {
         // Загружаем previewItems
@@ -865,6 +877,15 @@ export default function BannerGenerator() {
         console.error('Error loading project data:', e);
       }
     }
+
+    // Снимаем флаг загрузки после небольшой задержки
+    // чтобы дать React время применить все state updates
+    const timer = setTimeout(() => {
+      isLoadingProjectRef.current = false;
+      console.log(`Project ${activeProjectId} loading complete`);
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, [activeProjectId]);
 
   // После того как previewItems загружены, инициализируем базу данных и загружаем изображения
@@ -1086,6 +1107,8 @@ export default function BannerGenerator() {
   useEffect(() => {
     if (typeof window === 'undefined' || !window.localStorage) return;
     if (!localizedContent) return;
+    // Не сохраняем если сейчас загружаем данные проекта
+    if (isLoadingProjectRef.current) return;
 
     try {
       const contentKey = `project_${activeProjectId}_localizedContent`;
@@ -1098,6 +1121,8 @@ export default function BannerGenerator() {
   useEffect(() => {
     if (typeof window === 'undefined' || !window.localStorage) return;
     if (!bannerSettings) return;
+    // Не сохраняем если сейчас загружаем данные проекта
+    if (isLoadingProjectRef.current) return;
 
     try {
       const settingsKey = `project_${activeProjectId}_bannerSettings`;
