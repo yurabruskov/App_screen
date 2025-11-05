@@ -1,0 +1,78 @@
+/* Custom styles for top bar */
+
+/* Reorder top bar elements using flexbox order */
+/* Find the parent container and set it to flex */
+.flex.items-center.gap-2:has(> .flex.rounded.border) {
+  order: 1 !important;
+}
+
+.flex.items-center.gap-2.ml-4 {
+  order: 2 !important;
+}
+
+/* Make the parent container display as flex if not already */
+body > main > div > div:first-child {
+  display: flex !important;
+  flex-wrap: wrap !important;
+}
+
+/* Make Export All Images button blue */
+button:has(> .mr-2.h-4.w-4 + text()[contains(., "Export All Images")]) {
+  background-color: #0D99FF !important;
+  color: white !important;
+}
+
+/* Alternative selector using button text content */
+button[variant="default"]:has(svg + [class*="Fragment"]) {
+  background-color: #0D99FF !important;
+  color: white !important;
+}
+
+/* iOS-style segment control for device selector */
+.flex.rounded.border {
+  background-color: #f0f0f0 !important;
+  border: 1px solid #e0e0e0 !important;
+  padding: 2px !important;
+  border-radius: 8px !important;
+  height: 40px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+}
+
+.flex.rounded.border button {
+  background-color: transparent !important;
+  border: none !important;
+  color: #6b7280 !important;
+  transition: all 0.2s ease !important;
+  padding: 6px 16px !important;
+  border-radius: 6px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  height: 36px !important;
+}
+
+.flex.rounded.border button:hover {
+  color: #111827 !important;
+}
+
+/* Active device button - iOS style with white background and shadow */
+.flex.rounded.border button[class*="bg-[#0D99FF]"],
+.flex.rounded.border button[data-state="on"],
+.flex.rounded.border button[aria-pressed="true"] {
+  background-color: white !important;
+  color: #111827 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Make all outline buttons more gray */
+button[class*="outline"] {
+  background-color: hsl(var(--background)) !important;
+  border-color: hsl(var(--input)) !important;
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+button[class*="outline"]:hover {
+  background-color: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+}
