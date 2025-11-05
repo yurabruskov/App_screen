@@ -2046,7 +2046,7 @@ export default function BannerGenerator() {
               const finalCtx = finalCanvas.getContext('2d');
               if (finalCtx) {
                 // Рисуем исходный canvas на финальный с точными размерами
-                finalCtx.drawImage(canvas, 0, 0, 1284, 2778);
+                finalCtx.drawImage(canvas, 0, 0, exportWidth, exportHeight);
               }
               
               // Получаем данные из финального canvas
