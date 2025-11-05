@@ -2,7 +2,11 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [source-code]
+    branches: [gh-pages]
+    paths-ignore:
+      - '_next/**'
+      - 'index.html'
+      - '404.html'
   workflow_dispatch:
 
 permissions:
@@ -12,10 +16,8 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout source-code
+      - name: Checkout gh-pages
         uses: actions/checkout@v4
-        with:
-          ref: source-code
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -29,15 +31,17 @@ jobs:
       - name: Build Next.js
         run: npm run build
 
-      - name: Add .nojekyll
-        run: touch out/.nojekyll
+      - name: Copy built files to root
+        run: |
+          rm -rf _next 404 404.html index.html index.txt placeholder-*.png placeholder-*.svg placeholder-*.jpg
+          cp -r out/* .
+          rm -rf out
+          touch .nojekyll
 
-      - name: Deploy to gh-pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./out
-          publish_branch: gh-pages
-          user_name: 'github-actions[bot]'
-          user_email: 'github-actions[bot]@users.noreply.github.com'
-          commit_message: 'deploy: ${{ github.event.head_commit.message }}'
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add .
+          git diff --quiet && git diff --staged --quiet || git commit -m "deploy: ${{ github.event.head_commit.message }}"
+          git push
