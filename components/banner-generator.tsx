@@ -948,14 +948,27 @@ export default function BannerGenerator() {
             }
 
             for (const lang of LANGUAGES) {
-              const deviceLangImageId = `preview_${item.id}_${device}_${lang.code}`;
+              // Сначала пробуем новый ключ с projectId
+              const newImageId = getImageKey(item.id, device, lang.code);
+              // Для обратной совместимости - старый ключ без projectId
+              const oldImageId = `preview_${item.id}_${device}_${lang.code}`;
+
               try {
-                const deviceLangImageFile = await imageDBRef.current.getImage(deviceLangImageId);
-                if (deviceLangImageFile) {
-                  console.log(`Loaded device-specific image for ${deviceLangImageId}`);
-                  const dataUrl = await fileToDataURL(deviceLangImageFile);
+                // Пытаемся загрузить с новым ключом
+                let imageFile = await imageDBRef.current.getImage(newImageId);
+                let usedKey = newImageId;
+
+                // Если не нашли, пробуем старый ключ (миграция)
+                if (!imageFile) {
+                  imageFile = await imageDBRef.current.getImage(oldImageId);
+                  usedKey = oldImageId;
+                }
+
+                if (imageFile) {
+                  console.log(`Loaded device-specific image from ${usedKey}`);
+                  const dataUrl = await fileToDataURL(imageFile);
                   updatedItems[i].localizedScreenshots[device][lang.code] = {
-                    file: deviceLangImageFile,
+                    file: imageFile,
                     dataUrl,
                     borderColor: item.screenshot.borderColor,
                     borderWidth: item.screenshot.borderWidth,
@@ -964,7 +977,7 @@ export default function BannerGenerator() {
                   hasChanges = true;
                 }
               } catch (error) {
-                console.error(`Error loading device-specific image for ${deviceLangImageId}:`, error);
+                console.error(`Error loading device-specific image:`, error);
               }
             }
           }
@@ -1014,30 +1027,46 @@ export default function BannerGenerator() {
           continue;
         }
 
-        // Загружаем изображение для текущего языка
-        const langImageId = `preview_${item.id}_${activeLanguage}`;
-        console.log(`🔄 useEffect: Attempting to load image: ${langImageId} for preview ${item.id}`);
+        // Загружаем изображение для текущего языка и устройства
+        const newImageId = getImageKey(item.id, deviceType, activeLanguage);
+        const oldImageId = `preview_${item.id}_${activeLanguage}`;
+        console.log(`🔄 useEffect: Attempting to load image for preview ${item.id}, trying ${newImageId}`);
 
         try {
-          const langImageFile = await imageDBRef.current.getImage(langImageId);
-          if (langImageFile) {
-            console.log(`✅ useEffect: Loaded localized image for ${langImageId}, size: ${langImageFile.size} bytes`);
-            const dataUrl = await fileToDataURL(langImageFile);
-            console.log(`🔄 useEffect: Before setting - available languages for preview ${item.id}:`, Object.keys(updatedItems[i].localizedScreenshots || {}));
-            updatedItems[i].localizedScreenshots![activeLanguage] = {
-              file: langImageFile,
+          // Пытаемся загрузить с новым ключом
+          let imageFile = await imageDBRef.current.getImage(newImageId);
+          let usedKey = newImageId;
+
+          // Если не нашли, пробуем старый ключ (миграция)
+          if (!imageFile) {
+            imageFile = await imageDBRef.current.getImage(oldImageId);
+            usedKey = oldImageId;
+          }
+
+          if (imageFile) {
+            console.log(`✅ useEffect: Loaded localized image from ${usedKey}, size: ${imageFile.size} bytes`);
+            const dataUrl = await fileToDataURL(imageFile);
+
+            // Инициализируем структуру для устройства если нужно
+            if (!updatedItems[i].localizedScreenshots[deviceType]) {
+              updatedItems[i].localizedScreenshots[deviceType] = {};
+            }
+
+            console.log(`🔄 useEffect: Before setting - available languages for preview ${item.id}:`, Object.keys(updatedItems[i].localizedScreenshots[deviceType] || {}));
+            updatedItems[i].localizedScreenshots[deviceType][activeLanguage] = {
+              file: imageFile,
               dataUrl,
               borderColor: item.screenshot.borderColor,
               borderWidth: item.screenshot.borderWidth,
               borderRadius: item.screenshot.borderRadius,
             };
-            console.log(`🔄 useEffect: After setting - available languages for preview ${item.id}:`, Object.keys(updatedItems[i].localizedScreenshots || {}));
+            console.log(`🔄 useEffect: After setting - available languages for preview ${item.id}:`, Object.keys(updatedItems[i].localizedScreenshots[deviceType] || {}));
             hasChanges = true;
           } else {
-            console.log(`❌ useEffect: No image found for ${langImageId}`);
+            console.log(`❌ useEffect: No image found for preview ${item.id}`);
           }
         } catch (error) {
-          console.error(`💥 Error loading localized image for ${langImageId}:`, error);
+          console.error(`💥 Error loading localized image:`, error);
         }
       }
 
@@ -1235,8 +1264,8 @@ export default function BannerGenerator() {
 
         // ПОТОМ сохраняем в IndexedDB асинхронно
         if (imageDBRef.current) {
-          const imageId = `preview_${item.id}_${deviceToUse}_${langToUse}`;
-          console.log(`💾 Saving to IndexedDB: ${imageId}`);
+          const imageId = getImageKey(item.id, deviceToUse, langToUse);
+          console.log(`💾 Saving to IndexedDB with project isolation: ${imageId}`);
           await imageDBRef.current.saveImage(imageId, file);
           console.log(`✅ Successfully saved image for ${deviceToUse}/${langToUse}: ${imageId}`);
         }
@@ -1969,8 +1998,8 @@ export default function BannerGenerator() {
 
           // ПОТОМ сохраняем в IndexedDB асинхронно
           if (imageDBRef.current) {
-            const imageId = `preview_${item.id}_${langToUse}`;
-            console.log(`💾 uploadScreenshotToBanner: Saving to IndexedDB: ${imageId}`);
+            const imageId = getImageKey(item.id, deviceToUse, langToUse);
+            console.log(`💾 uploadScreenshotToBanner: Saving to IndexedDB with project isolation: ${imageId}`);
             await imageDBRef.current.saveImage(imageId, file);
             console.log(`✅ uploadScreenshotToBanner: Successfully saved image for banner ${bannerIndex}: ${imageId}`);
           }
