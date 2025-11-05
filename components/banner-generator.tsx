@@ -996,7 +996,7 @@ export default function BannerGenerator() {
     if (previewItems.length > 0) {
       loadImagesFromDB();
     }
-  }, [previewItems.length]); // Запускаем только при изменении количества превью
+  }, [previewItems.length, activeProjectId]); // Запускаем при изменении количества превью ИЛИ смене проекта
 
   // Загружаем изображения при смене языка с debounce
   useEffect(() => {
@@ -1080,7 +1080,7 @@ export default function BannerGenerator() {
     }, 200); // Увеличил debounce до 200ms
 
     return () => clearTimeout(timeoutId);
-  }, [activeLanguage, previewItems.length]); // Добавили previewItems.length как зависимость
+  }, [activeLanguage, previewItems.length, activeProjectId]); // Перезагружаем при смене языка, количества превью или проекта
 
   // Обновляем все хуки сохранения, чтобы они были консистентными
   useEffect(() => {
