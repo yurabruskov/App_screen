@@ -816,9 +816,16 @@ export default function BannerGenerator() {
 
   // Загружаем данные проекта при смене активного проекта
   useEffect(() => {
-    console.log(`Switching to project ${activeProjectId}`);
+    console.log(`🔄 [v2.0] Switching to project ${activeProjectId}`);
     // Устанавливаем флаг загрузки чтобы предотвратить сохранение
     isLoadingProjectRef.current = true;
+
+    // ВАЖНО: Очищаем все pending save таймеры чтобы предотвратить сохранение старых данных
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+      console.log("🧹 Cleared pending save timer");
+    }
 
     if (typeof window !== 'undefined' && window.localStorage) {
       try {
