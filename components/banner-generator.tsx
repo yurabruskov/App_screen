@@ -3683,7 +3683,6 @@ export default function BannerGenerator() {
                   </Dialog>
                 </div>
               </div>
-            </div>
           </header>
 
           {/* Content area with padding for fixed top bar */}
