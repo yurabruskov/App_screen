@@ -2012,14 +2012,14 @@ export default function BannerGenerator() {
               const exportWidth = DEVICE_CONFIG[deviceType].exportWidth;
               const exportHeight = DEVICE_CONFIG[deviceType].exportHeight;
               console.log(`Экспорт с размерами: ${exportWidth}x${exportHeight} для устройства ${deviceType}`);
+              console.log(`Preview размер: ${DEVICE_CONFIG[deviceType].previewWidth}x${DEVICE_CONFIG[deviceType].previewHeight}, scale: ${deviceConfig.html2canvasScale}`);
 
               const canvas = await html2canvas(exportElement as HTMLElement, {
                 scale: deviceConfig.html2canvasScale,
                 useCORS: true,
                 allowTaint: true,
                 backgroundColor: banner.backgroundColor || '#ffffff',
-                width: exportWidth,
-                height: exportHeight,
+                // НЕ передаем width/height - пусть html2canvas использует размер элемента × scale
                 logging: false,
                 removeContainer: false,
                 onclone: (clonedDoc, element) => {
@@ -2039,14 +2039,17 @@ export default function BannerGenerator() {
                 }
               });
               
-              // Создаем новый canvas с точными размерами
+              // Проверяем размер полученного canvas
+              console.log(`Canvas размер от html2canvas: ${canvas.width}x${canvas.height}`);
+
+              // Создаем новый canvas с точными размерами для гарантии
               const finalCanvas = document.createElement('canvas');
-              finalCanvas.width = DEVICE_CONFIG[deviceType].exportWidth;
-              finalCanvas.height = DEVICE_CONFIG[deviceType].exportHeight;
+              finalCanvas.width = exportWidth;
+              finalCanvas.height = exportHeight;
               const finalCtx = finalCanvas.getContext('2d');
               if (finalCtx) {
-                // Рисуем исходный canvas на финальный с точными размерами
-                finalCtx.drawImage(canvas, 0, 0, exportWidth, exportHeight);
+                // Рисуем исходный canvas на финальный, масштабируя при необходимости
+                finalCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, exportWidth, exportHeight);
               }
               
               // Получаем данные из финального canvas
