@@ -803,7 +803,7 @@ export default function BannerGenerator() {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [previewItems, activeProjectId]);
+  }, [previewItems]); // Убрали activeProjectId из зависимостей - сохраняем только при изменении previewItems
 
   // Загружаем данные проекта при смене активного проекта
   useEffect(() => {
@@ -1093,7 +1093,7 @@ export default function BannerGenerator() {
     } catch (error) {
       console.error('Error saving localized content:', error);
     }
-  }, [localizedContent, activeProjectId]);
+  }, [localizedContent]); // Убрали activeProjectId - сохраняем только при изменении контента
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.localStorage) return;
@@ -1105,7 +1105,7 @@ export default function BannerGenerator() {
     } catch (error) {
       console.error('Error saving banner settings:', error);
     }
-  }, [bannerSettings, activeProjectId]);
+  }, [bannerSettings]); // Убрали activeProjectId - сохраняем только при изменении настроек
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.localStorage) return;
@@ -3476,13 +3476,58 @@ export default function BannerGenerator() {
     <>
       {domLoaded ? (
         <div className="min-h-screen flex flex-col">
-          {/* Fixed header */}
-          <header className="fixed top-0 left-0 right-0 bg-white border-b py-4 px-6 z-50 shadow-sm">
-            <div className="container mx-auto">
-              <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold">ASB Generator v2</h1>
-                
-                <div className="flex items-center gap-4">
+          {/* Figma-style unified top bar with tabs */}
+          <header className="fixed top-0 left-0 right-0 bg-[#2C2C2C] border-b border-[#1E1E1E] z-50">
+            <div className="flex items-center justify-between h-12 px-3">
+              {/* Left: Project Tabs */}
+              <div className="flex items-center gap-1 flex-1 overflow-x-auto">
+                {projects.map((project) => (
+                  <div
+                    key={project.id}
+                    className={`group flex items-center gap-2 px-3 py-1.5 rounded cursor-pointer transition-colors ${
+                      activeProjectId === project.id
+                        ? 'bg-[#3D3D3D] text-white'
+                        : 'text-gray-400 hover:bg-[#353535] hover:text-gray-200'
+                    }`}
+                    onClick={() => setActiveProjectId(project.id)}
+                  >
+                    <span className="text-xs whitespace-nowrap">{project.name}</span>
+                    {activeProjectId === project.id && (
+                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            renameProject(project.id);
+                          }}
+                          className="p-0.5 hover:bg-[#4D4D4D] rounded text-[10px]"
+                          title="Rename"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteProject(project.id);
+                          }}
+                          className="p-0.5 hover:bg-red-600/20 rounded text-[10px]"
+                          title="Delete"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                <button
+                  onClick={createNewProject}
+                  className="px-2 py-1.5 bg-[#3D3D3D] text-gray-300 rounded hover:bg-[#4D4D4D] text-xs flex items-center gap-1 whitespace-nowrap"
+                >
+                  + New
+                </button>
+              </div>
+
+              {/* Right: Controls */}
+              <div className="flex items-center gap-2 ml-4">
                   <Dialog>
                     <DialogTrigger asChild>
                       <Button variant="outline">
@@ -3535,24 +3580,24 @@ export default function BannerGenerator() {
                     Export JSON
                   </Button>
                   
-                  <div className="flex items-center gap-3">
-                    <div className="flex rounded-lg border border-gray-200 p-1">
+                  <div className="flex items-center gap-2">
+                    <div className="flex rounded border border-[#1E1E1E] p-0.5 bg-[#1E1E1E]">
                       <button
                         onClick={() => handleDeviceTypeChange('iphone')}
-                        className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                        className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
                           deviceType === 'iphone'
-                            ? 'bg-blue-500 text-white'
-                            : 'text-gray-600 hover:bg-gray-100'
+                            ? 'bg-[#0D99FF] text-white'
+                            : 'text-gray-400 hover:bg-[#3D3D3D] hover:text-gray-200'
                         }`}
                       >
                         📱 iPhone
                       </button>
                       <button
                         onClick={() => handleDeviceTypeChange('ipad')}
-                        className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                        className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
                           deviceType === 'ipad'
-                            ? 'bg-blue-500 text-white'
-                            : 'text-gray-600 hover:bg-gray-100'
+                            ? 'bg-[#0D99FF] text-white'
+                            : 'text-gray-400 hover:bg-[#3D3D3D] hover:text-gray-200'
                         }`}
                       >
                         📱 iPad
@@ -3641,59 +3686,8 @@ export default function BannerGenerator() {
             </div>
           </header>
 
-          {/* Project Tabs */}
-          <div className="fixed top-[76px] left-0 right-0 bg-gray-50 border-b z-40 shadow-sm">
-            <div className="container mx-auto px-6">
-              <div className="flex items-center gap-2 overflow-x-auto py-2">
-                {projects.map((project) => (
-                  <div
-                    key={project.id}
-                    className={`group flex items-center gap-2 px-4 py-2 rounded-t-lg cursor-pointer transition-colors ${
-                      activeProjectId === project.id
-                        ? 'bg-white border border-b-0 font-semibold'
-                        : 'bg-gray-200 hover:bg-gray-300'
-                    }`}
-                    onClick={() => setActiveProjectId(project.id)}
-                  >
-                    <span className="text-sm whitespace-nowrap">{project.name}</span>
-                    {activeProjectId === project.id && (
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            renameProject(project.id);
-                          }}
-                          className="p-1 hover:bg-gray-200 rounded"
-                          title="Rename"
-                        >
-                          ✏️
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteProject(project.id);
-                          }}
-                          className="p-1 hover:bg-red-200 rounded"
-                          title="Delete"
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-                <button
-                  onClick={createNewProject}
-                  className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm flex items-center gap-1 whitespace-nowrap"
-                >
-                  + New Project
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Add padding to content area to account for fixed header + tabs */}
-          <div className="flex-grow container mx-auto px-4 py-6 mt-[156px]">
+          {/* Content area with padding for fixed top bar */}
+          <div className="flex-grow container mx-auto px-4 py-6 mt-[48px]">
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
               {/* Left panel - Banners */}
               <div>
