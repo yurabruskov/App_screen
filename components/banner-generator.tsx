@@ -30,6 +30,8 @@ import { LanguageSelector } from "@/components/language-selector"
 import { exportBanners } from "@/lib/export-utils"
 import { LANGUAGES, DEFAULT_SETTINGS, DEVICE_POSITIONS } from "@/lib/constants"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { DeviceSelector } from "@/components/banner/top-bar/DeviceSelector"
+import type { DeviceType } from "@/components/banner/types"
 
 // Класс для работы с IndexedDB
 class ImageDB {
@@ -194,6 +196,7 @@ class ImageDB {
 
 export default function BannerGenerator() {
   const [activeLanguage, setActiveLanguage] = useState("en")
+  const [selectedDevice, setSelectedDevice] = useState<DeviceType>("iphone")
   const [bannerSettings, setBannerSettings] = useState(DEFAULT_SETTINGS)
   const [localizedContent, setLocalizedContent] = useState({
     en: { title: "TEST TITLE", description: "TEST description" },
@@ -1619,6 +1622,10 @@ export default function BannerGenerator() {
         <header className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">App Store Banner Generator</h1>
           <div className="flex items-center gap-4">
+            <DeviceSelector
+              selectedDevice={selectedDevice}
+              onChange={setSelectedDevice}
+            />
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="outline">
