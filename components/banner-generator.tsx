@@ -911,12 +911,15 @@ export default function BannerGenerator() {
       if (!imageDBRef.current) return;
 
       try {
-        // Загружаем изображения для всех превью
-        const updatedItems = [...previewItems];
-        let hasChanges = false;
+        // Создаем Map для хранения загруженных изображений, НЕ используя previewItems из замыкания
+        const loadedImages = new Map<number, any>();
 
         for (let i = 0; i < previewItems.length; i++) {
           const item = previewItems[i];
+          const imageData: any = {
+            screenshot: null,
+            localizedScreenshots: {}
+          };
 
           // Загружаем основной скриншот (fallback) - пробуем старый ключ без языка
           const oldImageId = `preview_${item.id}`;
@@ -925,25 +928,19 @@ export default function BannerGenerator() {
             if (imageFile) {
               console.log(`Loaded default image for preview ${oldImageId}`);
               const dataUrl = await fileToDataURL(imageFile);
-              updatedItems[i] = {
-                ...updatedItems[i],
-                screenshot: {
-                  ...updatedItems[i].screenshot,
-                  file: imageFile,
-                  dataUrl
-                }
+              imageData.screenshot = {
+                file: imageFile,
+                dataUrl,
+                borderColor: item.screenshot.borderColor,
+                borderWidth: item.screenshot.borderWidth,
+                borderRadius: item.screenshot.borderRadius
               };
-              hasChanges = true;
             }
           } catch (error) {
             console.error(`Error loading default image for ${oldImageId}:`, error);
           }
 
           // Загружаем локализованные скриншоты для всех устройств и языков
-          if (!updatedItems[i].localizedScreenshots) {
-            updatedItems[i].localizedScreenshots = {};
-          }
-
           // Загружаем старые ключи для обратной совместимости (без устройства)
           for (const lang of LANGUAGES) {
             const oldLangImageId = `preview_${item.id}_${lang.code}`;
@@ -954,17 +951,16 @@ export default function BannerGenerator() {
                 const dataUrl = await fileToDataURL(langImageFile);
 
                 // Сохраняем в iphone для обратной совместимости
-                if (!updatedItems[i].localizedScreenshots.iphone) {
-                  updatedItems[i].localizedScreenshots.iphone = {};
+                if (!imageData.localizedScreenshots.iphone) {
+                  imageData.localizedScreenshots.iphone = {};
                 }
-                updatedItems[i].localizedScreenshots.iphone[lang.code] = {
+                imageData.localizedScreenshots.iphone[lang.code] = {
                   file: langImageFile,
                   dataUrl,
                   borderColor: item.screenshot.borderColor,
                   borderWidth: item.screenshot.borderWidth,
                   borderRadius: item.screenshot.borderRadius,
                 };
-                hasChanges = true;
               }
             } catch (error) {
               // Игнорируем ошибки для старых ключей
@@ -974,10 +970,6 @@ export default function BannerGenerator() {
           // Загружаем новые ключи с устройствами
           const devices: DeviceType[] = ['iphone', 'ipad'];
           for (const device of devices) {
-            if (!updatedItems[i].localizedScreenshots[device]) {
-              updatedItems[i].localizedScreenshots[device] = {};
-            }
-
             for (const lang of LANGUAGES) {
               // Сначала пробуем новый ключ с projectId
               const newImageId = getImageKey(item.id, device, lang.code);
@@ -998,25 +990,70 @@ export default function BannerGenerator() {
                 if (imageFile) {
                   console.log(`Loaded device-specific image from ${usedKey}`);
                   const dataUrl = await fileToDataURL(imageFile);
-                  updatedItems[i].localizedScreenshots[device][lang.code] = {
+
+                  if (!imageData.localizedScreenshots[device]) {
+                    imageData.localizedScreenshots[device] = {};
+                  }
+                  imageData.localizedScreenshots[device][lang.code] = {
                     file: imageFile,
                     dataUrl,
                     borderColor: item.screenshot.borderColor,
                     borderWidth: item.screenshot.borderWidth,
                     borderRadius: item.screenshot.borderRadius,
                   };
-                  hasChanges = true;
                 }
               } catch (error) {
                 console.error(`Error loading device-specific image:`, error);
               }
             }
           }
+
+          // Сохраняем данные изображений если что-то загрузилось
+          if (imageData.screenshot || Object.keys(imageData.localizedScreenshots).length > 0) {
+            loadedImages.set(i, imageData);
+          }
         }
-        
+
         // Обновляем состояние только если были изменения
-        if (hasChanges) {
-          setPreviewItems(updatedItems);
+        if (loadedImages.size > 0) {
+          console.log(`📥 Loaded ${loadedImages.size} images from IndexedDB`);
+          // ВАЖНО: используем функциональное обновление с prevItems
+          setPreviewItems(prevItems => {
+            return prevItems.map((prevItem, i) => {
+              const imageData = loadedImages.get(i);
+              if (imageData) {
+                const newItem = {...prevItem};
+
+                // Обновляем screenshot если загрузился
+                if (imageData.screenshot) {
+                  newItem.screenshot = {
+                    ...newItem.screenshot,
+                    ...imageData.screenshot
+                  };
+                }
+
+                // Обновляем localizedScreenshots если загрузились
+                if (Object.keys(imageData.localizedScreenshots).length > 0) {
+                  if (!newItem.localizedScreenshots) {
+                    newItem.localizedScreenshots = {};
+                  }
+                  // Мерджим загруженные изображения с существующими
+                  for (const device of Object.keys(imageData.localizedScreenshots)) {
+                    if (!newItem.localizedScreenshots[device]) {
+                      newItem.localizedScreenshots[device] = {};
+                    }
+                    newItem.localizedScreenshots[device] = {
+                      ...newItem.localizedScreenshots[device],
+                      ...imageData.localizedScreenshots[device]
+                    };
+                  }
+                }
+
+                return newItem;
+              }
+              return prevItem;
+            });
+          });
         }
       } catch (error) {
         console.error("Error loading images from IndexedDB:", error);
