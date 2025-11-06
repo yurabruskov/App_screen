@@ -1,5 +1,8 @@
 "use client"
 
+// VERSION: 2.4 - Rotation handles + IndexedDB image fix
+const APP_VERSION = "2.4.0-rotation-handles";
+
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -909,6 +912,7 @@ export default function BannerGenerator() {
 
   // После того как previewItems загружены, инициализируем базу данных и загружаем изображения
   useEffect(() => {
+    console.log(`🚀 App Screen Generator v${APP_VERSION} initialized`);
     console.log("Initializing IndexedDB and loading images");
     // Инициализируем базу данных
     if (!imageDBRef.current) {
