@@ -27,7 +27,12 @@ export function LanguageSelector({ languages, activeLanguage, onChange }: Langua
     <div className="flex items-center gap-2">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button variant="outline" role="combobox" aria-expanded={open} className="w-[200px] justify-between">
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-[200px] justify-between bg-[#3D3D3D] border-[#4D4D4D] text-gray-300 hover:bg-[#4D4D4D] hover:text-white h-9"
+          >
             {activeLanguageName}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>

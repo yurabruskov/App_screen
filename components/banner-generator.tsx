@@ -419,8 +419,8 @@ interface NumberInputWithSliderProps {
 
 const NumberInputWithSlider = ({ value, onChange, min, max, step = 1, unit, className = "" }: NumberInputWithSliderProps) => {
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
-      <div className="flex-1">
+    <div className={`flex items-center gap-2 group ${className}`}>
+      <div className="flex-1 transition-transform duration-200 hover:scale-y-150 hover:py-1">
         <Slider
           value={[value]}
           min={min}
@@ -1560,6 +1560,7 @@ export default function BannerGenerator() {
     const devicePosition = banner.devicePosition || "center";
     const deviceScale = banner.deviceScale || 100;
     const deviceOffset = (banner.verticalOffset?.[deviceType]?.device || banner.verticalOffset?.device) || 0;
+    const deviceHorizontalOffset = (banner.horizontalOffset?.[deviceType]?.device) || 0;
     const deviceRotation = banner.rotation?.device || 0;
     
     // Базовая ширина устройства
@@ -1580,7 +1581,7 @@ export default function BannerGenerator() {
           ...styles,
           top: "-35%", // Устройство будет выступать на 85% сверху
           left: "-15%", // Устройство будет выступать на 15% слева
-          transform: `translateY(${deviceOffset}px) rotate(${deviceRotation}deg)`
+          transform: `translateX(${deviceHorizontalOffset}px) translateY(${deviceOffset}px) rotate(${deviceRotation}deg)`
         };
         break;
       case "top-center":
@@ -1588,7 +1589,7 @@ export default function BannerGenerator() {
           ...styles,
           top: "-35%", // Устройство будет выступать на 85% сверху
           left: "50%",
-          transform: `translateX(-50%) translateY(${deviceOffset}px) rotate(${deviceRotation}deg)`
+          transform: `translateX(calc(-50% + ${deviceHorizontalOffset}px)) translateY(${deviceOffset}px) rotate(${deviceRotation}deg)`
         };
         break;
       case "top-right":
@@ -1596,7 +1597,7 @@ export default function BannerGenerator() {
           ...styles,
           top: "-35%", // Устройство будет выступать на 85% сверху
           right: "-15%", // Устройство будет выступать на 15% справа
-          transform: `translateY(${deviceOffset}px) rotate(${deviceRotation}deg)`
+          transform: `translateX(${deviceHorizontalOffset}px) translateY(${deviceOffset}px) rotate(${deviceRotation}deg)`
         };
         break;
       case "center-left":
@@ -1604,7 +1605,7 @@ export default function BannerGenerator() {
           ...styles,
           top: "50%",
           left: "-25%", // Устройство будет выступать на 25% слева
-          transform: `translateY(-50%) translateY(${deviceOffset}px) rotate(${deviceRotation}deg)`
+          transform: `translateX(${deviceHorizontalOffset}px) translateY(calc(-50% + ${deviceOffset}px)) rotate(${deviceRotation}deg)`
         };
         break;
       case "center":
@@ -1612,7 +1613,7 @@ export default function BannerGenerator() {
           ...styles,
           top: "50%",
           left: "50%",
-          transform: `translate(-50%, -50%) translateY(${deviceOffset}px) rotate(${deviceRotation}deg)`,
+          transform: `translate(calc(-50% + ${deviceHorizontalOffset}px), calc(-50% + ${deviceOffset}px)) rotate(${deviceRotation}deg)`,
           zIndex: "10", // Добавляем z-index, чтобы устройство было поверх текста
           maxWidth: "75%", // Ограничиваем максимальную ширину для лучшего вида
           margin: "0 auto" // Центрируем горизонтально
@@ -1623,7 +1624,7 @@ export default function BannerGenerator() {
           ...styles,
           top: "50%",
           right: "-25%", // Устройство будет выступать на 25% справа
-          transform: `translateY(-50%) translateY(${deviceOffset}px) rotate(${deviceRotation}deg)`
+          transform: `translateX(${deviceHorizontalOffset}px) translateY(calc(-50% + ${deviceOffset}px)) rotate(${deviceRotation}deg)`
         };
         break;
       case "bottom-left":
@@ -1631,7 +1632,7 @@ export default function BannerGenerator() {
           ...styles,
           bottom: "-35%", // Устройство будет выступать на 85% снизу
           left: "-15%", // Устройство будет выступать на 15% слева
-          transform: `translateY(${deviceOffset}px) rotate(${deviceRotation}deg)`
+          transform: `translateX(${deviceHorizontalOffset}px) translateY(${deviceOffset}px) rotate(${deviceRotation}deg)`
         };
         break;
       case "bottom-center":
@@ -1639,7 +1640,7 @@ export default function BannerGenerator() {
           ...styles,
           bottom: "-35%", // Устройство будет выступать на 85% снизу
           left: "50%",
-          transform: `translateX(-50%) translateY(${deviceOffset}px) rotate(${deviceRotation}deg)`
+          transform: `translateX(calc(-50% + ${deviceHorizontalOffset}px)) translateY(${deviceOffset}px) rotate(${deviceRotation}deg)`
         };
         break;
       case "bottom-right":
@@ -1647,7 +1648,7 @@ export default function BannerGenerator() {
           ...styles,
           bottom: "-35%", // Устройство будет выступать на 85% снизу
           right: "-15%", // Устройство будет выступать на 15% справа
-          transform: `translateY(${deviceOffset}px) rotate(${deviceRotation}deg)`
+          transform: `translateX(${deviceHorizontalOffset}px) translateY(${deviceOffset}px) rotate(${deviceRotation}deg)`
         };
         break;
       default:
@@ -1655,7 +1656,7 @@ export default function BannerGenerator() {
           ...styles,
           top: "50%",
           left: "50%",
-          transform: `translate(-50%, -50%) translateY(${deviceOffset}px) rotate(${deviceRotation}deg)`
+          transform: `translate(calc(-50% + ${deviceHorizontalOffset}px), calc(-50% + ${deviceOffset}px)) rotate(${deviceRotation}deg)`
         };
     }
     
@@ -2763,7 +2764,7 @@ export default function BannerGenerator() {
                     }
                   }}
                   min={50}
-                  max={150}
+                  max={500}
                   unit="%"
                 />
               </div>
@@ -2783,6 +2784,30 @@ export default function BannerGenerator() {
                         currentItem.verticalOffset[deviceType] = { combined: 0, title: 0, description: 0, device: 0 };
                       }
                       currentItem.verticalOffset[deviceType].device = value;
+                      setPreviewItems(updatedItems)
+                    }
+                  }}
+                  min={-300}
+                  max={300}
+                  unit="px"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <Label className="text-xs font-mono">Horizontal Position</Label>
+                </div>
+                <NumberInputWithSlider
+                  value={previewItems[previewIndex]?.horizontalOffset?.[deviceType]?.device || 0}
+                  onChange={(value) => {
+                    const updatedItems = [...previewItems]
+                    if (updatedItems[previewIndex]) {
+                      const currentItem = updatedItems[previewIndex];
+                      if (!currentItem.horizontalOffset) currentItem.horizontalOffset = {};
+                      if (!currentItem.horizontalOffset[deviceType]) {
+                        currentItem.horizontalOffset[deviceType] = { combined: 0, title: 0, description: 0, device: 0 };
+                      }
+                      currentItem.horizontalOffset[deviceType].device = value;
                       setPreviewItems(updatedItems)
                     }
                   }}
@@ -3676,7 +3701,7 @@ export default function BannerGenerator() {
                             : 'text-gray-400 hover:bg-[#3D3D3D] hover:text-gray-200'
                         }`}
                       >
-                        📱 iPhone
+                        iPhone
                       </button>
                       <button
                         onClick={() => handleDeviceTypeChange('ipad')}
@@ -3686,7 +3711,7 @@ export default function BannerGenerator() {
                             : 'text-gray-400 hover:bg-[#3D3D3D] hover:text-gray-200'
                         }`}
                       >
-                        📱 iPad
+                        iPad
                       </button>
                     </div>
 
