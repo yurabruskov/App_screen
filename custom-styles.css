@@ -1,5 +1,6 @@
-/* Custom styles for top bar - VERSION 3.0 */
-/* JavaScript debug-styles.js will show VERSION 3.0 in console */
+/* Custom styles for top bar - VERSION 3.1 */
+/* JavaScript debug-styles.js will show VERSION 3.1 in console */
+/* Now with MutationObserver to handle React dynamic content */
 
 /* Make the parent container display as flex for proper ordering */
 body > main > div > div:first-child {
