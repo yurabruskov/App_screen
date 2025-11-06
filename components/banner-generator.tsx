@@ -3616,7 +3616,7 @@ export default function BannerGenerator() {
               <div className="flex items-center gap-2 ml-4">
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button variant="outline">
+                      <Button variant="outline" className="bg-[#3D3D3D] border-[#4D4D4D] text-gray-300 hover:bg-[#4D4D4D] hover:text-white">
                         <Upload className="mr-2 h-4 w-4" />
                         Import JSON
                       </Button>
@@ -3660,17 +3660,17 @@ export default function BannerGenerator() {
                       </div>
                     </DialogContent>
                   </Dialog>
-                  
-                  <Button variant="outline" onClick={handleJsonExport}>
+
+                  <Button variant="outline" className="bg-[#3D3D3D] border-[#4D4D4D] text-gray-300 hover:bg-[#4D4D4D] hover:text-white" onClick={handleJsonExport}>
                     <Download className="mr-2 h-4 w-4" />
                     Export JSON
                   </Button>
-                  
+
                   <div className="flex items-center gap-2">
-                    <div className="flex rounded border border-[#1E1E1E] p-0.5 bg-[#1E1E1E]">
+                    <div className="flex rounded border border-[#1E1E1E] p-0.5 bg-[#1E1E1E] h-9">
                       <button
                         onClick={() => handleDeviceTypeChange('iphone')}
-                        className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                        className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                           deviceType === 'iphone'
                             ? 'bg-[#0D99FF] text-white'
                             : 'text-gray-400 hover:bg-[#3D3D3D] hover:text-gray-200'
@@ -3680,7 +3680,7 @@ export default function BannerGenerator() {
                       </button>
                       <button
                         onClick={() => handleDeviceTypeChange('ipad')}
-                        className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                        className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                           deviceType === 'ipad'
                             ? 'bg-[#0D99FF] text-white'
                             : 'text-gray-400 hover:bg-[#3D3D3D] hover:text-gray-200'
@@ -3695,7 +3695,10 @@ export default function BannerGenerator() {
                   
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button variant="default" disabled={isExporting}>
+                      <Button
+                        className="bg-yellow-500 hover:bg-yellow-600 text-black font-medium"
+                        disabled={isExporting}
+                      >
                         {isExporting ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -3814,7 +3817,7 @@ export default function BannerGenerator() {
               {/* Right panel - Settings */}
               <div>
                 {/* Панель настроек, растянутая на всю высоту экрана, но ниже шапки */}
-                <div className="fixed top-0 right-0 h-screen w-[320px] z-40" style={{ paddingTop: '65px' }}>
+                <div className="fixed top-0 right-0 h-screen w-[320px] z-40" style={{ paddingTop: '48px' }}>
                   <Card className="h-full rounded-none border-l border-t-0 border-r-0 border-b-0">
                     <CardContent className="p-6 h-full overflow-y-auto">
                       {/* Context-sensitive settings panel */}
