@@ -28,41 +28,24 @@ button[variant="default"]:has(svg + [class*="Fragment"]) {
   color: white !important;
 }
 
-/* iOS-style segment control for device selector */
-.flex.rounded.border {
-  background-color: #f0f0f0 !important;
-  border: 1px solid #e0e0e0 !important;
-  padding: 2px !important;
-  border-radius: 8px !important;
-  height: 40px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 2px !important;
-}
-
+/* Make device selector buttons with uniform gray style */
 .flex.rounded.border button {
   background-color: transparent !important;
-  border: none !important;
-  color: #6b7280 !important;
-  transition: all 0.2s ease !important;
-  padding: 6px 16px !important;
-  border-radius: 6px !important;
-  font-size: 14px !important;
-  font-weight: 500 !important;
-  height: 36px !important;
+  border: 1px solid hsl(var(--input)) !important;
+  color: hsl(var(--muted-foreground)) !important;
+  transition: all 0.2s !important;
 }
 
 .flex.rounded.border button:hover {
-  color: #111827 !important;
+  background-color: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
 }
 
-/* Active device button - iOS style with white background and shadow */
-.flex.rounded.border button[class*="bg-[#0D99FF]"],
-.flex.rounded.border button[data-state="on"],
-.flex.rounded.border button[aria-pressed="true"] {
-  background-color: white !important;
-  color: #111827 !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06) !important;
+/* Active device button */
+.flex.rounded.border button[class*="bg-[#0D99FF]"] {
+  background-color: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+  border-color: hsl(var(--accent)) !important;
 }
 
 /* Make all outline buttons more gray */
