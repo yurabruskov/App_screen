@@ -9,10 +9,10 @@ interface DeviceSelectorProps {
 
 export function DeviceSelector({ selectedDevice, onChange }: DeviceSelectorProps) {
   return (
-    <div className="inline-flex items-center h-10 p-1 bg-gray-100 rounded-lg border border-gray-200">
+    <div className="inline-flex items-center h-10 p-0.5 bg-gray-100 rounded-lg border border-gray-200 gap-0.5">
       <button
         onClick={() => onChange("iphone")}
-        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
           selectedDevice === "iphone"
             ? "bg-white text-gray-900 shadow-sm"
             : "text-gray-600 hover:text-gray-900"
@@ -22,7 +22,7 @@ export function DeviceSelector({ selectedDevice, onChange }: DeviceSelectorProps
       </button>
       <button
         onClick={() => onChange("ipad")}
-        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
           selectedDevice === "ipad"
             ? "bg-white text-gray-900 shadow-sm"
             : "text-gray-600 hover:text-gray-900"

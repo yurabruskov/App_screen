@@ -1,9 +1,7 @@
 "use client"
 
-import { RotateCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { Button } from "@/components/ui/button";
 
 interface NumberInputWithSliderProps {
   value: number;
@@ -12,7 +10,6 @@ interface NumberInputWithSliderProps {
   max: number;
   step?: number;
   unit?: string;
-  defaultValue?: number;
   className?: string;
 }
 
@@ -23,17 +20,8 @@ export function NumberInputWithSlider({
   max,
   step = 1,
   unit,
-  defaultValue,
   className = "",
 }: NumberInputWithSliderProps) {
-  const handleReset = () => {
-    if (defaultValue !== undefined) {
-      onChange(defaultValue);
-    }
-  };
-
-  const showResetButton = defaultValue !== undefined && value !== defaultValue;
-
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <div className="flex-1">
@@ -65,17 +53,6 @@ export function NumberInputWithSlider({
           <span className="text-[10px] font-mono text-gray-500">{unit}</span>
         )}
       </div>
-      {showResetButton && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleReset}
-          className="h-6 w-6 p-0 hover:bg-gray-100 opacity-60 hover:opacity-100 transition-opacity"
-          title="Reset to default"
-        >
-          <RotateCcw className="h-3 w-3" />
-        </Button>
-      )}
     </div>
   );
 }
