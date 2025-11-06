@@ -1,4 +1,5 @@
-/* Custom styles for top bar */
+/* Custom styles for top bar - VERSION 2.0 */
+/* If you see this in console, CSS is loading */
 
 /* Make the parent container display as flex for proper ordering */
 body > main > div > div:first-child {
@@ -109,4 +110,26 @@ body > main > div > div:first-child button {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
+}
+
+/* JavaScript for logging and forced styling */
+
+
+/* FORCED STYLING - Version 2.0 - More aggressive selectors */
+/* Target ALL buttons with variant="default" (Export All Images uses this) */
+button[class*="bg-primary"] {
+  background-color: #FFD700 !important;
+  color: #000000 !important;
+  font-weight: 600 !important;
+}
+
+button[class*="text-primary-foreground"] {
+  background-color: #FFD700 !important;
+  color: #000000 !important;
+}
+
+/* If button contains "Export All" text - most reliable */
+button:has(+ *):contains("Export") {
+  background-color: #FFD700 !important;
+  color: #000000 !important;
 }
