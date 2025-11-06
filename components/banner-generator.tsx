@@ -27,6 +27,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
 import { ColorPicker } from "@/components/color-picker"
 import { LanguageSelector } from "@/components/language-selector"
+import { DeviceSelector } from "@/components/banner/top-bar/DeviceSelector"
+import type { DeviceType } from "@/components/banner/types"
 import { exportBanners } from "@/lib/export-utils"
 import { LANGUAGES, DEFAULT_SETTINGS, DEVICE_POSITIONS } from "@/lib/constants"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -193,6 +195,7 @@ class ImageDB {
 }
 
 export default function BannerGenerator() {
+  const [device, setDevice] = useState<DeviceType>("iphone")
   const [activeLanguage, setActiveLanguage] = useState("en")
   const [bannerSettings, setBannerSettings] = useState(DEFAULT_SETTINGS)
   const [localizedContent, setLocalizedContent] = useState({
@@ -1619,6 +1622,7 @@ export default function BannerGenerator() {
         <header className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">App Store Banner Generator</h1>
           <div className="flex items-center gap-4">
+            <DeviceSelector selectedDevice={device} onChange={setDevice} />
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="outline">
