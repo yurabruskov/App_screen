@@ -1,5 +1,5 @@
-/* Custom styles for top bar - VERSION 2.0 */
-/* If you see this in console, CSS is loading */
+/* Custom styles for top bar - VERSION 3.0 */
+/* JavaScript debug-styles.js will show VERSION 3.0 in console */
 
 /* Make the parent container display as flex for proper ordering */
 body > main > div > div:first-child {
