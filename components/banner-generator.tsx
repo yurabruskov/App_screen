@@ -3614,6 +3614,34 @@ export default function BannerGenerator() {
 
               {/* Right: Controls */}
               <div className="flex items-center gap-2 ml-4">
+                  {/* 1. Device Selector - iPhone/iPad */}
+                  <div className="flex rounded border border-[#1E1E1E] p-0.5 bg-[#1E1E1E]">
+                    <button
+                      onClick={() => handleDeviceTypeChange('iphone')}
+                      className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                        deviceType === 'iphone'
+                          ? 'bg-[#0D99FF] text-white'
+                          : 'text-gray-400 hover:bg-[#3D3D3D] hover:text-gray-200'
+                      }`}
+                    >
+                      📱 iPhone
+                    </button>
+                    <button
+                      onClick={() => handleDeviceTypeChange('ipad')}
+                      className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                        deviceType === 'ipad'
+                          ? 'bg-[#0D99FF] text-white'
+                          : 'text-gray-400 hover:bg-[#3D3D3D] hover:text-gray-200'
+                      }`}
+                    >
+                      📱 iPad
+                    </button>
+                  </div>
+
+                  {/* 2. Language Selector */}
+                  <LanguageSelector languages={LANGUAGES} activeLanguage={activeLanguage} onChange={handleLanguageChange} />
+
+                  {/* 3. Import JSON */}
                   <Dialog>
                     <DialogTrigger asChild>
                       <Button variant="outline">
@@ -3631,14 +3659,14 @@ export default function BannerGenerator() {
                           <div className="flex flex-col gap-4">
                             <div>
                               <Label>Импорт из файла</Label>
-                              <Input 
-                                type="file" 
+                              <Input
+                                type="file"
                                 accept=".json"
                                 onChange={handleImportFile}
                                 className="mt-2"
                               />
                             </div>
-                            
+
                             <div>
                               <Label>Или вставьте JSON текст</Label>
                               <Textarea
@@ -3647,7 +3675,7 @@ export default function BannerGenerator() {
                                 placeholder="Вставьте JSON здесь..."
                                 className="mt-2 min-h-[200px]"
                               />
-                              <Button 
+                              <Button
                                 onClick={handleImportFromText}
                                 className="mt-2"
                                 disabled={!jsonImportText}
@@ -3660,42 +3688,19 @@ export default function BannerGenerator() {
                       </div>
                     </DialogContent>
                   </Dialog>
-                  
+
+                  {/* 4. Export JSON */}
                   <Button variant="outline" onClick={handleJsonExport}>
                     <Download className="mr-2 h-4 w-4" />
                     Export JSON
                   </Button>
-                  
-                  <div className="flex items-center gap-2">
-                    <div className="flex rounded border border-[#1E1E1E] p-0.5 bg-[#1E1E1E]">
-                      <button
-                        onClick={() => handleDeviceTypeChange('iphone')}
-                        className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
-                          deviceType === 'iphone'
-                            ? 'bg-[#0D99FF] text-white'
-                            : 'text-gray-400 hover:bg-[#3D3D3D] hover:text-gray-200'
-                        }`}
-                      >
-                        📱 iPhone
-                      </button>
-                      <button
-                        onClick={() => handleDeviceTypeChange('ipad')}
-                        className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
-                          deviceType === 'ipad'
-                            ? 'bg-[#0D99FF] text-white'
-                            : 'text-gray-400 hover:bg-[#3D3D3D] hover:text-gray-200'
-                        }`}
-                      >
-                        📱 iPad
-                      </button>
-                    </div>
 
-                    <LanguageSelector languages={LANGUAGES} activeLanguage={activeLanguage} onChange={handleLanguageChange} />
-                  </div>
-                  
+                  {/* 5. Export All Images - YELLOW button at the end */}
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button variant="default" disabled={isExporting}>
+                      <Button
+                        className="bg-[#FFD700] hover:bg-[#FFC700] text-black font-semibold ml-auto"
+                        disabled={isExporting}>
                         {isExporting ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
