@@ -623,6 +623,15 @@ export default function BannerGenerator() {
     initialElementOffsetX: number;
     initialElementOffsetY: number;
   } | null>(null);
+
+  // Состояние для отслеживания вращения элемента
+  const [rotatingElementInfo, setRotatingElementInfo] = useState<{
+    bannerId: number;
+    initialRotation: number;
+    centerX: number;
+    centerY: number;
+    initialAngle: number;
+  } | null>(null);
   
   // Создаем экземпляр ImageDB
   const imageDBRef = useRef<ImageDB | null>(null);
@@ -3125,10 +3134,15 @@ export default function BannerGenerator() {
 
           {/* Device/Screenshot */}
           <div
+            id={`device-${item.id}`}
             className={`absolute banner-device-target ${isActive ? "hover:ring-2 hover:ring-blue-300 hover:ring-opacity-50" : ""} ${isActive && draggingElementInfo?.elementType !== 'device' ? 'cursor-grab' : ''} ${draggingElementInfo?.elementType === 'device' ? 'cursor-grabbing' : ''}`}
             data-banner-id={index}
             style={getDevicePositionStyles(item) as React.CSSProperties}
-            onMouseDown={(e) => isActive && handleMouseDown(e, item.id, "device")}
+            onMouseDown={(e) => {
+              if (isActive && !rotatingElementInfo) {
+                handleMouseDown(e, item.id, "device");
+              }
+            }}
             onDoubleClick={(e) => {
               if (isActive) {
                 e.stopPropagation()
@@ -3197,6 +3211,59 @@ export default function BannerGenerator() {
               </div>
               );
             })()}
+
+            {/* Rotation handles - показываем только когда устройство активно */}
+            {isActive && activeElement === "device" && (
+              <>
+                {/* Top-left rotation handle */}
+                <div
+                  className="absolute -top-3 -left-3 w-6 h-6 bg-blue-500 rounded-full border-2 border-white cursor-grab hover:scale-110 transition-transform shadow-lg"
+                  style={{ zIndex: 1000 }}
+                  onMouseDown={(e) => {
+                    const deviceElement = document.getElementById(`device-${item.id}`) as HTMLDivElement;
+                    if (deviceElement) {
+                      handleRotationStart(e, item.id, deviceElement);
+                    }
+                  }}
+                />
+
+                {/* Top-right rotation handle */}
+                <div
+                  className="absolute -top-3 -right-3 w-6 h-6 bg-blue-500 rounded-full border-2 border-white cursor-grab hover:scale-110 transition-transform shadow-lg"
+                  style={{ zIndex: 1000 }}
+                  onMouseDown={(e) => {
+                    const deviceElement = document.getElementById(`device-${item.id}`) as HTMLDivElement;
+                    if (deviceElement) {
+                      handleRotationStart(e, item.id, deviceElement);
+                    }
+                  }}
+                />
+
+                {/* Bottom-left rotation handle */}
+                <div
+                  className="absolute -bottom-3 -left-3 w-6 h-6 bg-blue-500 rounded-full border-2 border-white cursor-grab hover:scale-110 transition-transform shadow-lg"
+                  style={{ zIndex: 1000 }}
+                  onMouseDown={(e) => {
+                    const deviceElement = document.getElementById(`device-${item.id}`) as HTMLDivElement;
+                    if (deviceElement) {
+                      handleRotationStart(e, item.id, deviceElement);
+                    }
+                  }}
+                />
+
+                {/* Bottom-right rotation handle */}
+                <div
+                  className="absolute -bottom-3 -right-3 w-6 h-6 bg-blue-500 rounded-full border-2 border-white cursor-grab hover:scale-110 transition-transform shadow-lg"
+                  style={{ zIndex: 1000 }}
+                  onMouseDown={(e) => {
+                    const deviceElement = document.getElementById(`device-${item.id}`) as HTMLDivElement;
+                    if (deviceElement) {
+                      handleRotationStart(e, item.id, deviceElement);
+                    }
+                  }}
+                />
+              </>
+            )}
           </div>
 
           {/* Action buttons */}
@@ -3518,7 +3585,77 @@ export default function BannerGenerator() {
     if (draggingElementInfo) {
       setDraggingElementInfo(null);
     }
-  }, [draggingElementInfo]);
+    if (rotatingElementInfo) {
+      setRotatingElementInfo(null);
+    }
+  }, [draggingElementInfo, rotatingElementInfo]);
+
+  // Обработчик начала вращения
+  const handleRotationStart = (
+    event: React.MouseEvent,
+    bannerId: number,
+    deviceElement: HTMLDivElement
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const banner = previewItems.find(p => p.id === bannerId);
+    if (!banner) return;
+
+    // Получаем центр элемента
+    const rect = deviceElement.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    // Вычисляем начальный угол между центром и позицией мыши
+    const initialAngle = Math.atan2(
+      event.clientY - centerY,
+      event.clientX - centerX
+    ) * (180 / Math.PI);
+
+    setRotatingElementInfo({
+      bannerId,
+      initialRotation: banner.rotation?.device || 0,
+      centerX,
+      centerY,
+      initialAngle
+    });
+  };
+
+  // Обработчик вращения при движении мыши
+  const handleRotationMove = useCallback((event: MouseEvent) => {
+    if (!rotatingElementInfo) return;
+
+    // Вычисляем текущий угол
+    const currentAngle = Math.atan2(
+      event.clientY - rotatingElementInfo.centerY,
+      event.clientX - rotatingElementInfo.centerX
+    ) * (180 / Math.PI);
+
+    // Вычисляем разницу углов
+    let angleDelta = currentAngle - rotatingElementInfo.initialAngle;
+
+    // Нормализуем угол
+    if (angleDelta > 180) angleDelta -= 360;
+    if (angleDelta < -180) angleDelta += 360;
+
+    const newRotation = rotatingElementInfo.initialRotation + angleDelta;
+
+    setPreviewItems(prevItems =>
+      prevItems.map(item => {
+        if (item.id === rotatingElementInfo.bannerId) {
+          return {
+            ...item,
+            rotation: {
+              ...item.rotation,
+              device: Math.round(newRotation)
+            }
+          };
+        }
+        return item;
+      })
+    );
+  }, [rotatingElementInfo, setPreviewItems]);
 
   // Эффект для добавления и удаления глобальных обработчиков мыши
   useEffect(() => {
@@ -3533,12 +3670,23 @@ export default function BannerGenerator() {
       document.body.style.userSelect = "";
     }
 
+    if (rotatingElementInfo) {
+      window.addEventListener("mousemove", handleRotationMove);
+      window.addEventListener("mouseup", handleMouseUp);
+      document.body.style.userSelect = "none";
+      document.body.style.cursor = "grabbing";
+    } else {
+      window.removeEventListener("mousemove", handleRotationMove);
+    }
+
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mousemove", handleRotationMove);
       window.removeEventListener("mouseup", handleMouseUp);
       document.body.style.userSelect = "";
+      document.body.style.cursor = "";
     };
-  }, [draggingElementInfo, handleMouseMove, handleMouseUp]);
+  }, [draggingElementInfo, rotatingElementInfo, handleMouseMove, handleRotationMove, handleMouseUp]);
 
   // === ФУНКЦИИ УПРАВЛЕНИЯ ПРОЕКТАМИ ===
   const createNewProject = () => {
