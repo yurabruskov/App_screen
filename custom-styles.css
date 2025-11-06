@@ -1,61 +1,105 @@
 /* Custom styles for top bar */
 
-/* Reorder top bar elements using flexbox order */
-/* Find the parent container and set it to flex */
+/* Make the parent container display as flex for proper ordering */
+body > main > div > div:first-child {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+/* Device selector container - keep it first */
 .flex.items-center.gap-2:has(> .flex.rounded.border) {
   order: 1 !important;
 }
 
+/* Import/Export buttons container - second */
 .flex.items-center.gap-2.ml-4 {
   order: 2 !important;
+  margin-left: 0 !important;
 }
 
-/* Make the parent container display as flex if not already */
-body > main > div > div:first-child {
+/* Export All Images button - LAST and YELLOW */
+button:has(> svg.mr-2 + *) {
+  order: 999 !important;
+  background-color: #FFD700 !important;
+  color: #000000 !important;
+  font-weight: 600 !important;
+  border: none !important;
+  margin-left: auto !important;
+}
+
+button:has(> svg.mr-2 + *):hover {
+  background-color: #FFC700 !important;
+  color: #000000 !important;
+}
+
+/* Device selector (iPhone/iPad) - dark theme, same height as other buttons */
+.flex.rounded.border {
+  background-color: #2C2C2C !important;
+  border-color: #3D3D3D !important;
+  height: 2.5rem !important; /* Same as h-10 (40px) */
   display: flex !important;
-  flex-wrap: wrap !important;
+  align-items: center !important;
+  padding: 0.125rem !important;
 }
 
-/* Make Export All Images button blue */
-button:has(> .mr-2.h-4.w-4 + text()[contains(., "Export All Images")]) {
-  background-color: #0D99FF !important;
-  color: white !important;
-}
-
-/* Alternative selector using button text content */
-button[variant="default"]:has(svg + [class*="Fragment"]) {
-  background-color: #0D99FF !important;
-  color: white !important;
-}
-
-/* Make device selector buttons with uniform gray style */
 .flex.rounded.border button {
   background-color: transparent !important;
-  border: 1px solid hsl(var(--input)) !important;
-  color: hsl(var(--muted-foreground)) !important;
+  border: none !important;
+  color: #9CA3AF !important; /* gray-400 */
   transition: all 0.2s !important;
+  height: 2rem !important; /* 32px - fits inside 40px container with padding */
+  padding: 0 0.75rem !important;
+  font-size: 0.875rem !important; /* text-sm */
+  border-radius: 0.375rem !important;
 }
 
 .flex.rounded.border button:hover {
-  background-color: hsl(var(--accent)) !important;
-  color: hsl(var(--accent-foreground)) !important;
+  background-color: #3D3D3D !important;
+  color: #D1D5DB !important; /* gray-300 */
 }
 
 /* Active device button */
-.flex.rounded.border button[class*="bg-[#0D99FF]"] {
-  background-color: hsl(var(--accent)) !important;
-  color: hsl(var(--accent-foreground)) !important;
-  border-color: hsl(var(--accent)) !important;
+.flex.rounded.border button[class*="bg-[#0D99FF]"],
+.flex.rounded.border button[class*="text-white"] {
+  background-color: #0D99FF !important;
+  color: white !important;
 }
 
-/* Make all outline buttons more gray */
-button[class*="outline"] {
-  background-color: hsl(var(--background)) !important;
-  border-color: hsl(var(--input)) !important;
-  color: hsl(var(--muted-foreground)) !important;
+/* Language selector and other dropdowns - dark theme */
+button[role="combobox"],
+button[class*="justify-between"] {
+  background-color: #2C2C2C !important;
+  border-color: #3D3D3D !important;
+  color: #D1D5DB !important; /* gray-300 */
+  height: 2.5rem !important; /* h-10 */
 }
 
-button[class*="outline"]:hover {
-  background-color: hsl(var(--accent)) !important;
-  color: hsl(var(--accent-foreground)) !important;
+button[role="combobox"]:hover,
+button[class*="justify-between"]:hover {
+  background-color: #3D3D3D !important;
+  color: #F3F4F6 !important; /* gray-100 */
+}
+
+/* All outline buttons (Import JSON, Export JSON) - dark theme */
+button[class*="outline"]:not(:has(> svg.mr-2)) {
+  background-color: #2C2C2C !important;
+  border-color: #3D3D3D !important;
+  color: #D1D5DB !important; /* gray-300 */
+  height: 2.5rem !important;
+}
+
+button[class*="outline"]:not(:has(> svg.mr-2)):hover {
+  background-color: #3D3D3D !important;
+  color: #F3F4F6 !important; /* gray-100 */
+  border-color: #4D4D4D !important;
+}
+
+/* Make sure all buttons in top bar have consistent height */
+body > main > div > div:first-child button {
+  height: 2.5rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
