@@ -19,17 +19,24 @@ body > main > div > div:first-child {
   margin-left: 0 !important;
 }
 
-/* Export All Images button - LAST and YELLOW */
-button:has(> svg.mr-2 + *) {
+/* Export All Images button wrapper - LAST position */
+/* The button is inside a Dialog wrapper, so we need to order the wrapper */
+body > main > div > div:first-child > *:has(button[class*="bg-primary"]) {
   order: 999 !important;
+  margin-left: auto !important;
+}
+
+/* Export All Images button - YELLOW color */
+body > main > div > div:first-child button[class*="bg-primary"],
+body > main > div > div:first-child button[class*="text-primary-foreground"] {
   background-color: #FFD700 !important;
   color: #000000 !important;
   font-weight: 600 !important;
   border: none !important;
-  margin-left: auto !important;
 }
 
-button:has(> svg.mr-2 + *):hover {
+body > main > div > div:first-child button[class*="bg-primary"]:hover,
+body > main > div > div:first-child button[class*="text-primary-foreground"]:hover {
   background-color: #FFC700 !important;
   color: #000000 !important;
 }
