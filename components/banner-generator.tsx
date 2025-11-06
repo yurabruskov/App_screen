@@ -419,8 +419,8 @@ interface NumberInputWithSliderProps {
 
 const NumberInputWithSlider = ({ value, onChange, min, max, step = 1, unit, className = "" }: NumberInputWithSliderProps) => {
   return (
-    <div className={`flex items-center gap-2 group ${className}`}>
-      <div className="flex-1 transition-transform duration-200 hover:scale-y-150 hover:py-1">
+    <div className={`flex items-center gap-2 ${className}`}>
+      <div className="flex-1">
         <Slider
           value={[value]}
           min={min}
@@ -1615,7 +1615,6 @@ export default function BannerGenerator() {
           left: "50%",
           transform: `translate(calc(-50% + ${deviceHorizontalOffset}px), calc(-50% + ${deviceOffset}px)) rotate(${deviceRotation}deg)`,
           zIndex: "10", // Добавляем z-index, чтобы устройство было поверх текста
-          maxWidth: "75%", // Ограничиваем максимальную ширину для лучшего вида
           margin: "0 auto" // Центрируем горизонтально
         };
         break;
@@ -3445,7 +3444,7 @@ export default function BannerGenerator() {
       initialElementOffsetX = horizontalOffsets.description;
       initialElementOffsetY = verticalOffsets.description;
     } else if (elementType === "device") {
-      initialElementOffsetX = 0; // Горизонтальное смещение устройства управляется его CSS-позицией
+      initialElementOffsetX = horizontalOffsets.device || 0;
       initialElementOffsetY = verticalOffsets.device;
     } else if (elementType === "text-block") {
       initialElementOffsetX = horizontalOffsets.combined;
@@ -3501,8 +3500,8 @@ export default function BannerGenerator() {
             updatedItem.horizontalOffset[deviceType].description = newOffsetX;
             updatedItem.verticalOffset[deviceType].description = newOffsetY;
           } else if (elementType === "device") {
+            updatedItem.horizontalOffset[deviceType].device = newOffsetX;
             updatedItem.verticalOffset[deviceType].device = newOffsetY;
-            // Горизонтальное пока не трогаем, оно через CSS left/right/transform
           } else if (elementType === "text-block") {
             updatedItem.horizontalOffset[deviceType].combined = newOffsetX;
             updatedItem.verticalOffset[deviceType].combined = newOffsetY;
