@@ -1,4 +1,6 @@
-/* Custom styles for top bar */
+/* Custom styles for top bar - VERSION 3.2 */
+/* JavaScript debug-styles.js will show VERSION 3.2 in console */
+/* Now searches for buttons DEEPER in DOM tree */
 
 /* Make the parent container display as flex for proper ordering */
 body > main > div > div:first-child {
