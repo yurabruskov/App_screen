@@ -99,12 +99,28 @@ interface PreviewItem {
   name: string;
   backgroundColor: string;
   devicePosition: string;
-  deviceScale: number;
+  deviceScale?: {
+    iphone?: number;
+    ipad?: number;
+  } | number; // number для обратной совместимости
   rotation?: {
-    device: number;
-    title: number;
-    description: number;
-    textBlock: number;
+    iphone?: {
+      device: number;
+      title: number;
+      description: number;
+      textBlock: number;
+    };
+    ipad?: {
+      device: number;
+      title: number;
+      description: number;
+      textBlock: number;
+    };
+    // Fallback для обратной совместимости
+    device?: number;
+    title?: number;
+    description?: number;
+    textBlock?: number;
   };
   verticalOffset?: {
     iphone?: {
@@ -165,6 +181,26 @@ interface Project {
   name: string;
   createdAt: number;
 }
+
+// Helper функции для получения device-specific настроек с fallback
+const getDeviceScale = (item: PreviewItem, deviceType: DeviceType): number => {
+  // Если deviceScale - объект с device-specific значениями
+  if (typeof item.deviceScale === 'object' && item.deviceScale !== null) {
+    return item.deviceScale[deviceType] ?? 100;
+  }
+  // Fallback на старое значение (number)
+  return typeof item.deviceScale === 'number' ? item.deviceScale : 100;
+};
+
+const getDeviceRotation = (item: PreviewItem, deviceType: DeviceType, elementType: 'device' | 'title' | 'description' | 'textBlock'): number => {
+  // Пробуем получить device-specific значение
+  const deviceSpecific = item.rotation?.[deviceType]?.[elementType];
+  if (typeof deviceSpecific === 'number') {
+    return deviceSpecific;
+  }
+  // Fallback на общее значение (старая структура)
+  return item.rotation?.[elementType] ?? 0;
+};
 
 // Функция для получения скриншота с fallback на английский язык и устройство
 const getCurrentScreenshot = (previewItem: PreviewItem, currentLanguage: string, currentDeviceType: DeviceType) => {
@@ -630,6 +666,7 @@ export default function BannerGenerator() {
   // Состояние для отслеживания вращения элемента
   const [rotatingElementInfo, setRotatingElementInfo] = useState<{
     bannerId: number;
+    deviceType: DeviceType;
     initialRotation: number;
     centerX: number;
     centerY: number;
@@ -1578,10 +1615,10 @@ export default function BannerGenerator() {
 
     // Получаем значения с проверкой наличия
     const devicePosition = banner.devicePosition || "center";
-    const deviceScale = banner.deviceScale || 100;
+    const deviceScale = getDeviceScale(banner, deviceType);
     const deviceOffset = (banner.verticalOffset?.[deviceType]?.device || banner.verticalOffset?.device) || 0;
     const deviceHorizontalOffset = (banner.horizontalOffset?.[deviceType]?.device) || 0;
-    const deviceRotation = banner.rotation?.device || 0;
+    const deviceRotation = getDeviceRotation(banner, deviceType, 'device');
     
     // Базовая ширина устройства
     const baseWidth = deviceConfig.deviceBaseWidth;
@@ -2554,15 +2591,22 @@ export default function BannerGenerator() {
                     <Label className="text-xs font-mono">{isTitle ? "Поворот заголовка" : "Поворот описания"}</Label>
                   </div>
                   <NumberInputWithSlider
-                    value={currentBanner.rotation?.[isTitle ? "title" : "description"] || 0}
+                    value={getDeviceRotation(currentBanner, deviceType, isTitle ? 'title' : 'description')}
                     onChange={(value) => {
                       const updatedItems = [...previewItems];
                       if (updatedItems[previewIndex]) {
+                        const currentRotation = updatedItems[previewIndex].rotation || {};
+                        const deviceSpecific = typeof currentRotation[deviceType] === 'object' && currentRotation[deviceType] !== null
+                          ? { ...currentRotation[deviceType] }
+                          : { device: 0, title: 0, description: 0, textBlock: 0 };
+
+                        deviceSpecific[isTitle ? 'title' : 'description'] = value;
+
                         updatedItems[previewIndex] = {
                           ...updatedItems[previewIndex],
                           rotation: {
-                            ...updatedItems[previewIndex].rotation,
-                            [isTitle ? 'title' : 'description']: value
+                            ...currentRotation,
+                            [deviceType]: deviceSpecific
                           }
                         };
                         setPreviewItems(updatedItems);
@@ -2640,15 +2684,22 @@ export default function BannerGenerator() {
                     <Label className="font-mono">Поворот блока</Label>
                   </div>
                   <NumberInputWithSlider
-                    value={currentBanner.rotation?.textBlock || 0}
+                    value={getDeviceRotation(currentBanner, deviceType, 'textBlock')}
                     onChange={(value) => {
                       const updatedItems = [...previewItems];
                       if (updatedItems[previewIndex]) {
+                        const currentRotation = updatedItems[previewIndex].rotation || {};
+                        const deviceSpecific = typeof currentRotation[deviceType] === 'object' && currentRotation[deviceType] !== null
+                          ? { ...currentRotation[deviceType] }
+                          : { device: 0, title: 0, description: 0, textBlock: 0 };
+
+                        deviceSpecific.textBlock = value;
+
                         updatedItems[previewIndex] = {
                           ...updatedItems[previewIndex],
                           rotation: {
-                            ...updatedItems[previewIndex].rotation,
-                            textBlock: value
+                            ...currentRotation,
+                            [deviceType]: deviceSpecific
                           }
                         };
                         setPreviewItems(updatedItems);
@@ -2771,13 +2822,21 @@ export default function BannerGenerator() {
                   <Label className="text-xs font-mono">Device Scale</Label>
                 </div>
                 <NumberInputWithSlider
-                  value={currentBanner.deviceScale || 100}
+                  value={getDeviceScale(currentBanner, deviceType)}
                   onChange={(value) => {
                     const updatedItems = [...previewItems];
                     if (updatedItems[previewIndex]) {
+                      // Инициализируем deviceScale как объект если это старое значение
+                      const currentScale = updatedItems[previewIndex].deviceScale;
+                      const newDeviceScale = typeof currentScale === 'object' && currentScale !== null
+                        ? { ...currentScale }
+                        : { iphone: 100, ipad: 100 };
+
+                      newDeviceScale[deviceType] = value;
+
                       updatedItems[previewIndex] = {
                         ...updatedItems[previewIndex],
-                        deviceScale: value,
+                        deviceScale: newDeviceScale,
                       };
                       setPreviewItems(updatedItems);
                     }
@@ -2885,15 +2944,22 @@ export default function BannerGenerator() {
                   <Label className="text-xs font-mono">Rotation</Label>
                 </div>
                 <NumberInputWithSlider
-                  value={currentBanner.rotation?.device || 0}
+                  value={getDeviceRotation(currentBanner, deviceType, 'device')}
                   onChange={(value) => {
                     const updatedItems = [...previewItems];
                     if (updatedItems[previewIndex]) {
+                      const currentRotation = updatedItems[previewIndex].rotation || {};
+                      const deviceSpecific = typeof currentRotation[deviceType] === 'object' && currentRotation[deviceType] !== null
+                        ? { ...currentRotation[deviceType] }
+                        : { device: 0, title: 0, description: 0, textBlock: 0 };
+
+                      deviceSpecific.device = value;
+
                       updatedItems[previewIndex] = {
                         ...updatedItems[previewIndex],
                         rotation: {
-                          ...updatedItems[previewIndex].rotation,
-                          device: value
+                          ...currentRotation,
+                          [deviceType]: deviceSpecific
                         }
                       };
                       setPreviewItems(updatedItems);
@@ -2967,7 +3033,13 @@ export default function BannerGenerator() {
     const { titlePosition, descriptionPosition, separateElements } = getContentPositions(devicePosition)
     const currentOffset = item.verticalOffset?.[deviceType] || item.verticalOffset || { combined: 0, title: 0, description: 0, device: 0 }
     const currentHorizontalOffset = item.horizontalOffset?.[deviceType] || item.horizontalOffset || { combined: 0, title: 0, description: 0 }
-    const currentRotation = item.rotation || { device: 0, title: 0, description: 0, textBlock: 0 }
+    // Получаем device-specific rotation с fallback на старую структуру
+    const currentRotation = {
+      device: getDeviceRotation(item, deviceType, 'device'),
+      title: getDeviceRotation(item, deviceType, 'title'),
+      description: getDeviceRotation(item, deviceType, 'description'),
+      textBlock: getDeviceRotation(item, deviceType, 'textBlock')
+    }
 
     // Helper function to render editable text
     const renderEditableText = (type, content, elementStyle, additionalStyle = {}) => {
@@ -3233,7 +3305,7 @@ export default function BannerGenerator() {
                   onMouseDown={(e) => {
                     const deviceElement = document.getElementById(`device-${item.id}`) as HTMLDivElement;
                     if (deviceElement) {
-                      handleRotationStart(e, item.id, deviceElement);
+                      handleRotationStart(e, item.id, deviceElement, deviceType);
                     }
                   }}
                 />
@@ -3245,7 +3317,7 @@ export default function BannerGenerator() {
                   onMouseDown={(e) => {
                     const deviceElement = document.getElementById(`device-${item.id}`) as HTMLDivElement;
                     if (deviceElement) {
-                      handleRotationStart(e, item.id, deviceElement);
+                      handleRotationStart(e, item.id, deviceElement, deviceType);
                     }
                   }}
                 />
@@ -3257,7 +3329,7 @@ export default function BannerGenerator() {
                   onMouseDown={(e) => {
                     const deviceElement = document.getElementById(`device-${item.id}`) as HTMLDivElement;
                     if (deviceElement) {
-                      handleRotationStart(e, item.id, deviceElement);
+                      handleRotationStart(e, item.id, deviceElement, deviceType);
                     }
                   }}
                 />
@@ -3269,7 +3341,7 @@ export default function BannerGenerator() {
                   onMouseDown={(e) => {
                     const deviceElement = document.getElementById(`device-${item.id}`) as HTMLDivElement;
                     if (deviceElement) {
-                      handleRotationStart(e, item.id, deviceElement);
+                      handleRotationStart(e, item.id, deviceElement, deviceType);
                     }
                   }}
                 />
@@ -3605,7 +3677,8 @@ export default function BannerGenerator() {
   const handleRotationStart = (
     event: React.MouseEvent,
     bannerId: number,
-    deviceElement: HTMLDivElement
+    deviceElement: HTMLDivElement,
+    currentDeviceType: DeviceType
   ) => {
     event.preventDefault();
     event.stopPropagation();
@@ -3626,7 +3699,8 @@ export default function BannerGenerator() {
 
     setRotatingElementInfo({
       bannerId,
-      initialRotation: banner.rotation?.device || 0,
+      deviceType: currentDeviceType,
+      initialRotation: getDeviceRotation(banner, currentDeviceType, 'device'),
       centerX,
       centerY,
       initialAngle
@@ -3655,11 +3729,18 @@ export default function BannerGenerator() {
     setPreviewItems(prevItems =>
       prevItems.map(item => {
         if (item.id === rotatingElementInfo.bannerId) {
+          const currentRotation = item.rotation || {};
+          const deviceSpecific = typeof currentRotation[rotatingElementInfo.deviceType] === 'object' && currentRotation[rotatingElementInfo.deviceType] !== null
+            ? { ...currentRotation[rotatingElementInfo.deviceType] }
+            : { device: 0, title: 0, description: 0, textBlock: 0 };
+
+          deviceSpecific.device = Math.round(newRotation);
+
           return {
             ...item,
             rotation: {
-              ...item.rotation,
-              device: Math.round(newRotation)
+              ...currentRotation,
+              [rotatingElementInfo.deviceType]: deviceSpecific
             }
           };
         }
