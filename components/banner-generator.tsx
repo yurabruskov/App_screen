@@ -1051,14 +1051,21 @@ export default function BannerGenerator() {
                     newItem.localizedScreenshots = {};
                   }
                   // Мерджим загруженные изображения с существующими
+                  // НО НЕ перезаписываем если уже есть File объект
                   for (const device of Object.keys(imageData.localizedScreenshots)) {
                     if (!newItem.localizedScreenshots[device]) {
                       newItem.localizedScreenshots[device] = {};
                     }
-                    newItem.localizedScreenshots[device] = {
-                      ...newItem.localizedScreenshots[device],
-                      ...imageData.localizedScreenshots[device]
-                    };
+                    // Мерджим по языкам
+                    for (const lang of Object.keys(imageData.localizedScreenshots[device])) {
+                      const existingLangData = newItem.localizedScreenshots[device][lang];
+                      // Только загружаем из IndexedDB если НЕТ File объекта в памяти
+                      if (!existingLangData?.file || !(existingLangData.file instanceof File)) {
+                        newItem.localizedScreenshots[device][lang] = imageData.localizedScreenshots[device][lang];
+                      } else {
+                        console.log(`⏭️ Skipping IndexedDB load for ${device}/${lang} - already has File in memory`);
+                      }
+                    }
                   }
                 }
 
