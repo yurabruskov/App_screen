@@ -1121,7 +1121,7 @@ export default function BannerGenerator() {
     if (previewItems.length > 0) {
       loadImagesFromDB();
     }
-  }, [previewItems.length, activeProjectId]); // Запускаем при изменении количества превью ИЛИ смене проекта
+  }, [previewItems.length, activeProjectId, previewItems[0]?.id]); // Запускаем при смене проекта И после обновления ID первого превью
 
   // Загружаем изображения при смене языка с debounce
   useEffect(() => {
