@@ -1518,11 +1518,12 @@ export default function BannerGenerator() {
       const newDescKey = `preview_${newId}_description`
 
       if (newLocalizedContent[langCode]) {
+        // Копируем текст ТОЛЬКО из оригинального слайда, НЕ из описания приложения
         newLocalizedContent[langCode][newTitleKey] =
-          newLocalizedContent[langCode][originalTitleKey] || newLocalizedContent[langCode].title || ""
+          newLocalizedContent[langCode][originalTitleKey] || ""
 
         newLocalizedContent[langCode][newDescKey] =
-          newLocalizedContent[langCode][originalDescKey] || newLocalizedContent[langCode].description || ""
+          newLocalizedContent[langCode][originalDescKey] || ""
       }
     })
 
