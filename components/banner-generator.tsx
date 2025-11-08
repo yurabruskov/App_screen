@@ -1617,59 +1617,67 @@ export default function BannerGenerator() {
 
   // Add new preview
   const addPreview = () => {
-    const newId = previewItems.length > 0 ? Math.max(...previewItems.map((p) => p.id)) + 1 : 1
+    // Находим максимальный ID среди всех устройств
+    const allIds = [
+      ...(previewItems.iphone || []).map(p => p.id),
+      ...(previewItems.ipad || []).map(p => p.id)
+    ];
+    const newId = allIds.length > 0 ? Math.max(...allIds) + 1 : 1
     const colors = ["#FFD700", "#F5F5DC", "#FF6347", "#FFDAB9", "#87CEEB", "#98FB98", "#DDA0DD", "#F0E68C"]
     const randomColor = colors[Math.floor(Math.random() * colors.length)]
 
-    setPreviewItems([
-      ...previewItems,
-      {
-        id: newId,
-        name: `Preview ${newId}`,
-        backgroundColor: randomColor,
-        devicePosition: "center",
-        deviceScale: 100,
-        verticalOffset: {
-          iphone: {
-            combined: 0,
-            title: 0,
-            description: 0,
-            device: 0,
-          },
-          ipad: {
-            combined: 0,
-            title: 0,
-            description: 0,
-            device: 0,
-          },
+    const newPreview = {
+      id: newId,
+      name: `Preview ${newId}`,
+      backgroundColor: randomColor,
+      devicePosition: "center",
+      deviceScale: 100,
+      verticalOffset: {
+        iphone: {
           combined: 0,
           title: 0,
           description: 0,
           device: 0,
         },
-        horizontalOffset: {
-          iphone: {
-            combined: 0,
-            title: 0,
-            description: 0
-          },
-          ipad: {
-            combined: 0,
-            title: 0,
-            description: 0
-          },
+        ipad: {
+          combined: 0,
+          title: 0,
+          description: 0,
+          device: 0,
+        },
+        combined: 0,
+        title: 0,
+        description: 0,
+        device: 0,
+      },
+      horizontalOffset: {
+        iphone: {
           combined: 0,
           title: 0,
           description: 0
         },
-        screenshot: {
-          file: null,
-          borderColor: "#000000",
-          borderWidth: 8,
-          borderRadius: 30,
+        ipad: {
+          combined: 0,
+          title: 0,
+          description: 0
         },
+        combined: 0,
+        title: 0,
+        description: 0
       },
-    ])
+      screenshot: {
+        file: null,
+        borderColor: "#000000",
+        borderWidth: 8,
+        borderRadius: 30,
+      },
+    }
+
+    // Add to current device
+    setPreviewItems(prev => ({
+      ...prev,
+      [deviceType]: [...(prev[deviceType] || []), newPreview]
+    }))
 
     // Scroll to the new banner after it's added
     setTimeout(() => {
@@ -3801,7 +3809,7 @@ export default function BannerGenerator() {
     event.preventDefault();
     event.stopPropagation(); // Останавливаем всплытие, чтобы не конфликтовать с выбором активного баннера
 
-    const banner = previewItems.find(p => p.id === bannerId);
+    const banner = (previewItems[deviceType] || []).find(p => p.id === bannerId);
     if (!banner) return;
 
     let initialElementOffsetX = 0;
@@ -3906,7 +3914,7 @@ export default function BannerGenerator() {
     event.preventDefault();
     event.stopPropagation();
 
-    const banner = previewItems.find(p => p.id === bannerId);
+    const banner = (previewItems[currentDeviceType] || []).find(p => p.id === bannerId);
     if (!banner) return;
 
     // Получаем центр элемента
