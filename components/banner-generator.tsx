@@ -182,6 +182,12 @@ interface Project {
   createdAt: number;
 }
 
+// Интерфейс для device-specific preview items
+interface DevicePreviewItems {
+  iphone: PreviewItem[];
+  ipad: PreviewItem[];
+}
+
 // Helper функции для получения device-specific настроек с fallback
 const getDeviceScale = (item: PreviewItem, deviceType: DeviceType): number => {
   // Если deviceScale - объект с device-specific значениями
@@ -700,7 +706,38 @@ export default function BannerGenerator() {
   }, []);
 
   // Обновим установку начальных значений, добавим проверку localStorage перед установкой дефолтного состояния
-  const [previewItems, setPreviewItems] = useState<PreviewItem[]>(() => {
+  const [previewItems, setPreviewItems] = useState<DevicePreviewItems>(() => {
+    const defaultItem: PreviewItem = {
+      id: 1,
+      name: "Preview 1",
+      backgroundColor: "#FFD700",
+      devicePosition: "center",
+      deviceScale: 100,
+      rotation: {
+        device: 0,
+        title: 0,
+        description: 0,
+        textBlock: 0
+      },
+      verticalOffset: {
+        combined: 0,
+        title: 0,
+        description: 0,
+        device: 0
+      },
+      horizontalOffset: {
+        combined: 0,
+        title: 0,
+        description: 0
+      },
+      screenshot: {
+        file: null,
+        borderColor: "#000000",
+        borderWidth: 8,
+        borderRadius: 30
+      }
+    };
+
     // Попробуем загрузить из localStorage при инициализации
     if (typeof window !== 'undefined' && window.localStorage) {
       try {
@@ -714,48 +751,36 @@ export default function BannerGenerator() {
         if (savedItems) {
           const parsedItems = JSON.parse(savedItems);
           console.log(`Loaded preview items for project ${projectId}:`, parsedItems);
+
+          // Проверяем новый формат (объект с iphone/ipad)
+          if (parsedItems && typeof parsedItems === 'object' && !Array.isArray(parsedItems)) {
+            if (parsedItems.iphone || parsedItems.ipad) {
+              return {
+                iphone: parsedItems.iphone || [defaultItem],
+                ipad: parsedItems.ipad || [defaultItem]
+              };
+            }
+          }
+
+          // Миграция старого формата (массив) - используем для обоих устройств
           if (Array.isArray(parsedItems) && parsedItems.length > 0) {
-            return parsedItems;
+            console.log('📦 Migrating old format to device-specific structure');
+            return {
+              iphone: parsedItems,
+              ipad: JSON.parse(JSON.stringify(parsedItems)) // deep copy
+            };
           }
         }
       } catch (e) {
         console.error('Error loading initial preview items:', e);
       }
     }
-    
+
     // Если не удалось загрузить, используем значение по умолчанию
-    return [
-      {
-        id: 1,
-        name: "Preview 1",
-        backgroundColor: "#FFD700",
-        devicePosition: "center",
-        deviceScale: 100,
-        rotation: {
-          device: 0,
-          title: 0,
-          description: 0,
-          textBlock: 0
-        },
-        verticalOffset: {
-          combined: 0,
-          title: 0,
-          description: 0,
-          device: 0
-        },
-        horizontalOffset: {
-          combined: 0,
-          title: 0,
-          description: 0
-        },
-        screenshot: {
-          file: null,
-          borderColor: "#000000",
-          borderWidth: 8,
-          borderRadius: 30
-        }
-      }
-    ];
+    return {
+      iphone: [defaultItem],
+      ipad: [{ ...defaultItem }] // separate copy for iPad
+    };
   });
 
   // Замените старый хук загрузки данных из localStorage на этот
@@ -803,8 +828,8 @@ export default function BannerGenerator() {
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.localStorage) return;
-    if (!previewItems) return;
-    
+    if (!previewItems || (!previewItems.iphone && !previewItems.ipad)) return;
+
     // Очищаем предыдущий таймер
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
@@ -819,10 +844,11 @@ export default function BannerGenerator() {
       }
 
       try {
-        console.log("Saving previewItems to localStorage", previewItems.length);
-        // Сохраняем ТОЛЬКО минимальные данные, БЕЗ изображений
-        // Изображения хранятся в IndexedDB, а в localStorage только метаданные
-        const minimalData = previewItems.map(item => ({
+        const totalCount = (previewItems.iphone?.length || 0) + (previewItems.ipad?.length || 0);
+        console.log(`Saving previewItems to localStorage - iPhone: ${previewItems.iphone?.length || 0}, iPad: ${previewItems.ipad?.length || 0}`);
+
+        // Функция для удаления изображений из item
+        const stripImages = (item: PreviewItem) => ({
           id: item.id,
           name: item.name,
           backgroundColor: item.backgroundColor,
@@ -838,12 +864,18 @@ export default function BannerGenerator() {
             // ВАЖНО: file и dataUrl НЕ сохраняем - они в IndexedDB
           }
           // ВАЖНО: localizedScreenshots НЕ сохраняем - они в IndexedDB
-        }));
+        });
+
+        // Сохраняем device-specific структуру
+        const minimalData: DevicePreviewItems = {
+          iphone: previewItems.iphone?.map(stripImages) || [],
+          ipad: previewItems.ipad?.map(stripImages) || []
+        };
 
         const dataToSave = JSON.stringify(minimalData);
         const sizeInKB = new Blob([dataToSave]).size / 1024;
-        console.log(`💾 [v2.3] Saving ${sizeInKB.toFixed(2)}KB to localStorage for project ${activeProjectId} (images excluded)`);
-        console.log(`💾 [v2.3] Preview 1 rotation.device: ${minimalData[0]?.rotation?.device ?? 'undefined'}`);
+        console.log(`💾 [v2.4] Saving ${sizeInKB.toFixed(2)}KB to localStorage for project ${activeProjectId} (images excluded)`);
+        console.log(`💾 [v2.4] iPhone preview 1 rotation.device: ${minimalData.iphone[0]?.rotation?.device ?? 'undefined'}`);
 
         const projectKey = `project_${activeProjectId}_previewItems`;
         localStorage.setItem(projectKey, dataToSave);
@@ -866,8 +898,9 @@ export default function BannerGenerator() {
 
   // Загружаем данные проекта при смене активного проекта
   useEffect(() => {
-    console.log(`🔄 [v2.3] Switching to project ${activeProjectId}`);
-    console.log(`🔄 [v2.3] Current rotation.device BEFORE load: ${previewItems[0]?.rotation?.device ?? 'undefined'}`);
+    console.log(`🔄 [v2.4] Switching to project ${activeProjectId}`);
+    console.log(`🔄 [v2.4] Current iPhone items: ${previewItems.iphone?.length ?? 0}, iPad items: ${previewItems.ipad?.length ?? 0}`);
+
     // Устанавливаем флаг загрузки чтобы предотвратить сохранение
     isLoadingProjectRef.current = true;
 
@@ -878,6 +911,18 @@ export default function BannerGenerator() {
       console.log("🧹 Cleared pending save timer");
     }
 
+    const defaultItem: PreviewItem = {
+      id: 1,
+      name: "Preview 1",
+      backgroundColor: "#FFD700",
+      devicePosition: "center",
+      deviceScale: 100,
+      rotation: { device: 0, title: 0, description: 0, textBlock: 0 },
+      verticalOffset: { combined: 0, title: 0, description: 0, device: 0 },
+      horizontalOffset: { combined: 0, title: 0, description: 0 },
+      screenshot: { file: null, borderColor: "#000000", borderWidth: 8, borderRadius: 30 }
+    };
+
     if (typeof window !== 'undefined' && window.localStorage) {
       try {
         // Загружаем previewItems
@@ -885,22 +930,44 @@ export default function BannerGenerator() {
         const savedItems = localStorage.getItem(previewKey);
         if (savedItems) {
           const parsedItems = JSON.parse(savedItems);
-          console.log(`✅ [v2.3] Loaded ${parsedItems.length} preview items for project ${activeProjectId}`);
-          console.log(`✅ [v2.3] Loaded rotation.device from localStorage: ${parsedItems[0]?.rotation?.device ?? 'undefined'}`);
-          setPreviewItems(parsedItems);
+
+          // Проверяем новый формат (объект с iphone/ipad)
+          if (parsedItems && typeof parsedItems === 'object' && !Array.isArray(parsedItems)) {
+            if (parsedItems.iphone || parsedItems.ipad) {
+              console.log(`✅ [v2.4] Loaded device-specific items - iPhone: ${parsedItems.iphone?.length ?? 0}, iPad: ${parsedItems.ipad?.length ?? 0}`);
+              setPreviewItems({
+                iphone: parsedItems.iphone || [defaultItem],
+                ipad: parsedItems.ipad || [defaultItem]
+              });
+            } else {
+              // Пустой объект, используем default
+              console.log(`No saved preview data for project ${activeProjectId}, using default`);
+              setPreviewItems({
+                iphone: [defaultItem],
+                ipad: [{ ...defaultItem }]
+              });
+            }
+          }
+          // Миграция старого формата (массив)
+          else if (Array.isArray(parsedItems) && parsedItems.length > 0) {
+            console.log(`📦 [v2.4] Migrating old format (${parsedItems.length} items) to device-specific structure`);
+            setPreviewItems({
+              iphone: parsedItems,
+              ipad: JSON.parse(JSON.stringify(parsedItems)) // deep copy
+            });
+          } else {
+            console.log(`No saved preview data for project ${activeProjectId}, using default`);
+            setPreviewItems({
+              iphone: [defaultItem],
+              ipad: [{ ...defaultItem }]
+            });
+          }
         } else {
           console.log(`No saved preview data for project ${activeProjectId}, using default`);
-          setPreviewItems([{
-            id: 1,
-            name: "Preview 1",
-            backgroundColor: "#FFD700",
-            devicePosition: "center",
-            deviceScale: 100,
-            rotation: { device: 0, title: 0, description: 0, textBlock: 0 },
-            verticalOffset: { combined: 0, title: 0, description: 0, device: 0 },
-            horizontalOffset: { combined: 0, title: 0, description: 0 },
-            screenshot: { file: null, borderColor: "#000000", borderWidth: 8, borderRadius: 30 }
-          }]);
+          setPreviewItems({
+            iphone: [defaultItem],
+            ipad: [{ ...defaultItem }]
+          });
         }
 
         // Загружаем bannerSettings
@@ -961,11 +1028,14 @@ export default function BannerGenerator() {
       if (!imageDBRef.current) return;
 
       try {
-        // Создаем Map для хранения загруженных изображений, НЕ используя previewItems из замыкания
-        const loadedImages = new Map<number, any>();
+        // Загружаем изображения для обоих устройств
+        const loadedImagesIPhone = new Map<number, any>();
+        const loadedImagesIPad = new Map<number, any>();
 
-        for (let i = 0; i < previewItems.length; i++) {
-          const item = previewItems[i];
+        // Загружаем для iPhone
+        const iphoneItems = previewItems.iphone || [];
+        for (let i = 0; i < iphoneItems.length; i++) {
+          const item = iphoneItems[i];
           const imageData: any = {
             screenshot: null,
             localizedScreenshots: {}
@@ -1060,17 +1130,90 @@ export default function BannerGenerator() {
 
           // Сохраняем данные изображений если что-то загрузилось
           if (imageData.screenshot || Object.keys(imageData.localizedScreenshots).length > 0) {
-            loadedImages.set(i, imageData);
+            loadedImagesIPhone.set(i, imageData);
+          }
+        }
+
+        // Загружаем для iPad
+        const ipadItems = previewItems.ipad || [];
+        for (let i = 0; i < ipadItems.length; i++) {
+          const item = ipadItems[i];
+          const imageData: any = {
+            screenshot: null,
+            localizedScreenshots: {}
+          };
+
+          // Загружаем основной скриншот (fallback)
+          const oldImageId = `preview_${item.id}`;
+          try {
+            const imageFile = await imageDBRef.current.getImage(oldImageId);
+            if (imageFile) {
+              console.log(`Loaded default image for preview ${oldImageId}`);
+              const dataUrl = await fileToDataURL(imageFile);
+              imageData.screenshot = {
+                file: imageFile,
+                dataUrl,
+                borderColor: item.screenshot.borderColor,
+                borderWidth: item.screenshot.borderWidth,
+                borderRadius: item.screenshot.borderRadius
+              };
+            }
+          } catch (error) {
+            console.error(`Error loading default image for ${oldImageId}:`, error);
+          }
+
+          // Загружаем локализованные скриншоты
+          const devices: DeviceType[] = ['iphone', 'ipad'];
+          for (const device of devices) {
+            for (const lang of LANGUAGES) {
+              const newImageId = getImageKey(item.id, device, lang.code);
+              const oldImageId = `preview_${item.id}_${device}_${lang.code}`;
+
+              try {
+                let imageFile = await imageDBRef.current.getImage(newImageId);
+                let usedKey = newImageId;
+
+                if (!imageFile) {
+                  imageFile = await imageDBRef.current.getImage(oldImageId);
+                  usedKey = oldImageId;
+                }
+
+                if (imageFile) {
+                  console.log(`Loaded device-specific image from ${usedKey}`);
+                  const dataUrl = await fileToDataURL(imageFile);
+
+                  if (!imageData.localizedScreenshots[device]) {
+                    imageData.localizedScreenshots[device] = {};
+                  }
+                  imageData.localizedScreenshots[device][lang.code] = {
+                    file: imageFile,
+                    dataUrl,
+                    borderColor: item.screenshot.borderColor,
+                    borderWidth: item.screenshot.borderWidth,
+                    borderRadius: item.screenshot.borderRadius,
+                  };
+                }
+              } catch (error) {
+                console.error(`Error loading device-specific image:`, error);
+              }
+            }
+          }
+
+          // Сохраняем данные изображений если что-то загрузилось
+          if (imageData.screenshot || Object.keys(imageData.localizedScreenshots).length > 0) {
+            loadedImagesIPad.set(i, imageData);
           }
         }
 
         // Обновляем состояние только если были изменения
-        if (loadedImages.size > 0) {
-          console.log(`📥 Loaded ${loadedImages.size} images from IndexedDB`);
+        const totalLoaded = loadedImagesIPhone.size + loadedImagesIPad.size;
+        if (totalLoaded > 0) {
+          console.log(`📥 Loaded ${totalLoaded} images from IndexedDB (iPhone: ${loadedImagesIPhone.size}, iPad: ${loadedImagesIPad.size})`);
           // ВАЖНО: используем функциональное обновление с prevItems
           setPreviewItems(prevItems => {
-            return prevItems.map((prevItem, i) => {
-              const imageData = loadedImages.get(i);
+            // Обновляем iPhone items
+            const updatedIPhone = (prevItems.iphone || []).map((prevItem, i) => {
+              const imageData = loadedImagesIPhone.get(i);
               if (imageData) {
                 const newItem = {...prevItem};
 
@@ -1110,18 +1253,68 @@ export default function BannerGenerator() {
               }
               return prevItem;
             });
+
+            // Обновляем iPad items
+            const updatedIPad = (prevItems.ipad || []).map((prevItem, i) => {
+              const imageData = loadedImagesIPad.get(i);
+              if (imageData) {
+                const newItem = {...prevItem};
+
+                // Обновляем screenshot если загрузился
+                if (imageData.screenshot) {
+                  newItem.screenshot = {
+                    ...newItem.screenshot,
+                    ...imageData.screenshot
+                  };
+                }
+
+                // Обновляем localizedScreenshots если загрузились
+                if (Object.keys(imageData.localizedScreenshots).length > 0) {
+                  if (!newItem.localizedScreenshots) {
+                    newItem.localizedScreenshots = {};
+                  }
+                  for (const device of Object.keys(imageData.localizedScreenshots)) {
+                    if (!newItem.localizedScreenshots[device]) {
+                      newItem.localizedScreenshots[device] = {};
+                    }
+                    for (const lang of Object.keys(imageData.localizedScreenshots[device])) {
+                      const existingLangData = newItem.localizedScreenshots[device][lang];
+                      if (!existingLangData?.file || !(existingLangData.file instanceof File)) {
+                        newItem.localizedScreenshots[device][lang] = imageData.localizedScreenshots[device][lang];
+                      } else {
+                        console.log(`⏭️ Skipping IndexedDB load for ${device}/${lang} - already has File in memory`);
+                      }
+                    }
+                  }
+                }
+
+                return newItem;
+              }
+              return prevItem;
+            });
+
+            return {
+              iphone: updatedIPhone,
+              ipad: updatedIPad
+            };
           });
         }
       } catch (error) {
         console.error("Error loading images from IndexedDB:", error);
       }
     };
-    
+
     // Загружаем изображения только если есть превью
-    if (previewItems.length > 0) {
+    const hasItems = (previewItems.iphone?.length || 0) > 0 || (previewItems.ipad?.length || 0) > 0;
+    if (hasItems) {
       loadImagesFromDB();
     }
-  }, [previewItems.length, activeProjectId]); // Запускаем при изменении количества превью ИЛИ смене проекта
+  }, [
+    (previewItems.iphone?.length || 0) + (previewItems.ipad?.length || 0),
+    activeProjectId,
+    previewItems.iphone?.[0]?.id,
+    previewItems.ipad?.[0]?.id
+  ]); // Запускаем при смене проекта И после обновления ID первого превью
 
   // Загружаем изображения при смене языка с debounce
   useEffect(() => {
@@ -1424,59 +1617,67 @@ export default function BannerGenerator() {
 
   // Add new preview
   const addPreview = () => {
-    const newId = previewItems.length > 0 ? Math.max(...previewItems.map((p) => p.id)) + 1 : 1
+    // Находим максимальный ID среди всех устройств
+    const allIds = [
+      ...(previewItems.iphone || []).map(p => p.id),
+      ...(previewItems.ipad || []).map(p => p.id)
+    ];
+    const newId = allIds.length > 0 ? Math.max(...allIds) + 1 : 1
     const colors = ["#FFD700", "#F5F5DC", "#FF6347", "#FFDAB9", "#87CEEB", "#98FB98", "#DDA0DD", "#F0E68C"]
     const randomColor = colors[Math.floor(Math.random() * colors.length)]
 
-    setPreviewItems([
-      ...previewItems,
-      {
-        id: newId,
-        name: `Preview ${newId}`,
-        backgroundColor: randomColor,
-        devicePosition: "center",
-        deviceScale: 100,
-        verticalOffset: {
-          iphone: {
-            combined: 0,
-            title: 0,
-            description: 0,
-            device: 0,
-          },
-          ipad: {
-            combined: 0,
-            title: 0,
-            description: 0,
-            device: 0,
-          },
+    const newPreview = {
+      id: newId,
+      name: `Preview ${newId}`,
+      backgroundColor: randomColor,
+      devicePosition: "center",
+      deviceScale: 100,
+      verticalOffset: {
+        iphone: {
           combined: 0,
           title: 0,
           description: 0,
           device: 0,
         },
-        horizontalOffset: {
-          iphone: {
-            combined: 0,
-            title: 0,
-            description: 0
-          },
-          ipad: {
-            combined: 0,
-            title: 0,
-            description: 0
-          },
+        ipad: {
+          combined: 0,
+          title: 0,
+          description: 0,
+          device: 0,
+        },
+        combined: 0,
+        title: 0,
+        description: 0,
+        device: 0,
+      },
+      horizontalOffset: {
+        iphone: {
           combined: 0,
           title: 0,
           description: 0
         },
-        screenshot: {
-          file: null,
-          borderColor: "#000000",
-          borderWidth: 8,
-          borderRadius: 30,
+        ipad: {
+          combined: 0,
+          title: 0,
+          description: 0
         },
+        combined: 0,
+        title: 0,
+        description: 0
       },
-    ])
+      screenshot: {
+        file: null,
+        borderColor: "#000000",
+        borderWidth: 8,
+        borderRadius: 30,
+      },
+    }
+
+    // Add to current device
+    setPreviewItems(prev => ({
+      ...prev,
+      [deviceType]: [...(prev[deviceType] || []), newPreview]
+    }))
 
     // Scroll to the new banner after it's added
     setTimeout(() => {
@@ -1488,10 +1689,17 @@ export default function BannerGenerator() {
 
   // Duplicate preview
   const duplicatePreview = (id) => {
-    const previewToDuplicate = previewItems.find((p) => p.id === id)
+    // Ищем в текущем deviceType
+    const currentItems = previewItems[deviceType] || [];
+    const previewToDuplicate = currentItems.find((p) => p.id === id)
     if (!previewToDuplicate) return
 
-    const newId = previewItems.length > 0 ? Math.max(...previewItems.map((p) => p.id)) + 1 : 1
+    // Находим максимальный ID среди всех устройств
+    const allIds = [
+      ...(previewItems.iphone || []).map(p => p.id),
+      ...(previewItems.ipad || []).map(p => p.id)
+    ];
+    const newId = allIds.length > 0 ? Math.max(...allIds) + 1 : 1
 
     // Create a new preview with the same settings
     const newPreview = {
@@ -1504,8 +1712,11 @@ export default function BannerGenerator() {
       },
     }
 
-    // Add the new preview
-    setPreviewItems([...previewItems, newPreview])
+    // Add the new preview to current device
+    setPreviewItems(prev => ({
+      ...prev,
+      [deviceType]: [...(prev[deviceType] || []), newPreview]
+    }))
 
     // Duplicate localized content for all languages
     const newLocalizedContent = { ...localizedContent }
@@ -1518,18 +1729,19 @@ export default function BannerGenerator() {
       const newDescKey = `preview_${newId}_description`
 
       if (newLocalizedContent[langCode]) {
+        // Копируем текст ТОЛЬКО из оригинального слайда, НЕ из описания приложения
         newLocalizedContent[langCode][newTitleKey] =
-          newLocalizedContent[langCode][originalTitleKey] || newLocalizedContent[langCode].title || ""
+          newLocalizedContent[langCode][originalTitleKey] || ""
 
         newLocalizedContent[langCode][newDescKey] =
-          newLocalizedContent[langCode][originalDescKey] || newLocalizedContent[langCode].description || ""
+          newLocalizedContent[langCode][originalDescKey] || ""
       }
     })
 
     setLocalizedContent(newLocalizedContent)
 
-    // Switch to the new preview
-    setPreviewIndex(previewItems.length)
+    // Switch to the new preview (last in current device list)
+    setPreviewIndex(currentItems.length)
 
     // Scroll to the new banner after it's added
     setTimeout(() => {
@@ -1541,7 +1753,8 @@ export default function BannerGenerator() {
 
   // Модифицируем removePreview для удаления изображений из IndexedDB
   const removePreview = (id: number) => {
-    if (previewItems.length <= 1) return; // Don't remove the last preview
+    const currentItems = previewItems[deviceType] || [];
+    if (currentItems.length <= 1) return; // Don't remove the last preview from current device
 
     // Удаляем изображение из IndexedDB
     if (imageDBRef.current) {
@@ -1550,23 +1763,31 @@ export default function BannerGenerator() {
         .catch(error => console.error('Error deleting image from IndexedDB:', error));
     }
 
-    const newPreviewItems = previewItems.filter((p) => p.id !== id);
-    setPreviewItems(newPreviewItems);
+    // Удаляем только из текущего устройства
+    const newDeviceItems = currentItems.filter((p) => p.id !== id);
+    setPreviewItems(prev => ({
+      ...prev,
+      [deviceType]: newDeviceItems
+    }));
 
     // Adjust preview index if needed
-    if (previewIndex >= newPreviewItems.length) {
-      setPreviewIndex(newPreviewItems.length - 1);
+    if (previewIndex >= newDeviceItems.length) {
+      setPreviewIndex(newDeviceItems.length - 1);
     }
   };
 
   // Update preview settings
   const updatePreview = (id, field, value) => {
-    setPreviewItems(previewItems.map((p) => (p.id === id ? { ...p, [field]: value } : p)))
+    setPreviewItems(prev => ({
+      ...prev,
+      [deviceType]: (prev[deviceType] || []).map((p) => (p.id === id ? { ...p, [field]: value } : p))
+    }))
   }
 
   // Update screenshot settings
   const updateScreenshotSetting = (field, value) => {
-    const updatedItems = [...previewItems]
+    const currentDeviceItems = previewItems[deviceType] || [];
+    const updatedItems = [...currentDeviceItems]
     if (updatedItems[previewIndex]) {
       const currentItem = updatedItems[previewIndex]
 
@@ -1596,7 +1817,10 @@ export default function BannerGenerator() {
         screenshot: updatedScreenshot,
         localizedScreenshots: updatedLocalizedScreenshots,
       }
-      setPreviewItems(updatedItems)
+      setPreviewItems(prev => ({
+        ...prev,
+        [deviceType]: updatedItems
+      }))
     }
   }
 
@@ -2103,21 +2327,24 @@ export default function BannerGenerator() {
         const newItems = [...previewItems];
 
         if (newItems[bannerIndex]) {
-          const item = newItems[bannerIndex];
+          // ВАЖНО: создаем глубокую копию объекта, чтобы не мутировать оригинал
+          const originalItem = newItems[bannerIndex];
+          const item = {
+            ...originalItem,
+            localizedScreenshots: originalItem.localizedScreenshots
+              ? { ...originalItem.localizedScreenshots }
+              : {}
+          };
+
+          // Создаем копию для конкретного устройства
+          if (item.localizedScreenshots[deviceToUse]) {
+            item.localizedScreenshots[deviceToUse] = { ...item.localizedScreenshots[deviceToUse] };
+          } else {
+            item.localizedScreenshots[deviceToUse] = {};
+          }
+
           console.log(`📤 uploadScreenshotToBanner: Processing banner ${item.id}`);
           console.log(`📤 uploadScreenshotToBanner: Current localizedScreenshots:`, item.localizedScreenshots);
-
-          // Инициализируем localizedScreenshots если его нет
-          if (!item.localizedScreenshots) {
-            item.localizedScreenshots = {};
-            console.log(`📤 uploadScreenshotToBanner: Initialized localizedScreenshots for banner ${item.id}`);
-          }
-
-          // Инициализируем устройство если его нет
-          if (!item.localizedScreenshots[deviceToUse]) {
-            item.localizedScreenshots[deviceToUse] = {};
-            console.log(`📤 uploadScreenshotToBanner: Initialized localizedScreenshots[${deviceToUse}] for banner ${item.id}`);
-          }
 
           // Сохраняем для текущего устройства и языка
           console.log(`📤 uploadScreenshotToBanner: Before setting - localizedScreenshots[${deviceToUse}] keys:`, Object.keys(item.localizedScreenshots[deviceToUse]));
@@ -2130,6 +2357,9 @@ export default function BannerGenerator() {
           };
           console.log(`📤 uploadScreenshotToBanner: After setting - localizedScreenshots keys:`, Object.keys(item.localizedScreenshots));
           console.log(`📤 uploadScreenshotToBanner: Set localized screenshot for ${langToUse} in state with dataUrl`);
+
+          // Обновляем элемент в массиве с новым объектом
+          newItems[bannerIndex] = item;
 
           // СНАЧАЛА обновляем состояние
           setPreviewItems(newItems);
@@ -2233,17 +2463,18 @@ export default function BannerGenerator() {
         const langFolder = zip.folder(langCode);
         if (!langFolder) continue;
         
-        // Перебираем все баннеры
-        for (let i = 0; i < previewItems.length; i++) {
+        // Перебираем все баннеры текущего устройства
+        const currentDeviceItems = previewItems[deviceType] || [];
+        for (let i = 0; i < currentDeviceItems.length; i++) {
           try {
             // Устанавливаем текущий язык и индекс
             setActiveLanguage(langCode);
             setPreviewIndex(i);
-            
+
             // Даем время на обновление интерфейса
             await new Promise(resolve => setTimeout(resolve, 100));
-            
-            const banner = previewItems[i];
+
+            const banner = currentDeviceItems[i];
             console.log(`Экспорт баннера #${banner.id} для языка ${langCode}`);
             
             // Получаем DOM-элемент баннера
@@ -2370,7 +2601,7 @@ export default function BannerGenerator() {
               }
             }
           } catch (error) {
-            console.error(`Ошибка при экспорте баннера ${previewItems[i].id}:`, error);
+            console.error(`Ошибка при экспорте баннера ${currentDeviceItems[i]?.id}:`, error);
           }
         }
       }
@@ -2423,7 +2654,7 @@ export default function BannerGenerator() {
 
   // Обновляем функцию renderSettingsPanel, чтобы добавить настройки высоты
   const renderSettingsPanel = () => {
-    const currentBanner = previewItems[previewIndex] || {} as PreviewItem;
+    const currentBanner = (previewItems[deviceType] || [])[previewIndex] || {} as PreviewItem;
 
     switch (activeElement) {
       case "none":
@@ -3578,7 +3809,7 @@ export default function BannerGenerator() {
     event.preventDefault();
     event.stopPropagation(); // Останавливаем всплытие, чтобы не конфликтовать с выбором активного баннера
 
-    const banner = previewItems.find(p => p.id === bannerId);
+    const banner = (previewItems[deviceType] || []).find(p => p.id === bannerId);
     if (!banner) return;
 
     let initialElementOffsetX = 0;
@@ -3683,7 +3914,7 @@ export default function BannerGenerator() {
     event.preventDefault();
     event.stopPropagation();
 
-    const banner = previewItems.find(p => p.id === bannerId);
+    const banner = (previewItems[currentDeviceType] || []).find(p => p.id === bannerId);
     if (!banner) return;
 
     // Получаем центр элемента
@@ -4058,7 +4289,7 @@ export default function BannerGenerator() {
                         className="flex overflow-x-auto pb-4 pt-2 px-2 -mx-2 mb-4 snap-x"
                         style={{ scrollbarWidth: "thin" }}
                       >
-                        {previewItems.map((item, index) => renderBanner(item, index))}
+                        {(previewItems[deviceType] || []).map((item, index) => renderBanner(item, index))}
 
                         <div
                           className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-primary hover:bg-gray-50"
