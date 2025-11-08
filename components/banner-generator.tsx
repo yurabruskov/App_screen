@@ -2104,21 +2104,24 @@ export default function BannerGenerator() {
         const newItems = [...previewItems];
 
         if (newItems[bannerIndex]) {
-          const item = newItems[bannerIndex];
+          // ВАЖНО: создаем глубокую копию объекта, чтобы не мутировать оригинал
+          const originalItem = newItems[bannerIndex];
+          const item = {
+            ...originalItem,
+            localizedScreenshots: originalItem.localizedScreenshots
+              ? { ...originalItem.localizedScreenshots }
+              : {}
+          };
+
+          // Создаем копию для конкретного устройства
+          if (item.localizedScreenshots[deviceToUse]) {
+            item.localizedScreenshots[deviceToUse] = { ...item.localizedScreenshots[deviceToUse] };
+          } else {
+            item.localizedScreenshots[deviceToUse] = {};
+          }
+
           console.log(`📤 uploadScreenshotToBanner: Processing banner ${item.id}`);
           console.log(`📤 uploadScreenshotToBanner: Current localizedScreenshots:`, item.localizedScreenshots);
-
-          // Инициализируем localizedScreenshots если его нет
-          if (!item.localizedScreenshots) {
-            item.localizedScreenshots = {};
-            console.log(`📤 uploadScreenshotToBanner: Initialized localizedScreenshots for banner ${item.id}`);
-          }
-
-          // Инициализируем устройство если его нет
-          if (!item.localizedScreenshots[deviceToUse]) {
-            item.localizedScreenshots[deviceToUse] = {};
-            console.log(`📤 uploadScreenshotToBanner: Initialized localizedScreenshots[${deviceToUse}] for banner ${item.id}`);
-          }
 
           // Сохраняем для текущего устройства и языка
           console.log(`📤 uploadScreenshotToBanner: Before setting - localizedScreenshots[${deviceToUse}] keys:`, Object.keys(item.localizedScreenshots[deviceToUse]));
@@ -2131,6 +2134,9 @@ export default function BannerGenerator() {
           };
           console.log(`📤 uploadScreenshotToBanner: After setting - localizedScreenshots keys:`, Object.keys(item.localizedScreenshots));
           console.log(`📤 uploadScreenshotToBanner: Set localized screenshot for ${langToUse} in state with dataUrl`);
+
+          // Обновляем элемент в массиве с новым объектом
+          newItems[bannerIndex] = item;
 
           // СНАЧАЛА обновляем состояние
           setPreviewItems(newItems);
