@@ -1568,10 +1568,10 @@ export default function BannerGenerator() {
       const dataUrl = await fileToDataURL(file);
       console.log(`📤 Converted file to data URL, length: ${dataUrl.length}`);
 
-      const newItems = [...previewItems];
+      const currentDeviceItems = [...(previewItems[deviceToUse] || [])];
 
-      if (newItems[previewIndex]) {
-        const item = newItems[previewIndex];
+      if (currentDeviceItems[previewIndex]) {
+        const item = currentDeviceItems[previewIndex];
         console.log(`📤 Processing preview ${item.id}`);
 
         // Инициализируем localizedScreenshots если его нет
@@ -1597,7 +1597,10 @@ export default function BannerGenerator() {
         console.log(`📤 Set localized screenshot for ${deviceToUse}/${langToUse} in state with dataUrl`);
 
         // СНАЧАЛА обновляем состояние
-        setPreviewItems(newItems);
+        setPreviewItems(prev => ({
+          ...prev,
+          [deviceToUse]: currentDeviceItems
+        }));
         console.log(`📤 Updated React state`);
 
         // Принудительно обновляем UI
@@ -2330,11 +2333,11 @@ export default function BannerGenerator() {
         const dataUrl = await fileToDataURL(file);
         console.log(`📤 uploadScreenshotToBanner: Converted file to data URL, length: ${dataUrl.length}`);
 
-        const newItems = [...previewItems];
+        const currentDeviceItems = [...(previewItems[deviceToUse] || [])];
 
-        if (newItems[bannerIndex]) {
+        if (currentDeviceItems[bannerIndex]) {
           // ВАЖНО: создаем глубокую копию объекта, чтобы не мутировать оригинал
-          const originalItem = newItems[bannerIndex];
+          const originalItem = currentDeviceItems[bannerIndex];
           const item = {
             ...originalItem,
             localizedScreenshots: originalItem.localizedScreenshots
@@ -2365,10 +2368,13 @@ export default function BannerGenerator() {
           console.log(`📤 uploadScreenshotToBanner: Set localized screenshot for ${langToUse} in state with dataUrl`);
 
           // Обновляем элемент в массиве с новым объектом
-          newItems[bannerIndex] = item;
+          currentDeviceItems[bannerIndex] = item;
 
           // СНАЧАЛА обновляем состояние
-          setPreviewItems(newItems);
+          setPreviewItems(prev => ({
+            ...prev,
+            [deviceToUse]: currentDeviceItems
+          }));
           console.log(`📤 uploadScreenshotToBanner: Updated React state`);
 
           // Принудительно обновляем UI
@@ -2676,13 +2682,16 @@ export default function BannerGenerator() {
                   <ColorPicker
                     color={currentBanner.backgroundColor || "#007AFF"}
                     onChange={(color) => {
-                      const updatedItems = [...previewItems]
+                      const updatedItems = [...(previewItems[deviceType] || [])]
                       if (updatedItems[previewIndex]) {
                         updatedItems[previewIndex] = {
                           ...updatedItems[previewIndex],
                           backgroundColor: color,
                         }
-                        setPreviewItems(updatedItems)
+                        setPreviewItems(prev => ({
+                          ...prev,
+                          [deviceType]: updatedItems
+                        }))
                       }
                     }}
                   />
@@ -2780,7 +2789,7 @@ export default function BannerGenerator() {
                   <NumberInputWithSlider
                     value={currentBanner.verticalOffset?.[isTitle ? "title" : "description"] || 0}
                     onChange={(value) => {
-                      const updatedItems = [...previewItems];
+                      const updatedItems = [...(previewItems[deviceType] || [])];
                       if (updatedItems[previewIndex]) {
                         updatedItems[previewIndex] = {
                           ...updatedItems[previewIndex],
@@ -2789,7 +2798,10 @@ export default function BannerGenerator() {
                             [isTitle ? "title" : "description"]: value,
                           },
                         };
-                        setPreviewItems(updatedItems);
+                        setPreviewItems(prev => ({
+                          ...prev,
+                          [deviceType]: updatedItems
+                        }));
                       }
                     }}
                     min={-300}
@@ -2805,7 +2817,7 @@ export default function BannerGenerator() {
                   <NumberInputWithSlider
                     value={currentBanner.horizontalOffset?.[isTitle ? "title" : "description"] || 0}
                     onChange={(value) => {
-                      const updatedItems = [...previewItems];
+                      const updatedItems = [...(previewItems[deviceType] || [])];
                       if (updatedItems[previewIndex]) {
                         updatedItems[previewIndex] = {
                           ...updatedItems[previewIndex],
@@ -2814,7 +2826,10 @@ export default function BannerGenerator() {
                             [isTitle ? "title" : "description"]: value,
                           },
                         };
-                        setPreviewItems(updatedItems);
+                        setPreviewItems(prev => ({
+                          ...prev,
+                          [deviceType]: updatedItems
+                        }));
                       }
                     }}
                     min={-300}
@@ -2830,7 +2845,7 @@ export default function BannerGenerator() {
                   <NumberInputWithSlider
                     value={getDeviceRotation(currentBanner, deviceType, isTitle ? 'title' : 'description')}
                     onChange={(value) => {
-                      const updatedItems = [...previewItems];
+                      const updatedItems = [...(previewItems[deviceType] || [])];
                       if (updatedItems[previewIndex]) {
                         const currentRotation = updatedItems[previewIndex].rotation || {};
                         const deviceSpecific = typeof currentRotation[deviceType] === 'object' && currentRotation[deviceType] !== null
@@ -2846,7 +2861,10 @@ export default function BannerGenerator() {
                             [deviceType]: deviceSpecific
                           }
                         };
-                        setPreviewItems(updatedItems);
+                        setPreviewItems(prev => ({
+                          ...prev,
+                          [deviceType]: updatedItems
+                        }));
                       }
                     }}
                     min={-180}
@@ -2873,7 +2891,7 @@ export default function BannerGenerator() {
                   <NumberInputWithSlider
                     value={currentBanner.verticalOffset?.combined || 0}
                     onChange={(value) => {
-                      const updatedItems = [...previewItems];
+                      const updatedItems = [...(previewItems[deviceType] || [])];
                       if (updatedItems[previewIndex]) {
                         updatedItems[previewIndex] = {
                           ...updatedItems[previewIndex],
@@ -2882,7 +2900,10 @@ export default function BannerGenerator() {
                             combined: value,
                           },
                         };
-                        setPreviewItems(updatedItems);
+                        setPreviewItems(prev => ({
+                          ...prev,
+                          [deviceType]: updatedItems
+                        }));
                       }
                     }}
                     min={-300}
@@ -2898,7 +2919,7 @@ export default function BannerGenerator() {
                   <NumberInputWithSlider
                     value={currentBanner.horizontalOffset?.combined || 0}
                     onChange={(value) => {
-                      const updatedItems = [...previewItems];
+                      const updatedItems = [...(previewItems[deviceType] || [])];
                       if (updatedItems[previewIndex]) {
                         updatedItems[previewIndex] = {
                           ...updatedItems[previewIndex],
@@ -2907,7 +2928,10 @@ export default function BannerGenerator() {
                             combined: value,
                           },
                         };
-                        setPreviewItems(updatedItems);
+                        setPreviewItems(prev => ({
+                          ...prev,
+                          [deviceType]: updatedItems
+                        }));
                       }
                     }}
                     min={-300}
@@ -2923,7 +2947,7 @@ export default function BannerGenerator() {
                   <NumberInputWithSlider
                     value={getDeviceRotation(currentBanner, deviceType, 'textBlock')}
                     onChange={(value) => {
-                      const updatedItems = [...previewItems];
+                      const updatedItems = [...(previewItems[deviceType] || [])];
                       if (updatedItems[previewIndex]) {
                         const currentRotation = updatedItems[previewIndex].rotation || {};
                         const deviceSpecific = typeof currentRotation[deviceType] === 'object' && currentRotation[deviceType] !== null
@@ -2939,7 +2963,10 @@ export default function BannerGenerator() {
                             [deviceType]: deviceSpecific
                           }
                         };
-                        setPreviewItems(updatedItems);
+                        setPreviewItems(prev => ({
+                          ...prev,
+                          [deviceType]: updatedItems
+                        }));
                       }
                     }}
                     min={-180}
@@ -3031,13 +3058,16 @@ export default function BannerGenerator() {
                         key={position.value}
                         type="button"
                         onClick={() => {
-                          const updatedItems = [...previewItems]
+                          const updatedItems = [...(previewItems[deviceType] || [])]
                           if (updatedItems[previewIndex]) {
                             updatedItems[previewIndex] = {
                               ...updatedItems[previewIndex],
                               devicePosition: position.value,
                             }
-                            setPreviewItems(updatedItems)
+                            setPreviewItems(prev => ({
+                              ...prev,
+                              [deviceType]: updatedItems
+                            }))
                           }
                         }}
                         className={`p-0.5 rounded-md border ${
@@ -3061,7 +3091,7 @@ export default function BannerGenerator() {
                 <NumberInputWithSlider
                   value={getDeviceScale(currentBanner, deviceType)}
                   onChange={(value) => {
-                    const updatedItems = [...previewItems];
+                    const updatedItems = [...(previewItems[deviceType] || [])];
                     if (updatedItems[previewIndex]) {
                       // Инициализируем deviceScale как объект если это старое значение
                       const currentScale = updatedItems[previewIndex].deviceScale;
@@ -3089,9 +3119,9 @@ export default function BannerGenerator() {
                   <Label className="text-xs font-mono">Vertical Position</Label>
                 </div>
                 <NumberInputWithSlider
-                  value={previewItems[previewIndex]?.verticalOffset?.[deviceType]?.device || previewItems[previewIndex]?.verticalOffset?.device || 0}
+                  value={(previewItems[deviceType]?.[previewIndex])?.verticalOffset?.[deviceType]?.device || (previewItems[deviceType]?.[previewIndex])?.verticalOffset?.device || 0}
                   onChange={(value) => {
-                    const updatedItems = [...previewItems]
+                    const updatedItems = [...(previewItems[deviceType] || [])]
                     if (updatedItems[previewIndex]) {
                       const currentItem = updatedItems[previewIndex];
                       if (!currentItem.verticalOffset) currentItem.verticalOffset = {};
@@ -3099,7 +3129,10 @@ export default function BannerGenerator() {
                         currentItem.verticalOffset[deviceType] = { combined: 0, title: 0, description: 0, device: 0 };
                       }
                       currentItem.verticalOffset[deviceType].device = value;
-                      setPreviewItems(updatedItems)
+                      setPreviewItems(prev => ({
+                        ...prev,
+                        [deviceType]: updatedItems
+                      }))
                     }
                   }}
                   min={-300}
@@ -3113,9 +3146,9 @@ export default function BannerGenerator() {
                   <Label className="text-xs font-mono">Horizontal Position</Label>
                 </div>
                 <NumberInputWithSlider
-                  value={previewItems[previewIndex]?.horizontalOffset?.[deviceType]?.device || 0}
+                  value={(previewItems[deviceType]?.[previewIndex])?.horizontalOffset?.[deviceType]?.device || 0}
                   onChange={(value) => {
-                    const updatedItems = [...previewItems]
+                    const updatedItems = [...(previewItems[deviceType] || [])]
                     if (updatedItems[previewIndex]) {
                       const currentItem = updatedItems[previewIndex];
                       if (!currentItem.horizontalOffset) currentItem.horizontalOffset = {};
@@ -3123,7 +3156,10 @@ export default function BannerGenerator() {
                         currentItem.horizontalOffset[deviceType] = { combined: 0, title: 0, description: 0, device: 0 };
                       }
                       currentItem.horizontalOffset[deviceType].device = value;
-                      setPreviewItems(updatedItems)
+                      setPreviewItems(prev => ({
+                        ...prev,
+                        [deviceType]: updatedItems
+                      }))
                     }
                   }}
                   min={-300}
@@ -3183,7 +3219,7 @@ export default function BannerGenerator() {
                 <NumberInputWithSlider
                   value={getDeviceRotation(currentBanner, deviceType, 'device')}
                   onChange={(value) => {
-                    const updatedItems = [...previewItems];
+                    const updatedItems = [...(previewItems[deviceType] || [])];
                     if (updatedItems[previewIndex]) {
                       const currentRotation = updatedItems[previewIndex].rotation || {};
                       const deviceSpecific = typeof currentRotation[deviceType] === 'object' && currentRotation[deviceType] !== null
