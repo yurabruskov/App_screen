@@ -1319,8 +1319,9 @@ export default function BannerGenerator() {
   // Загружаем изображения при смене языка с debounce
   useEffect(() => {
     const timeoutId = setTimeout(async () => {
-      if (!imageDBRef.current || previewItems.length === 0) {
-        console.log(`Skipping image loading: imageDB=${!!imageDBRef.current}, previewItems=${previewItems.length}`);
+      const currentDeviceItems = previewItems[deviceType] || [];
+      if (!imageDBRef.current || currentDeviceItems.length === 0) {
+        console.log(`Skipping image loading: imageDB=${!!imageDBRef.current}, previewItems=${currentDeviceItems.length}`);
         return;
       }
 
@@ -1329,8 +1330,8 @@ export default function BannerGenerator() {
       // Создаем Map для хранения загруженных изображений, НЕ используя previewItems из замыкания
       const loadedImages = new Map<number, any>();
 
-      for (let i = 0; i < previewItems.length; i++) {
-        const item = previewItems[i];
+      for (let i = 0; i < currentDeviceItems.length; i++) {
+        const item = currentDeviceItems[i];
         console.log(`Checking preview ${item.id} for language ${activeLanguage}`);
 
         // Проверяем есть ли уже изображение для этого языка
@@ -1383,7 +1384,7 @@ export default function BannerGenerator() {
         // ВАЖНО: Используем функциональное обновление с prevItems (АКТУАЛЬНЫЕ данные)
         // loadedImages содержит ТОЛЬКО изображения, без rotation и других настроек
         setPreviewItems(prevItems => {
-          return prevItems.map((prevItem, i) => {
+          const updatedDeviceItems = (prevItems[deviceType] || []).map((prevItem, i) => {
             const loadedImage = loadedImages.get(i);
             if (loadedImage) {
               // Создаем НОВЫЙ объект с ВСЕМИ полями из prevItem (включая актуальный rotation!)
@@ -1404,6 +1405,11 @@ export default function BannerGenerator() {
             }
             return prevItem;
           });
+
+          return {
+            ...prevItems,
+            [deviceType]: updatedDeviceItems
+          };
         });
         forceUpdate(); // Принудительное обновление UI
       } else {
@@ -1412,7 +1418,7 @@ export default function BannerGenerator() {
     }, 200); // Увеличил debounce до 200ms
 
     return () => clearTimeout(timeoutId);
-  }, [activeLanguage, previewItems.length, activeProjectId]); // Перезагружаем при смене языка, количества превью или проекта
+  }, [activeLanguage, previewItems[deviceType]?.length, activeProjectId, deviceType]); // Перезагружаем при смене языка, количества превью, устройства или проекта
 
   // Обновляем все хуки сохранения, чтобы они были консистентными
   useEffect(() => {
@@ -2450,8 +2456,8 @@ export default function BannerGenerator() {
       }
       
       console.log("Выбранные языки для экспорта:", selectedLanguages);
-      
-      const totalBanners = previewItems.length * selectedLanguages.length;
+
+      const totalBanners = (previewItems[deviceType]?.length || 0) * selectedLanguages.length;
       let processedBanners = 0;
       
       // Сохраняем текущий язык и индекс
@@ -3594,8 +3600,8 @@ export default function BannerGenerator() {
               >
                 <Copy className="h-4 w-4" />
               </Button>
-              
-              {previewItems.length > 1 && (
+
+              {(previewItems[deviceType]?.length || 0) > 1 && (
                 <Button
                   variant="ghost"
                   size="icon"
@@ -3639,9 +3645,9 @@ export default function BannerGenerator() {
       if (!exportData.banners[langCode]) {
         exportData.banners[langCode] = {};
       }
-      
-      // Добавляем контент для каждого баннера
-      previewItems.forEach(preview => {
+
+      // Добавляем контент для каждого баннера текущего устройства
+      (previewItems[deviceType] || []).forEach(preview => {
         const previewKey = `preview_${preview.id}`;
         exportData.banners[langCode][previewKey] = {
           title: langCode === "ru" ? getPreviewContent(langCode, preview.id, "title") || "" : "",
