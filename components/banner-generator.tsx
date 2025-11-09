@@ -224,6 +224,18 @@ const getCurrentScreenshot = (previewItem: PreviewItem, currentLanguage: string,
     return previewItem.localizedScreenshots[currentDeviceType].en;
   }
 
+  // NEW: Fallback на любой доступный язык для текущего устройства
+  if (previewItem.localizedScreenshots?.[currentDeviceType]) {
+    const availableLanguages = Object.keys(previewItem.localizedScreenshots[currentDeviceType]);
+    for (const lang of availableLanguages) {
+      const screenshot = previewItem.localizedScreenshots[currentDeviceType][lang];
+      if (screenshot?.file || screenshot?.dataUrl) {
+        console.log(`⚠️ No screenshot for ${currentDeviceType}/${currentLanguage}, using ${currentDeviceType}/${lang} fallback`);
+        return screenshot;
+      }
+    }
+  }
+
   // Fallback на iPhone версию того же языка
   if (currentDeviceType !== 'iphone' && (previewItem.localizedScreenshots?.iphone?.[currentLanguage]?.file || previewItem.localizedScreenshots?.iphone?.[currentLanguage]?.dataUrl)) {
     console.log(`⚠️ No screenshot for ${currentDeviceType}/${currentLanguage}, using iPhone fallback`);
@@ -234,6 +246,18 @@ const getCurrentScreenshot = (previewItem: PreviewItem, currentLanguage: string,
   if (currentDeviceType !== 'iphone' && (previewItem.localizedScreenshots?.iphone?.en?.file || previewItem.localizedScreenshots?.iphone?.en?.dataUrl)) {
     console.log(`⚠️ No screenshot, using iPhone English fallback`);
     return previewItem.localizedScreenshots.iphone.en;
+  }
+
+  // NEW: Fallback на любой доступный язык для iPhone
+  if (currentDeviceType !== 'iphone' && previewItem.localizedScreenshots?.iphone) {
+    const availableLanguages = Object.keys(previewItem.localizedScreenshots.iphone);
+    for (const lang of availableLanguages) {
+      const screenshot = previewItem.localizedScreenshots.iphone[lang];
+      if (screenshot?.file || screenshot?.dataUrl) {
+        console.log(`⚠️ No screenshot for ${currentDeviceType}, using iPhone/${lang} fallback`);
+        return screenshot;
+      }
+    }
   }
 
   // Fallback на общий скриншот (как было раньше)
@@ -3105,7 +3129,10 @@ export default function BannerGenerator() {
                         ...updatedItems[previewIndex],
                         deviceScale: newDeviceScale,
                       };
-                      setPreviewItems(updatedItems);
+                      setPreviewItems(prev => ({
+                        ...prev,
+                        [deviceType]: updatedItems
+                      }));
                     }
                   }}
                   min={50}
@@ -3235,7 +3262,10 @@ export default function BannerGenerator() {
                           [deviceType]: deviceSpecific
                         }
                       };
-                      setPreviewItems(updatedItems);
+                      setPreviewItems(prev => ({
+                        ...prev,
+                        [deviceType]: updatedItems
+                      }));
                     }
                   }}
                   min={-360}
@@ -3569,7 +3599,7 @@ export default function BannerGenerator() {
             })()}
 
             {/* Rotation handles - показываем только когда устройство активно */}
-            {isActive && activeElement === "device" && (
+            {isActive && activeElement === "device" && !isExporting && (
               <>
                 {/* Top-left rotation handle */}
                 <div
@@ -3623,7 +3653,7 @@ export default function BannerGenerator() {
           </div>
 
           {/* Action buttons */}
-          {isActive && (
+          {isActive && !isExporting && (
             <div className="absolute top-4 right-4 flex gap-1">
               <Button
                 variant="ghost"
@@ -3883,6 +3913,7 @@ export default function BannerGenerator() {
     setDraggingElementInfo({
       bannerId,
       elementType,
+      deviceType,
       initialMouseX: event.clientX,
       initialMouseY: event.clientY,
       initialElementOffsetX,
@@ -3900,8 +3931,9 @@ export default function BannerGenerator() {
     const newOffsetX = draggingElementInfo.initialElementOffsetX + deltaX;
     const newOffsetY = draggingElementInfo.initialElementOffsetY + deltaY;
 
-    setPreviewItems(prevItems =>
-      prevItems.map(item => {
+    setPreviewItems(prevItems => ({
+      ...prevItems,
+      [draggingElementInfo.deviceType]: (prevItems[draggingElementInfo.deviceType] || []).map(item => {
         if (item.id === draggingElementInfo.bannerId) {
           const updatedItem = { ...item };
           let elementType = draggingElementInfo.elementType;
@@ -3909,31 +3941,31 @@ export default function BannerGenerator() {
           // Инициализируем device-specific оффсеты если нужно
           if (!updatedItem.verticalOffset) updatedItem.verticalOffset = {};
           if (!updatedItem.horizontalOffset) updatedItem.horizontalOffset = {};
-          if (!updatedItem.verticalOffset[deviceType]) {
-            updatedItem.verticalOffset[deviceType] = { combined: 0, title: 0, description: 0, device: 0 };
+          if (!updatedItem.verticalOffset[draggingElementInfo.deviceType]) {
+            updatedItem.verticalOffset[draggingElementInfo.deviceType] = { combined: 0, title: 0, description: 0, device: 0 };
           }
-          if (!updatedItem.horizontalOffset[deviceType]) {
-            updatedItem.horizontalOffset[deviceType] = { combined: 0, title: 0, description: 0 };
+          if (!updatedItem.horizontalOffset[draggingElementInfo.deviceType]) {
+            updatedItem.horizontalOffset[draggingElementInfo.deviceType] = { combined: 0, title: 0, description: 0 };
           }
 
           if (elementType === "title") {
-            updatedItem.horizontalOffset[deviceType].title = newOffsetX;
-            updatedItem.verticalOffset[deviceType].title = newOffsetY;
+            updatedItem.horizontalOffset[draggingElementInfo.deviceType].title = newOffsetX;
+            updatedItem.verticalOffset[draggingElementInfo.deviceType].title = newOffsetY;
           } else if (elementType === "description") {
-            updatedItem.horizontalOffset[deviceType].description = newOffsetX;
-            updatedItem.verticalOffset[deviceType].description = newOffsetY;
+            updatedItem.horizontalOffset[draggingElementInfo.deviceType].description = newOffsetX;
+            updatedItem.verticalOffset[draggingElementInfo.deviceType].description = newOffsetY;
           } else if (elementType === "device") {
-            updatedItem.horizontalOffset[deviceType].device = newOffsetX;
-            updatedItem.verticalOffset[deviceType].device = newOffsetY;
+            updatedItem.horizontalOffset[draggingElementInfo.deviceType].device = newOffsetX;
+            updatedItem.verticalOffset[draggingElementInfo.deviceType].device = newOffsetY;
           } else if (elementType === "text-block") {
-            updatedItem.horizontalOffset[deviceType].combined = newOffsetX;
-            updatedItem.verticalOffset[deviceType].combined = newOffsetY;
+            updatedItem.horizontalOffset[draggingElementInfo.deviceType].combined = newOffsetX;
+            updatedItem.verticalOffset[draggingElementInfo.deviceType].combined = newOffsetY;
           }
           return updatedItem;
         }
         return item;
       })
-    );
+    }));
   }, [draggingElementInfo, setPreviewItems]);
 
   // Обработчик отпускания кнопки мыши (будет добавлен глобально)
@@ -3999,8 +4031,9 @@ export default function BannerGenerator() {
 
     const newRotation = rotatingElementInfo.initialRotation + angleDelta;
 
-    setPreviewItems(prevItems =>
-      prevItems.map(item => {
+    setPreviewItems(prevItems => ({
+      ...prevItems,
+      [rotatingElementInfo.deviceType]: (prevItems[rotatingElementInfo.deviceType] || []).map(item => {
         if (item.id === rotatingElementInfo.bannerId) {
           const currentRotation = item.rotation || {};
           const deviceSpecific = typeof currentRotation[rotatingElementInfo.deviceType] === 'object' && currentRotation[rotatingElementInfo.deviceType] !== null
@@ -4019,7 +4052,7 @@ export default function BannerGenerator() {
         }
         return item;
       })
-    );
+    }));
   }, [rotatingElementInfo, setPreviewItems]);
 
   // Эффект для добавления и удаления глобальных обработчиков мыши
